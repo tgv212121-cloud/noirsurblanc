@@ -15,8 +15,6 @@ import { cn } from '@/lib/utils'
 const NAV_ITEMS = [
   { href: '/', label: 'Accueil', icon: DashboardIcon, color: '#2563eb' },
   { href: '/clients', label: 'Clients', icon: ClientsIcon, color: '#8b5cf6' },
-  { href: '/analytics', label: 'Analytics', icon: AnalyticsIcon, color: '#059669' },
-  { href: '/reminders', label: 'Rappels', icon: RemindersIcon, color: '#ea580c' },
 ]
 
 export default function Sidebar() {
