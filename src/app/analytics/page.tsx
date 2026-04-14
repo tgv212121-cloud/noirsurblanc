@@ -1,10 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { clients } from '@/data/clients'
-import { posts } from '@/data/posts'
-import { metrics } from '@/data/metrics'
+import { useState, useEffect } from 'react'
+import { fetchClients, fetchPosts, fetchMetrics } from '@/lib/queries'
 import { formatNumber, cn } from '@/lib/utils'
+import type { Client, Post, PostMetrics } from '@/types'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
 import PulseButton from '@/components/ui/PulseButton'
 import Link from 'next/link'
@@ -21,6 +20,15 @@ export default function AnalyticsPage() {
   const [period, setPeriod] = useState<Period>('30d')
   const [csvData, setCsvData] = useState('')
   const [showImport, setShowImport] = useState(false)
+  const [clients, setClients] = useState<Client[]>([])
+  const [posts, setPosts] = useState<Post[]>([])
+  const [metrics, setMetrics] = useState<PostMetrics[]>([])
+
+  useEffect(() => {
+    Promise.all([fetchClients(), fetchPosts(), fetchMetrics()]).then(([c, p, m]) => {
+      setClients(c); setPosts(p); setMetrics(m)
+    })
+  }, [])
 
   const cutoff = period === '7d'
     ? new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]

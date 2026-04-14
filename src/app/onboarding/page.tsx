@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import QuestionCard from '@/components/onboarding/QuestionCard'
 import ProgressBar from '@/components/onboarding/ProgressBar'
 import { questions } from '@/components/onboarding/questions'
 import { ChevronLeft, ChevronRight, ArrowRight, Check } from '@/components/onboarding/icons'
-import { clients } from '@/data/clients'
+import { fetchClients } from '@/lib/queries'
+import type { Client } from '@/types'
 
 type Answers = Record<number, string | Record<number, string>>
 
@@ -17,6 +18,9 @@ export default function OnboardingPage() {
   const [answers, setAnswers] = useState<Answers>({})
   const [completed, setCompleted] = useState(false)
   const [direction, setDirection] = useState(1)
+  const [clients, setClients] = useState<Client[]>([])
+
+  useEffect(() => { fetchClients().then(setClients) }, [])
 
   const handleStart = useCallback(() => {
     if (!selectedClient) return

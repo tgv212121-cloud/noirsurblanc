@@ -1,23 +1,24 @@
 'use client'
 
-import { use, useState, useCallback } from 'react'
-import { clients } from '@/data/clients'
-import { posts as initialPosts } from '@/data/posts'
-import { metrics } from '@/data/metrics'
-import { reminders } from '@/data/reminders'
+import { use, useState, useEffect, useCallback } from 'react'
+import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders } from '@/lib/queries'
 import { formatNumber, formatDate, formatRelative, cn } from '@/lib/utils'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import PulseButton from '@/components/ui/PulseButton'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
-import type { PostStatus } from '@/types'
+import type { Client, Post, PostMetrics, Reminder, PostStatus } from '@/types'
 import { questions } from '@/components/onboarding/questions'
 
 type Tab = 'calendar' | 'conversation' | 'stats' | 'onboarding'
 
 export default function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const client = clients.find(c => c.id === id)
+  const [client, setClient] = useState<Client | null>(null)
+  const [initialPosts, setInitialPosts] = useState<Post[]>([])
+  const [metrics, setMetrics] = useState<PostMetrics[]>([])
+  const [reminders, setReminders] = useState<Reminder[]>([])
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<Tab>('calendar')
   const [newPost, setNewPost] = useState('')
   const [editingDate, setEditingDate] = useState<string | null>(null)
@@ -27,6 +28,12 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const [postStatuses, setPostStatuses] = useState<Record<string, PostStatus>>({})
   const [draggedPostId, setDraggedPostId] = useState<string | null>(null)
   const [dragOverCol, setDragOverCol] = useState<string | null>(null)
+
+  useEffect(() => {
+    Promise.all([fetchClient(id), fetchClientPosts(id), fetchMetrics(), fetchReminders()]).then(([c, p, m, r]) => {
+      setClient(c); setInitialPosts(p); setMetrics(m); setReminders(r.filter(x => x.clientId === id)); setLoading(false)
+    })
+  }, [id])
 
   const getPostStatus = useCallback((postId: string, originalStatus: PostStatus): PostStatus => {
     return postStatuses[postId] || originalStatus

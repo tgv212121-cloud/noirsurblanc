@@ -1,14 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { clients } from '@/data/clients'
-import { posts } from '@/data/posts'
-import { metrics } from '@/data/metrics'
+import { useState, useEffect } from 'react'
+import { fetchClients, fetchPosts, fetchMetrics } from '@/lib/queries'
 import { formatRelative, cn } from '@/lib/utils'
 import Link from 'next/link'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
 import PulseButton from '@/components/ui/PulseButton'
-import type { ClientStatus } from '@/types'
+import type { Client, Post, PostMetrics, ClientStatus } from '@/types'
 
 const STATUSES: { value: ClientStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'Tous' },
@@ -20,6 +18,16 @@ const STATUSES: { value: ClientStatus | 'all'; label: string }[] = [
 export default function ClientsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<ClientStatus | 'all'>('all')
+  const [clients, setClients] = useState<Client[]>([])
+  const [posts, setPosts] = useState<Post[]>([])
+  const [metrics, setMetrics] = useState<PostMetrics[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all([fetchClients(), fetchPosts(), fetchMetrics()]).then(([c, p, m]) => {
+      setClients(c); setPosts(p); setMetrics(m); setLoading(false)
+    })
+  }, [])
 
   const filtered = clients.filter(c => {
     const matchesSearch = search === '' ||

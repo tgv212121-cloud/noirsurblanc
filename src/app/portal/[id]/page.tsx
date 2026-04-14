@@ -1,11 +1,9 @@
 'use client'
 
-import { use, useState, useCallback } from 'react'
-import { clients } from '@/data/clients'
-import { posts } from '@/data/posts'
-import { metrics } from '@/data/metrics'
-import { reminders } from '@/data/reminders'
+import { use, useState, useEffect, useCallback } from 'react'
+import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders } from '@/lib/queries'
 import { formatNumber, formatRelative, cn } from '@/lib/utils'
+import type { Client, Post, PostMetrics, Reminder } from '@/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
 import QuestionCard from '@/components/onboarding/QuestionCard'
@@ -17,10 +15,20 @@ type Tab = 'calendar' | 'messages' | 'stats' | 'history'
 
 export default function ClientPortalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const client = clients.find(c => c.id === id)
+  const [client, setClient] = useState<Client | null>(null)
+  const [posts, setPosts] = useState<Post[]>([])
+  const [metrics, setMetrics] = useState<PostMetrics[]>([])
+  const [reminders, setReminders] = useState<Reminder[]>([])
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<Tab>('calendar')
   const [expandedPost, setExpandedPost] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState('')
+
+  useEffect(() => {
+    Promise.all([fetchClient(id), fetchClientPosts(id), fetchMetrics(), fetchReminders()]).then(([c, p, m, r]) => {
+      setClient(c); setPosts(p); setMetrics(m); setReminders(r.filter(x => x.clientId === id)); setLoading(false)
+    })
+  }, [id])
 
   // Onboarding state
   const [onboardingDone, setOnboardingDone] = useState(false)

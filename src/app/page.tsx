@@ -1,13 +1,23 @@
 'use client'
 
-import { clients } from '@/data/clients'
-import { posts } from '@/data/posts'
-import { metrics } from '@/data/metrics'
-import { reminders } from '@/data/reminders'
+import { useState, useEffect } from 'react'
+import { fetchClients, fetchPosts, fetchMetrics, fetchReminders } from '@/lib/queries'
 import { formatNumber, formatRelative } from '@/lib/utils'
 import Link from 'next/link'
+import type { Client, Post, PostMetrics, Reminder } from '@/types'
 
 export default function Dashboard() {
+  const [clients, setClients] = useState<Client[]>([])
+  const [posts, setPosts] = useState<Post[]>([])
+  const [metrics, setMetrics] = useState<PostMetrics[]>([])
+  const [reminders, setReminders] = useState<Reminder[]>([])
+
+  useEffect(() => {
+    Promise.all([fetchClients(), fetchPosts(), fetchMetrics(), fetchReminders()]).then(([c, p, m, r]) => {
+      setClients(c); setPosts(p); setMetrics(m); setReminders(r)
+    })
+  }, [])
+
   const activeClients = clients.filter(c => c.status === 'active').length
   const publishedThisMonth = posts.filter(p => p.status === 'published' && p.publishedAt >= '2026-04-01').length
   const totalImpressions = metrics.reduce((sum, m) => sum + m.impressions, 0)

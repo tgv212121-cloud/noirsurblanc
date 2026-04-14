@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { clients } from '@/data/clients'
-import { reminders } from '@/data/reminders'
+import { useState, useEffect } from 'react'
+import { fetchClients, fetchReminders } from '@/lib/queries'
 import { formatRelative, DAYS_FR, cn } from '@/lib/utils'
+import type { Client, Reminder } from '@/types'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
 import PulseButton from '@/components/ui/PulseButton'
 import { motion } from 'framer-motion'
@@ -27,6 +27,14 @@ export default function RemindersPage() {
   const [day, setDay] = useState(1)
   const [time, setTime] = useState('09:00')
   const [message, setMessage] = useState('')
+  const [clients, setClients] = useState<Client[]>([])
+  const [reminders, setReminders] = useState<Reminder[]>([])
+
+  useEffect(() => {
+    Promise.all([fetchClients(), fetchReminders()]).then(([c, r]) => {
+      setClients(c); setReminders(r)
+    })
+  }, [])
 
   const filtered = reminders
     .filter(r => filter === 'all' || r.status === filter)
