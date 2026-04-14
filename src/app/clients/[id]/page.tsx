@@ -29,6 +29,12 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const [draggedPostId, setDraggedPostId] = useState<string | null>(null)
   const [dragOverCol, setDragOverCol] = useState<string | null>(null)
 
+  // Calendar state (must be declared before any conditional return)
+  const now = new Date()
+  const [calendarMonth, setCalendarMonth] = useState(now.getMonth())
+  const [calendarYear, setCalendarYear] = useState(now.getFullYear())
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+
   useEffect(() => {
     Promise.all([fetchClient(id), fetchClientPosts(id), fetchMetrics(), fetchReminders()]).then(([c, p, m, r]) => {
       setClient(c); setInitialPosts(p); setMetrics(m); setReminders(r.filter(x => x.clientId === id)); setLoading(false)
@@ -42,6 +48,14 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const movePost = useCallback((postId: string, newStatus: PostStatus) => {
     setPostStatuses(prev => ({ ...prev, [postId]: newStatus }))
   }, [])
+
+  if (loading) {
+    return (
+      <div className="py-10">
+        <p className="text-blanc-muted">Chargement...</p>
+      </div>
+    )
+  }
 
   if (!client) {
     return (
@@ -82,11 +96,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
     { id: 'onboarding', label: 'Onboarding' },
   ]
 
-  // Calendar
-  const now = new Date()
-  const [calendarMonth, setCalendarMonth] = useState(now.getMonth())
-  const [calendarYear, setCalendarYear] = useState(now.getFullYear())
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  // Calendar helpers
   const MONTHS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
   const getDaysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate()
   const getFirstDayOfMonth = (month: number, year: number) => (new Date(year, month, 1).getDay() + 6) % 7

@@ -36,6 +36,12 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
   const [answers, setAnswers] = useState<Record<number, string | Record<number, string>>>({})
   const [direction, setDirection] = useState(1)
 
+  // Calendar state (must be before any conditional return)
+  const now = new Date()
+  const [calendarMonth, setCalendarMonth] = useState(now.getMonth())
+  const [calendarYear, setCalendarYear] = useState(now.getFullYear())
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+
   const handleAnswer = useCallback((questionId: number, value: string | Record<number, string>) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }))
   }, [])
@@ -59,6 +65,14 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleNext()
   }, [handleNext])
+
+  if (loading) {
+    return (
+      <div className="py-20 text-center">
+        <p className="text-blanc-muted text-lg">Chargement...</p>
+      </div>
+    )
+  }
 
   if (!client) {
     return (
@@ -162,11 +176,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
     { id: 'history', label: 'Historique' },
   ]
 
-  // Build calendar data
-  const now = new Date()
-  const [calendarMonth, setCalendarMonth] = useState(now.getMonth())
-  const [calendarYear, setCalendarYear] = useState(now.getFullYear())
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  // Calendar data (state already declared at top)
 
   const MONTHS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
 
