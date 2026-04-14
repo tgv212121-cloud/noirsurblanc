@@ -1,0 +1,28 @@
+import { PostMetrics } from '@/types'
+
+export const metrics: PostMetrics[] = [
+  { postId: 'p-01', impressions: 18420, likes: 347, comments: 89, reposts: 42, engagementRate: 2.6, capturedAt: '2026-04-11' },
+  { postId: 'p-02', impressions: 12800, likes: 215, comments: 67, reposts: 31, engagementRate: 2.44, capturedAt: '2026-04-08' },
+  { postId: 'p-03', impressions: 9500, likes: 178, comments: 45, reposts: 18, engagementRate: 2.54, capturedAt: '2026-04-04' },
+  { postId: 'p-04', impressions: 7200, likes: 132, comments: 28, reposts: 15, engagementRate: 2.43, capturedAt: '2026-03-29' },
+  { postId: 'p-05', impressions: 22100, likes: 412, comments: 98, reposts: 56, engagementRate: 2.56, capturedAt: '2026-04-12' },
+  { postId: 'p-06', impressions: 15300, likes: 289, comments: 72, reposts: 38, engagementRate: 2.61, capturedAt: '2026-04-09' },
+  { postId: 'p-07', impressions: 11700, likes: 198, comments: 54, reposts: 22, engagementRate: 2.34, capturedAt: '2026-04-05' },
+  { postId: 'p-08', impressions: 31200, likes: 587, comments: 142, reposts: 89, engagementRate: 2.62, capturedAt: '2026-04-10' },
+  { postId: 'p-09', impressions: 14600, likes: 267, comments: 58, reposts: 34, engagementRate: 2.46, capturedAt: '2026-04-06' },
+  { postId: 'p-10', impressions: 8900, likes: 156, comments: 41, reposts: 19, engagementRate: 2.43, capturedAt: '2026-03-31' },
+  { postId: 'p-11', impressions: 16800, likes: 321, comments: 87, reposts: 45, engagementRate: 2.7, capturedAt: '2026-04-11' },
+  { postId: 'p-12', impressions: 13400, likes: 245, comments: 63, reposts: 29, engagementRate: 2.52, capturedAt: '2026-04-07' },
+  { postId: 'p-13', impressions: 19700, likes: 378, comments: 94, reposts: 51, engagementRate: 2.65, capturedAt: '2026-04-12' },
+  { postId: 'p-14', impressions: 25400, likes: 489, comments: 112, reposts: 67, engagementRate: 2.63, capturedAt: '2026-04-09' },
+  { postId: 'p-15', impressions: 10200, likes: 187, comments: 48, reposts: 23, engagementRate: 2.53, capturedAt: '2026-04-10' },
+  { postId: 'p-16', impressions: 6800, likes: 124, comments: 32, reposts: 14, engagementRate: 2.5, capturedAt: '2026-04-03' },
+  { postId: 'p-17', impressions: 28900, likes: 534, comments: 126, reposts: 78, engagementRate: 2.55, capturedAt: '2026-04-11' },
+  { postId: 'p-18', impressions: 11300, likes: 201, comments: 52, reposts: 26, engagementRate: 2.47, capturedAt: '2026-04-06' },
+  { postId: 'p-19', impressions: 14100, likes: 268, comments: 71, reposts: 35, engagementRate: 2.65, capturedAt: '2026-04-12' },
+  { postId: 'p-20', impressions: 20500, likes: 398, comments: 96, reposts: 53, engagementRate: 2.67, capturedAt: '2026-04-08' },
+  { postId: 'p-21', impressions: 35600, likes: 672, comments: 187, reposts: 94, engagementRate: 2.68, capturedAt: '2026-04-10' },
+  { postId: 'p-22', impressions: 17800, likes: 334, comments: 82, reposts: 44, engagementRate: 2.58, capturedAt: '2026-04-11' },
+  { postId: 'p-23', impressions: 21300, likes: 401, comments: 95, reposts: 58, engagementRate: 2.6, capturedAt: '2026-04-12' },
+  { postId: 'p-24', impressions: 9800, likes: 176, comments: 43, reposts: 21, engagementRate: 2.45, capturedAt: '2026-04-07' },
+]
