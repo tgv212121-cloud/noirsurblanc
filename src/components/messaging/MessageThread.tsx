@@ -134,16 +134,16 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
   }
 
   return (
-    <div>
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 260px)' }}>
       {/* Messages */}
-      <div className="space-y-8 mb-12 max-h-[500px] overflow-y-auto" style={{ paddingRight: '8px' }}>
+      <div className="flex-1 space-y-6 overflow-y-auto" style={{ paddingRight: '8px', paddingBottom: '24px' }}>
         {messages.length === 0 ? (
           <p className="text-sm text-blanc-muted py-12 text-center">Aucun message pour le moment.</p>
         ) : (
           messages.map((msg) => {
             const isMe = msg.sender === currentUser
             return (
-              <div key={msg.id} className={cn('max-w-[75%]', isMe ? 'ml-auto' : 'mr-auto')}>
+              <div key={msg.id} className={cn('w-fit max-w-[65%]', isMe ? 'ml-auto' : 'mr-auto')}>
                 <div
                   className="rounded-2xl"
                   style={{
@@ -214,7 +214,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Votre message..."
-                rows={3}
+                rows={1}
                 className="w-full bg-transparent text-sm text-blanc placeholder:text-blanc-muted/50 outline-none leading-relaxed"
                 style={{ resize: 'none', padding: '4px 8px' }}
                 onKeyDown={(e) => {
