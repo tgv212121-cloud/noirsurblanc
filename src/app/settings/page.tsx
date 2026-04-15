@@ -185,8 +185,12 @@ export default function SettingsPage() {
               <div style={{ marginBottom: '18px' }}>
                 <label className="text-[10px] text-blanc-muted/60 uppercase tracking-[0.14em] block" style={{ marginBottom: '10px' }}>Lier au client</label>
                 <select value={newClientId} onChange={e => setNewClientId(e.target.value)} style={inputStyle}>
-                  <option value="">— Sélectionner —</option>
-                  {clients.map(c => <option key={c.id} value={c.id}>{c.name}{c.company ? ' — ' + c.company : ''}</option>)}
+                  <option value="" style={{ background: '#141414', color: '#fafaf9' }}>— Sélectionner —</option>
+                  {clients.map(c => (
+                    <option key={c.id} value={c.id} style={{ background: '#141414', color: '#fafaf9' }}>
+                      {c.name}{c.company ? ' — ' + c.company : ''}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
