@@ -58,9 +58,16 @@ export async function getSession() {
 export async function getMyProfile(): Promise<Profile | null> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
-  const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-  if (error || !data) return null
-  return { id: data.id, email: data.email, role: data.role, clientId: data.client_id }
+  const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  if (data) {
+    return { id: data.id, email: data.email, role: data.role, clientId: data.client_id }
+  }
+  // Auto-create a default 'client' profile if missing (admins must be promoted via SQL or /settings)
+  const { data: created } = await supabase.from('profiles').insert({
+    id: user.id, email: user.email, role: 'client', client_id: null,
+  }).select().single()
+  if (!created) return null
+  return { id: created.id, email: created.email, role: created.role, clientId: created.client_id }
 }
 
 export async function listProfiles(): Promise<Profile[]> {
