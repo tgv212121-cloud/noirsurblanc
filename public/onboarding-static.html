@@ -392,21 +392,62 @@ async function renderDone(){
 }
 
 function renderAccount(){
+  const iconMail=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`;
+  const iconLock=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+  const iconEye=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  const iconEyeOff=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`;
+
+  const inputStyle='width:100%;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:#fafaf9;font-size:15px;padding:16px 18px 16px 50px;outline:none;font-family:inherit;transition:all 0.3s ease;';
+  const iconStyle='position:absolute;left:18px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.35);pointer-events:none;display:flex;';
+
   document.getElementById('app').innerHTML=`
     <div class="q-card" id="scr" style="max-width:520px">
       <div class="q-num" aria-hidden="true">Dernière étape</div>
       <h2 class="q-text">Crée ton compte</h2>
-      <p class="q-sub">Pour accéder à ton espace personnel et discuter avec ton copywriter.</p>
-      <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px">
-        <input type="email" id="acc-email" placeholder="ton@email.com" required style="width:100%">
-        <input type="password" id="acc-pass" placeholder="Mot de passe (≥ 6 caractères)" minlength="6" required style="width:100%">
+      <p class="q-sub" style="margin-bottom:32px">Pour accéder à ton espace personnel et discuter avec ton copywriter.</p>
+
+      <div style="margin-bottom:20px">
+        <label style="font-size:10px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.18em;display:block;margin-bottom:12px">Email</label>
+        <div style="position:relative">
+          <div style="${iconStyle}">${iconMail}</div>
+          <input type="email" id="acc-email" placeholder="ton@email.com" required style="${inputStyle}">
+        </div>
       </div>
-      <p id="acc-err" style="color:#f87171;font-size:12px;margin-top:10px;display:none"></p>
+
+      <div style="margin-bottom:8px">
+        <label style="font-size:10px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.18em;display:block;margin-bottom:12px">Mot de passe</label>
+        <div style="position:relative">
+          <div style="${iconStyle}">${iconLock}</div>
+          <input type="password" id="acc-pass" placeholder="••••••••" minlength="6" required style="${inputStyle.replace('padding:16px 18px 16px 50px','padding:16px 50px 16px 50px')}">
+          <button type="button" id="acc-eye" aria-label="Afficher" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;padding:4px;display:flex">${iconEye}</button>
+        </div>
+        <p style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:10px">Minimum 6 caractères.</p>
+      </div>
+
+      <p id="acc-err" style="color:#f87171;font-size:12px;margin-top:16px;display:none"></p>
       <div class="btn-wrap">
         <button class="btn-next" id="createAcc">Créer mon espace ${ico.arrow}</button>
       </div>
     </div>`;
   gsap.fromTo('#scr',{opacity:0,y:20},{opacity:1,y:0,duration:0.55,ease:'power3.out'});
+
+  // Focus ring doré sur les inputs
+  document.querySelectorAll('#acc-email, #acc-pass').forEach(inp=>{
+    inp.addEventListener('focus',()=>{ inp.style.borderColor='rgba(202,138,4,0.35)'; inp.style.background='rgba(255,255,255,0.045)'; inp.style.boxShadow='0 0 30px rgba(202,138,4,0.06)'; });
+    inp.addEventListener('blur',()=>{ inp.style.borderColor='rgba(255,255,255,0.08)'; inp.style.background='rgba(255,255,255,0.025)'; inp.style.boxShadow='none'; });
+  });
+
+  // Eye toggle
+  const eye=document.getElementById('acc-eye');
+  const pwdInput=document.getElementById('acc-pass');
+  const iconEye2=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  const iconEyeOff2=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`;
+  eye.addEventListener('click',()=>{
+    const isPwd=pwdInput.type==='password';
+    pwdInput.type=isPwd?'text':'password';
+    eye.innerHTML=isPwd?iconEyeOff2:iconEye2;
+  });
+
   const btn=document.getElementById('createAcc');
   attachMagnetic(btn);
   btn.addEventListener('click',async ()=>{
