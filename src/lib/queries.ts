@@ -32,13 +32,16 @@ export async function createClient(input: {
   email: string
   phone?: string
 }): Promise<Client | null> {
+  const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8)
   const { data, error } = await supabase
     .from('clients')
     .insert({
+      id,
       name: input.name,
-      company: input.company,
+      company: input.company || '',
+      avatar: '',
       email: input.email,
-      phone: input.phone || null,
+      phone: input.phone || '',
       status: 'onboarding',
       onboarded_at: new Date().toISOString(),
     })

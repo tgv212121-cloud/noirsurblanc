@@ -298,15 +298,16 @@ let CLIENT_ID = new URLSearchParams(window.location.search).get('client');
 
 async function ensureClient(){
   if(CLIENT_ID) return CLIENT_ID;
-  // Self-serve: create a minimal client on the fly using the first few answers
+  const id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : ('c_'+Date.now()+'_'+Math.random().toString(36).slice(2,8));
   const name = (answers[2] && typeof answers[2]==='string') ? answers[2].slice(0,60) : 'Nouveau client';
   const r = await fetch(`${SUPABASE_URL}/rest/v1/clients`,{
     method:'POST',
     headers:SB_HEADERS,
-    body:JSON.stringify({name, company:'', email:'', status:'onboarding', onboarded_at:new Date().toISOString()})
+    body:JSON.stringify({id, name, company:'', avatar:'', email:'', phone:'', status:'onboarding', onboarded_at:new Date().toISOString()})
   });
   const data = await r.json();
   if(data && data[0]) CLIENT_ID = data[0].id;
+  else console.error('ensureClient failed', data);
   return CLIENT_ID;
 }
 
@@ -317,9 +318,8 @@ async function saveAnswersToSupabase(){
   for(const q of Q){
     const sv = answers[q.id];
     if(sv===undefined || sv===null) continue;
-    const answer = typeof sv==='string' ? sv : JSON.stringify(sv);
-    if(!answer || (typeof sv==='string' && !sv.trim())) continue;
-    rows.push({client_id:id, question_id:q.id, answer});
+    if(typeof sv==='string' && !sv.trim()) continue;
+    rows.push({client_id:id, question_id:q.id, answer: sv});
   }
   if(rows.length===0) return;
   try{
@@ -348,9 +348,23 @@ async function renderDone(){
     .from('.btn-wrap',{opacity:0,y:10,duration:0.45},0.68);
 
   // Sauvegarde auto dans Supabase
-  await saveAnswersToSupabase();
   const link = document.getElementById('portalLink');
-  if(link && CLIENT_ID) link.href = '/portal/' + CLIENT_ID;
+  link.style.cursor = 'wait';
+  link.textContent = 'Enregistrement...';
+  try {
+    await saveAnswersToSupabase();
+  } catch(e){ console.error(e); }
+  link.innerHTML = 'Accéder à mon portail ' + ico.arrow;
+  link.style.cursor = 'pointer';
+  link.addEventListener('click', (e)=>{
+    e.preventDefault();
+    if(CLIENT_ID){
+      window.location.href = '/portal/' + CLIENT_ID;
+    } else {
+      alert("Ton compte n'a pas pu être créé. Contacte ton copywriter pour obtenir ton lien d'accès.");
+    }
+  });
+  if(CLIENT_ID) link.href = '/portal/' + CLIENT_ID;
 }
 
 function go(to,forward){
