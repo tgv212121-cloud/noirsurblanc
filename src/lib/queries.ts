@@ -142,6 +142,7 @@ function mapPost(row: any): Post {
     publishedAt: row.published_at,
     status: row.status,
     linkedinUrl: row.linkedin_url,
+    files: Array.isArray(row.files) ? row.files : [],
   }
 }
 
@@ -292,6 +293,15 @@ export async function uploadPostImage(file: File): Promise<string | null> {
 
   const { data } = supabase.storage.from('post-images').getPublicUrl(fileName)
   return data.publicUrl
+}
+
+export async function uploadPostFile(file: File): Promise<{ name: string; url: string; size: number } | null> {
+  const ext = file.name.split('.').pop()
+  const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  const { error } = await supabase.storage.from('message-files').upload(safeName, file)
+  if (error) { console.error('uploadPostFile', error); return null }
+  const { data } = supabase.storage.from('message-files').getPublicUrl(safeName)
+  return { name: file.name, url: data.publicUrl, size: file.size }
 }
 
 export async function uploadMessageFile(file: File): Promise<string | null> {

@@ -260,7 +260,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                   Post du {new Date(selectedDate + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </p>
                 {postsByDate[selectedDate].map(post => (
-                  <PostCopyCard key={post.id} content={post.content} />
+                  <PostCopyCard key={post.id} content={post.content} files={post.files} />
                 ))}
               </motion.div>
             ) : (
@@ -509,7 +509,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
   )
 }
 
-function PostCopyCard({ content }: { content: string }) {
+function PostCopyCard({ content, files }: { content: string; files?: { name: string; url: string; size?: number }[] }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
@@ -542,6 +542,27 @@ function PostCopyCard({ content }: { content: string }) {
       >
         {content}
       </div>
+
+      {/* Files */}
+      {files && files.length > 0 && (
+        <div className="flex flex-col gap-2 mb-8">
+          {files.map((f, i) => (
+            <a key={i} href={f.url} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-3 bg-noir-card rounded-lg hover:bg-noir-card/70 transition-colors"
+              style={{ padding: '12px 16px' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#8b5cf6' }} className="shrink-0">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-blanc truncate">{f.name}</p>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-blanc-muted shrink-0">
+                <path d="M7 17L17 7"/><path d="M7 7h10v10"/>
+              </svg>
+            </a>
+          ))}
+        </div>
+      )}
 
       {/* Copy button */}
       <div className="flex items-center gap-4">

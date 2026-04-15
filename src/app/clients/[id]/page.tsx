@@ -2,7 +2,8 @@
 
 import { use, useState, useEffect, useCallback } from 'react'
 import { useAuthGuard } from '@/lib/useAuthGuard'
-import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders, createPost, fetchOnboardingAnswers } from '@/lib/queries'
+import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders, createPost, fetchOnboardingAnswers, uploadPostFile } from '@/lib/queries'
+import type { PostFile } from '@/types'
 import { formatNumber, formatDate, formatRelative, cn } from '@/lib/utils'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -13,6 +14,12 @@ import type { Client, Post, PostMetrics, Reminder, PostStatus } from '@/types'
 import { questions } from '@/components/onboarding/questions'
 
 type Tab = 'calendar' | 'conversation' | 'stats' | 'onboarding'
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return bytes + ' o'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' Ko'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' Mo'
+}
 
 export default function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -28,6 +35,8 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const [expandedPost, setExpandedPost] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState('')
   const [postImages, setPostImages] = useState<string[]>([])
+  const [postFiles, setPostFiles] = useState<PostFile[]>([])
+  const [uploadingFile, setUploadingFile] = useState(false)
   const [savingPost, setSavingPost] = useState(false)
   const [postStatuses, setPostStatuses] = useState<Record<string, PostStatus>>({})
   const [draggedPostId, setDraggedPostId] = useState<string | null>(null)
@@ -221,6 +230,26 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                           </span>
                         </div>
                         <p className="text-[15px] text-blanc leading-[1.9] whitespace-pre-line mb-6" style={{ maxWidth: '60ch' }}>{post.content}</p>
+                        {post.files && post.files.length > 0 && (
+                          <div className="flex flex-col gap-2 mb-6" style={{ maxWidth: '60ch' }}>
+                            {post.files.map((f, i) => (
+                              <a key={i} href={f.url} target="_blank" rel="noopener noreferrer"
+                                className="flex items-center gap-3 bg-noir-card rounded-lg hover:bg-noir-elevated transition-colors"
+                                style={{ padding: '10px 14px' }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-gold shrink-0">
+                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-blanc truncate">{f.name}</p>
+                                  {typeof f.size === 'number' && <p className="text-[11px] text-blanc-muted/60">{formatBytes(f.size)}</p>}
+                                </div>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-blanc-muted shrink-0">
+                                  <path d="M7 17L17 7"/><path d="M7 7h10v10"/>
+                                </svg>
+                              </a>
+                            ))}
+                          </div>
+                        )}
                         {m && (
                           <div className="grid grid-cols-4 gap-3">
                             <div className="bg-noir-card rounded-lg" style={{ padding: '12px 16px' }}><p className="text-[10px] text-blanc-muted mb-1">Impressions</p><p className="text-sm font-semibold text-blanc">{formatNumber(m.impressions)}</p></div>
@@ -318,6 +347,59 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                       )}
                     </div>
 
+                    {/* Files */}
+                    <div className="mt-6">
+                      <p className="text-xs text-blanc-muted mb-3">Fichiers joints</p>
+
+                      {postFiles.length > 0 && (
+                        <div className="flex flex-col gap-2 mb-4">
+                          {postFiles.map((f, i) => (
+                            <div key={i} className="flex items-center gap-3 bg-noir-card rounded-lg group" style={{ padding: '10px 14px' }}>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-gold shrink-0">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                              </svg>
+                              <div className="flex-1 min-w-0">
+                                <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blanc hover:text-gold transition-colors truncate block">{f.name}</a>
+                                {typeof f.size === 'number' && <p className="text-[11px] text-blanc-muted/60">{formatBytes(f.size)}</p>}
+                              </div>
+                              <button
+                                onClick={() => setPostFiles(prev => prev.filter((_, idx) => idx !== i))}
+                                className="text-blanc-muted/40 hover:text-red-400 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
+                                title="Retirer"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <label className="inline-flex items-center gap-2 text-sm text-blanc-muted hover:text-blanc cursor-pointer rounded-xl transition-colors duration-200" style={{ padding: '12px 20px', backgroundColor: 'var(--noir-card)' }}>
+                        {uploadingFile ? (
+                          <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                        ) : (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                          </svg>
+                        )}
+                        {uploadingFile ? 'Envoi...' : 'Ajouter un fichier'}
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            e.target.value = ''
+                            if (!file) return
+                            setUploadingFile(true)
+                            const result = await uploadPostFile(file)
+                            setUploadingFile(false)
+                            if (!result) { alert("Erreur lors de l'upload."); return }
+                            setPostFiles(prev => [...prev, result])
+                          }}
+                        />
+                      </label>
+                    </div>
+
                     <div className="flex items-center gap-4 mt-6">
                       <PulseButton
                         onClick={async () => {
@@ -333,18 +415,18 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                             publishedAt,
                             status,
                             images: postImages,
+                            files: postFiles,
                           })
                           setSavingPost(false)
                           if (!created) { alert("Erreur lors de l'enregistrement du post."); return }
-                          // Refresh the client posts locally
                           const refreshed = await fetchClientPosts(id)
                           setInitialPosts(refreshed)
-                          setEditingDate(null); setSelectedDate(null); setNewPost(''); setPostImages([])
+                          setEditingDate(null); setSelectedDate(null); setNewPost(''); setPostImages([]); setPostFiles([])
                         }}
                       >
                         {savingPost ? 'Enregistrement...' : 'Enregistrer'}
                       </PulseButton>
-                      <button onClick={() => { setEditingDate(null); setSelectedDate(null); setNewPost(''); setPostImages([]) }} className="text-sm text-blanc-muted hover:text-blanc transition-colors duration-200 cursor-pointer" style={{ padding: '14px 24px' }}>
+                      <button onClick={() => { setEditingDate(null); setSelectedDate(null); setNewPost(''); setPostImages([]); setPostFiles([]) }} className="text-sm text-blanc-muted hover:text-blanc transition-colors duration-200 cursor-pointer" style={{ padding: '14px 24px' }}>
                         Annuler
                       </button>
                     </div>
