@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Onboarding — Enzo Chabbi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --gold:       oklch(72% 0.12 78);
+      --gold-light: oklch(84% 0.10 78);
+      --gold-dark:  oklch(48% 0.10 78);
+      --bg:         #0a0a0a;
+      --fg:         #ffffff;
+      --fg-muted:   rgba(255,255,255,0.65);
+      --glass:      rgba(255,255,255,0.04);
+      --glass-b:    rgba(255,255,255,0.10);
+      --input-bg:   rgba(255,255,255,0.04);
+      --input-b:    rgba(255,255,255,0.10);
+      --accent:     rgba(255,255,255,0.08);
+      --accent-b:   rgba(255,255,255,0.18);
+      --r: 18px;
+      --ease: cubic-bezier(0.22,1,0.36,1);
+    }
+
+    html, body { height: 100%; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--fg); overflow: hidden; }
+
+    /* NOISE */
+    .noise { position: fixed; inset: 0; z-index: 2; pointer-events: none; width: 100%; height: 100%; opacity: .038; }
+
+    /* BACKGROUND */
+    .bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(100px); pointer-events: none; animation: drift linear infinite; }
+    .orb-1 { width: 700px; height: 700px; background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%); top: -260px; left: -200px; animation-duration: 22s; }
+    .orb-2 { width: 520px; height: 520px; background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%); bottom: -180px; right: -120px; animation-duration: 29s; animation-direction: reverse; }
+    .orb-3 { width: 380px; height: 380px; background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%); top: 50%; left: 56%; transform: translate(-50%,-50%); animation-duration: 37s; }
+    @keyframes drift { 0%,100%{transform:translate(0,0) scale(1)} 25%{transform:translate(26px,-16px) scale(1.04)} 50%{transform:translate(-16px,26px) scale(0.96)} 75%{transform:translate(18px,14px) scale(1.02)} }
+    .grid { position: fixed; inset: 0; z-index: 1; background-image: linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px); background-size: 56px 56px; }
+    @media (prefers-reduced-motion: reduce) { .orb,.badge-dot { animation: none !important; } }
+
+    /* PROGRESS */
+    .progress-wrap { position: fixed; top: 0; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.06); z-index: 200; }
+    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg,var(--gold-dark),var(--gold),var(--gold-light)); transition: width 0.6s var(--ease); position: relative; }
+    .progress-fill::after { content:''; position: absolute; right: -1px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold-light); box-shadow: 0 0 12px 2px var(--gold); opacity: 0; transition: opacity 0.4s; }
+    .progress-fill.lit::after { opacity: 1; }
+
+    /* TOPBAR */
+    .topbar { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 20px 32px 0; z-index: 100; pointer-events: none; }
+    .logo-svg { height: 38px; width: 38px; border-radius: 6px; overflow: hidden; display: block; flex-shrink: 0; box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+    .step-counter { font-size: 11px; font-weight: 500; letter-spacing: 0.2em; color: var(--fg-muted); opacity: 0; transition: opacity 0.4s; }
+
+    /* SHELL */
+    .app { position: relative; z-index: 10; height: 100vh; display: flex; align-items: center; justify-content: center; padding: 88px 20px 20px; }
+
+    /* WELCOME */
+    .welcome { width: 100%; max-width: 660px; text-align: center; }
+    .badge { display: inline-flex; align-items: center; gap: 8px; padding: 5px 16px; margin-bottom: 30px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.35); border-radius: 100px; font-size: 10px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: #ffffff; }
+    .badge-dot { width: 5px; height: 5px; background: #fff; border-radius: 50%; animation: blink 2s ease infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+    .w-title { font-family: 'Cormorant Garamond',serif; font-size: clamp(40px,6vw,72px); font-weight: 300; line-height: 1.05; letter-spacing: -0.02em; margin-bottom: 18px; }
+    .w-title em { font-style: italic; color: #fff; }
+    .w-sub { font-size: clamp(13px,1.4vw,15px); font-weight: 300; line-height: 1.8; color: var(--fg-muted); max-width: 400px; margin: 0 auto 38px; }
+    .meta-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 48px; flex-wrap: wrap; }
+    .meta-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--fg-muted); }
+    .meta-sep { width: 1px; height: 12px; background: rgba(255,255,255,0.1); }
+    .meta-dot { width: 4px; height: 4px; background: #fff; border-radius: 50%; }
+
+    /* CARD */
+    .q-card { width: 100%; max-width: 680px; background: var(--glass); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border: 1px solid var(--glass-b); border-radius: var(--r); padding: 46px 50px; position: relative; overflow: hidden; box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 36px 90px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.06); }
+    .q-card::before { content:''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent); }
+    .q-card::after { content:''; position: absolute; inset: 0; background: radial-gradient(600px circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.03), transparent 50%); pointer-events: none; border-radius: var(--r); }
+    .q-num { font-size: 10px; font-weight: 500; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(255,255,255,0.6); margin-bottom: 18px; display: flex; align-items: center; gap: 12px; }
+    .q-num::after { content:''; flex: 1; height: 1px; background: rgba(255,255,255,0.15); }
+    .q-text { font-family: 'Cormorant Garamond',serif; font-size: clamp(20px,3.2vw,30px); font-weight: 400; line-height: 1.2; letter-spacing: -0.01em; margin-bottom: 6px; }
+    .q-sub { font-size: 12px; font-weight: 300; color: var(--fg-muted); margin-bottom: 28px; line-height: 1.6; }
+
+    /* INPUTS */
+    textarea, input[type="text"], input[type="url"] { width: 100%; background: var(--input-bg); border: 1px solid var(--input-b); border-radius: 12px; color: var(--fg); font-family: 'Plus Jakarta Sans',sans-serif; font-size: 14px; font-weight: 300; padding: 14px 18px; outline: none; resize: none; transition: border-color 0.25s, box-shadow 0.25s, background 0.25s; line-height: 1.65; -webkit-appearance: none; }
+    textarea { min-height: 128px; }
+    textarea:focus, input:focus { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); box-shadow: 0 0 0 3px rgba(255,255,255,0.05); }
+    textarea::placeholder, input::placeholder { color: rgba(255,255,255,0.18); }
+    textarea::-webkit-scrollbar { width: 3px; }
+    textarea::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+    /* MULTI FIELDS */
+    .field-group { display: flex; flex-direction: column; gap: 10px; }
+    .field-row { display: flex; align-items: center; gap: 12px; }
+    .f-label { font-size: 10px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: #ffffff; white-space: nowrap; min-width: 76px; }
+    .field-row input { flex: 1; padding: 11px 15px; font-size: 13px; }
+    .triple-group { display: flex; flex-direction: column; gap: 10px; }
+    .bullet-row { display: flex; align-items: center; gap: 12px; }
+    .bullet-n { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.35); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #ffffff; }
+    .bullet-row input { flex: 1; padding: 11px 15px; font-size: 13px; }
+
+    /* BUTTON — gold conservé */
+    .btn-wrap { margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .btn-next { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 18px 32px; background: linear-gradient(135deg,var(--gold-dark),var(--gold) 48%,var(--gold-light) 72%,var(--gold)); background-size: 250% 250%; animation: gShift 5s ease infinite; border: none; border-radius: 13px; color: #0a0a0a; font-family: 'Plus Jakarta Sans',sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; position: relative; overflow: hidden; will-change: transform; box-shadow: 0 5px 0 var(--gold-dark), 0 12px 32px rgba(201,168,76,0.28); -webkit-tap-highlight-color: transparent; min-height: 56px; }
+    @keyframes gShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+    .btn-next::before { content:''; position: absolute; inset: 0; border-radius: 13px; background: linear-gradient(to bottom,rgba(255,255,255,0.18),transparent); pointer-events: none; }
+    .btn-next:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+    .btn-icon { flex-shrink: 0; transition: transform 0.2s var(--ease); }
+    .btn-next:hover .btn-icon { transform: translateX(4px); }
+    .btn-back { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--fg-muted); font-size: 11px; font-family: 'Plus Jakarta Sans',sans-serif; letter-spacing: 0.1em; cursor: pointer; padding: 6px; transition: color 0.2s; -webkit-tap-highlight-color: transparent; }
+    .btn-back:hover { color: var(--fg); }
+    .btn-back:focus-visible { outline: 2px solid rgba(255,255,255,0.3); border-radius: 6px; }
+
+    /* COMPLETION */
+    .done { width: 100%; max-width: 560px; text-align: center; }
+    .check-ring { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 32px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 40px rgba(255,255,255,0.08); color: #fff; }
+    .done-title { font-family: 'Cormorant Garamond',serif; font-size: clamp(40px,6vw,64px); font-weight: 300; letter-spacing: -0.02em; margin-bottom: 14px; }
+    .done-title em { font-style: italic; color: #fff; }
+    .done-text { font-size: 14px; font-weight: 300; color: var(--fg-muted); line-height: 1.8; max-width: 400px; margin: 0 auto 32px; }
+    .done-box { display: inline-flex; align-items: center; gap: 12px; padding: 14px 22px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; font-size: 13px; color: var(--fg-muted); line-height: 1.5; }
+    .done-box svg { flex-shrink: 0; color: #fff; }
+
+    @media (max-width: 640px) {
+      .q-card { padding: 28px 20px; }
+      .field-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .f-label { min-width: unset; }
+      .field-row input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <svg class="noise" xmlns="http://www.w3.org/2000/svg">
+    <filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="4" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+    <rect width="100%" height="100%" filter="url(#n)"/>
+  </svg>
+
+  <div class="bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="grid"></div>
+
+  <div class="progress-wrap"><div class="progress-fill" id="bar"></div></div>
+
+  <div class="topbar" id="topbar">
+    <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo NB">
+      <rect x="0" y="0" width="50" height="100" fill="#ffffff"/>
+      <rect x="50" y="0" width="50" height="100" fill="#000000"/>
+      <defs>
+        <clipPath id="cl"><rect x="0" y="0" width="50" height="100"/></clipPath>
+        <clipPath id="cr"><rect x="50" y="0" width="50" height="100"/></clipPath>
+      </defs>
+      <text x="50" y="77" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="400" fill="#000000" clip-path="url(#cl)">NB</text>
+      <text x="50" y="77" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="400" fill="#ffffff" clip-path="url(#cr)">NB</text>
+    </svg>
+    <span class="step-counter" id="counter" aria-live="polite"></span>
+  </div>
+
+  <main class="app" id="app" role="main"></main>
+
+<script>
+const Q = [
+  {id:1,text:"Quel est ton objectif ultime sur LinkedIn ?",type:"textarea",placeholder:"Décris ta vision à long terme sur la plateforme…"},
+  {id:2,text:"Quelle image voudrais-tu renvoyer de toi ?",type:"textarea",placeholder:"Expert, entrepreneur, leader d'opinion, inspirant…"},
+  {id:3,text:"Quelles sont tes attentes ?",sub:"Abonnés · Followers · CA généré",type:"multi",fields:[{label:"3 mois",ph:"ex : 500 abonnés, 5 k€/mois"},{label:"6 mois",ph:"ex : 2 000 abonnés, 15 k€/mois"},{label:"1 an",ph:"ex : 10 000 abonnés, 50 k€/mois"},{label:"3 ans",ph:"Ta vision à long terme"}]},
+  {id:4,text:"Les 3 gros sujets que tu voudrais aborder ?",type:"triple",fields:["Sujet principal 1","Sujet principal 2","Sujet principal 3"]},
+  {id:5,text:"Des informations utiles sur toi et ton business ?",type:"textarea",placeholder:"Secteur, offres, valeur ajoutée, positionnement…"},
+  {id:6,text:"Raconte-moi ton parcours entrepreneurial",type:"textarea",placeholder:"Tes débuts, les étapes clés, les pivots, les réussites…"},
+  {id:7,text:"Un accès à tes formations ou coachings ?",sub:"Si tu en as — lien vers la page de présentation",type:"url",placeholder:"https://ta-formation.com"},
+  {id:8,text:"Ressources utiles à partager",sub:"YouTube · Blog · Newsletter · Webinaire · Formation",type:"multi-url",fields:[{label:"YouTube",ph:"https://youtube.com/@toi"},{label:"Blog",ph:"https://tonblog.com"},{label:"Newsletter",ph:"https://ta-newsletter.com"},{label:"Webinaire",ph:"https://…"},{label:"Formation",ph:"https://…"}]},
+  {id:9,text:"Si tu pouvais échanger ton audience avec quelqu'un, ce serait qui ?",sub:"Peu importe le réseau — Twitter, Insta, YouTube, FR ou US",type:"text",placeholder:"ex : Alex Hormozi, Oussama Ammar…"},
+  {id:10,text:"Quel compte poste déjà comme tu voudrais le faire ?",sub:"FR ou US",type:"text",placeholder:"ex : @NomDuCompte"},
+  {id:11,text:"Tu te focalises sur quoi quand tu montes une audience ?",type:"textarea",placeholder:"Engagement, valeur, niche, consistance, viralité…"},
+  {id:12,text:"Quel genre de personnes aimerais-tu avoir dans tes DMs ?",type:"textarea",placeholder:"Profil type, secteur, problèmes, aspirations…"},
+  {id:13,text:"Qui est ton client idéal ?",type:"textarea",placeholder:"Profil, douleurs, objectifs, budget, où il passe son temps…"},
+  {id:14,text:"Quel est le cheminement type de ton client sur LinkedIn pour arriver à l'achat ?",type:"textarea",placeholder:"Découverte → Intérêt → Confiance → DM → Achat ?"},
+  {id:15,text:"Sur quel lien envoyer les prospects ?",sub:"Si tu veux que je gère ta messagerie",type:"url",placeholder:"https://calendly.com/toi"},
+  {id:16,text:"Pourquoi c'est important pour toi de monter une audience ?",type:"textarea",placeholder:"Ta motivation profonde, ce que ça représente pour toi…"},
+  {id:17,text:"Si ton audience avait un ou plusieurs ennemis communs, ce serait qui ?",type:"textarea",placeholder:"Une croyance limitante, un système, un type de personne…"}
+];
+
+const TOTAL=Q.length, answers={};
+let busy=false;
+
+const ico={
+  arrow:`<svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`,
+  back:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>`,
+  check:`<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`,
+  msg:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`
+};
+
+function setBar(step){const pct=(step/TOTAL)*100,bar=document.getElementById('bar');bar.style.width=pct+'%';bar.classList.toggle('lit',pct>0&&pct<100);}
+function setCounter(idx){const el=document.getElementById('counter');if(idx===null){el.style.opacity=0;return;}el.style.opacity=1;el.textContent=String(idx+1).padStart(2,'0')+' / '+String(TOTAL).padStart(2,'0');}
+
+function buildInput(q){
+  const sv=answers[q.id]||((['multi','multi-url','triple'].includes(q.type))?{}:'');
+  if(q.type==='textarea')return`<textarea id="ans" placeholder="${q.placeholder||''}" aria-label="${q.text}">${sv}</textarea>`;
+  if(q.type==='text'||q.type==='url')return`<input type="${q.type==='url'?'url':'text'}" id="ans" placeholder="${q.placeholder||''}" value="${sv}" aria-label="${q.text}">`;
+  if(q.type==='multi'||q.type==='multi-url')return`<div class="field-group" role="group">`+q.fields.map((f,i)=>`<div class="field-row"><label class="f-label" for="f${i}">${f.label}</label><input type="${q.type==='multi-url'?'url':'text'}" id="f${i}" data-i="${i}" placeholder="${f.ph||''}" value="${sv[i]||''}" aria-label="${f.label}"></div>`).join('')+`</div>`;
+  if(q.type==='triple')return`<div class="triple-group" role="group">`+q.fields.map((f,i)=>`<div class="bullet-row"><div class="bullet-n" aria-hidden="true">${i+1}</div><input type="text" id="t${i}" data-i="${i}" placeholder="${f}" value="${sv[i]||''}" aria-label="Sujet ${i+1}"></div>`).join('')+`</div>`;
+  return'';
+}
+
+function collect(idx){
+  const q=Q[idx];
+  if(['textarea','text','url'].includes(q.type)){const el=document.getElementById('ans');answers[q.id]=el?el.value:'';}
+  else{const obj={};document.querySelectorAll('[data-i]').forEach(e=>obj[e.dataset.i]=e.value);answers[q.id]=obj;}
+}
+
+function attachMagnetic(btn){
+  if(!btn||window.matchMedia('(pointer: coarse)').matches)return;
+  btn.addEventListener('mousemove',e=>{const r=btn.getBoundingClientRect(),x=(e.clientX-r.left-r.width/2)*0.28,y=(e.clientY-r.top-r.height/2)*0.28;gsap.to(btn,{x,y,duration:0.35,ease:'power2.out'});});
+  btn.addEventListener('mouseleave',()=>gsap.to(btn,{x:0,y:0,duration:0.65,ease:'elastic.out(1,0.4)'}));
+  btn.addEventListener('mousedown',()=>gsap.to(btn,{scale:0.96,duration:0.1}));
+  btn.addEventListener('mouseup',()=>gsap.to(btn,{scale:1,duration:0.45,ease:'elastic.out(1,0.5)'}));
+}
+
+function attachSpotlight(card){
+  if(!card)return;
+  card.addEventListener('mousemove',e=>{const r=card.getBoundingClientRect();card.style.setProperty('--mx',(e.clientX-r.left)+'px');card.style.setProperty('--my',(e.clientY-r.top)+'px');});
+}
+
+function renderWelcome(){
+  setBar(0);setCounter(null);
+  document.getElementById('app').innerHTML=`
+    <div class="welcome" id="scr">
+      <div class="badge"><div class="badge-dot"></div>Questionnaire LinkedIn</div>
+      <h1 class="w-title">Bienvenue sur<br>ton <em>onboarding</em></h1>
+      <p class="w-sub">Ce questionnaire nous permet d'être parfaitement alignés pour créer le contenu LinkedIn le plus percutant possible.</p>
+      <div class="meta-row">
+        <div class="meta-item"><div class="meta-dot"></div>${TOTAL} questions</div>
+        <div class="meta-sep"></div>
+        <div class="meta-item"><div class="meta-dot"></div>~15 minutes</div>
+        <div class="meta-sep"></div>
+        <div class="meta-item"><div class="meta-dot"></div>100 % confidentiel</div>
+      </div>
+      <div class="btn-wrap"><button class="btn-next" id="startBtn" aria-label="Commencer">Commencer ${ico.arrow}</button></div>
+    </div>`;
+
+  const tl=gsap.timeline({defaults:{ease:'power3.out'}});
+  tl.from('.logo-name',{opacity:0,y:-16,duration:0.6},0)
+    .from('.badge',{opacity:0,y:20,duration:0.6},0.06)
+    .from('.w-title',{opacity:0,y:30,duration:0.7},0.18)
+    .from('.w-sub',{opacity:0,y:20,duration:0.6},0.32)
+    .from('.meta-row',{opacity:0,y:14,duration:0.5},0.44)
+    .from('#startBtn',{opacity:0,y:14,scale:0.96,duration:0.5},0.56);
+
+  const btn=document.getElementById('startBtn');
+  attachMagnetic(btn);
+  btn.addEventListener('click',()=>go(0,true));
+}
+
+function renderQuestion(idx,forward=true){
+  const q=Q[idx],isLast=idx===TOTAL-1;
+  const app=document.getElementById('app');
+  setBar(idx+1);setCounter(idx);
+
+  const el=document.createElement('div');
+  el.id='scr';
+  el.innerHTML=`
+    <div class="q-card" id="card">
+      <div class="q-num" aria-hidden="true">Question ${String(q.id).padStart(2,'0')}</div>
+      <h2 class="q-text">${q.text}</h2>
+      ${q.sub?`<p class="q-sub">${q.sub}</p>`:''}
+      ${buildInput(q)}
+      <div class="btn-wrap">
+        <button class="btn-next" id="nextBtn" aria-label="${isLast?'Terminer':'Question suivante'}">${isLast?'Terminer':'Question suivante'} ${ico.arrow}</button>
+        ${idx>0?`<button class="btn-back" id="backBtn">${ico.back} Précédent</button>`:''}
+      </div>
+    </div>`;
+
+  app.innerHTML='';
+  app.appendChild(el);
+
+  const xFrom=forward?55:-55;
+  gsap.fromTo('#scr .q-card',{opacity:0,x:xFrom,scale:0.97},{opacity:1,x:0,scale:1,duration:0.55,ease:'power3.out',delay:0.02});
+  gsap.fromTo('#scr .q-num',{opacity:0,x:xFrom*0.6},{opacity:1,x:0,duration:0.45,ease:'power3.out',delay:0.08});
+  gsap.fromTo('#scr .q-text',{opacity:0,y:12},{opacity:1,y:0,duration:0.5,ease:'power3.out',delay:0.15});
+  gsap.fromTo('#scr #ans, #scr .field-group, #scr .triple-group',{opacity:0,y:10},{opacity:1,y:0,duration:0.45,ease:'power3.out',delay:0.22});
+  gsap.fromTo('#scr .btn-wrap',{opacity:0,y:8},{opacity:1,y:0,duration:0.4,ease:'power3.out',delay:0.30});
+
+  setTimeout(()=>{const f=el.querySelector('textarea,input');if(f)f.focus({preventScroll:true});},380);
+
+  attachSpotlight(document.getElementById('card'));
+  const nextBtn=document.getElementById('nextBtn');
+  attachMagnetic(nextBtn);
+
+  nextBtn.addEventListener('click',()=>{collect(idx);go(isLast?null:idx+1,true);});
+  if(idx>0)document.getElementById('backBtn').addEventListener('click',()=>{collect(idx);go(idx-1,false);});
+}
+
+// Supabase config
+const SUPABASE_URL='https://oqwkqmxecyrvlhibmdxl.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xd2txbXhlY3lydmxoaWJtZHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNzYyNzksImV4cCI6MjA5MTc1MjI3OX0.SMfw8amMFUbGapsXzecUVuBDyMsfdKKqA4-TwCCGUDo';
+const SB_HEADERS={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=representation'};
+
+let CLIENT_ID = new URLSearchParams(window.location.search).get('client');
+
+async function ensureClient(){
+  if(CLIENT_ID) return CLIENT_ID;
+  // Self-serve: create a minimal client on the fly using the first few answers
+  const name = (answers[2] && typeof answers[2]==='string') ? answers[2].slice(0,60) : 'Nouveau client';
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/clients`,{
+    method:'POST',
+    headers:SB_HEADERS,
+    body:JSON.stringify({name, company:'', email:'', status:'onboarding', onboarded_at:new Date().toISOString()})
+  });
+  const data = await r.json();
+  if(data && data[0]) CLIENT_ID = data[0].id;
+  return CLIENT_ID;
+}
+
+async function saveAnswersToSupabase(){
+  const id = await ensureClient();
+  if(!id) return;
+  const rows = [];
+  for(const q of Q){
+    const sv = answers[q.id];
+    if(sv===undefined || sv===null) continue;
+    const answer = typeof sv==='string' ? sv : JSON.stringify(sv);
+    if(!answer || (typeof sv==='string' && !sv.trim())) continue;
+    rows.push({client_id:id, question_id:q.id, answer});
+  }
+  if(rows.length===0) return;
+  try{
+    await fetch(`${SUPABASE_URL}/rest/v1/onboarding_answers?on_conflict=client_id,question_id`,{
+      method:'POST',
+      headers:{...SB_HEADERS, 'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify(rows)
+    });
+  }catch(e){ console.error('Supabase error',e); }
+}
+
+async function renderDone(){
+  setBar(TOTAL);setCounter(null);
+  document.getElementById('app').innerHTML=`
+    <div class="done" id="scr">
+      <div class="check-ring" id="chk">${ico.check}</div>
+      <h2 class="done-title">Merci pour<br>ton <em>temps</em></h2>
+      <p class="done-text">Ça nous permet d'être parfaitement alignés pour créer le meilleur contenu LinkedIn possible. Ton espace personnel est prêt.</p>
+      <div class="btn-wrap" style="margin-top:32px"><a id="portalLink" class="btn-next" style="text-decoration:none;max-width:320px" aria-label="Accéder à mon portail">Accéder à mon portail ${ico.arrow}</a></div>
+    </div>`;
+
+  const tl=gsap.timeline({defaults:{ease:'power3.out'}});
+  tl.from('#chk',{scale:0,opacity:0,duration:0.6,ease:'back.out(1.7)'},0.1)
+    .from('.done-title',{opacity:0,y:24,duration:0.6},0.4)
+    .from('.done-text',{opacity:0,y:16,duration:0.5},0.56)
+    .from('.btn-wrap',{opacity:0,y:10,duration:0.45},0.68);
+
+  // Sauvegarde auto dans Supabase
+  await saveAnswersToSupabase();
+  const link = document.getElementById('portalLink');
+  if(link && CLIENT_ID) link.href = '/portal/' + CLIENT_ID;
+}
+
+function go(to,forward){
+  if(busy)return;busy=true;
+  const card=document.querySelector('#scr .q-card')||document.getElementById('scr');
+  const dir=forward?-1:1;
+  if(card){
+    gsap.to(card,{opacity:0,x:dir*50,scale:0.97,duration:0.3,ease:'power2.in',onComplete:()=>{
+      if(to===null)renderDone();
+      else renderQuestion(to,forward);
+      busy=false;
+    }});
+  } else {
+    if(to===null)renderDone();else renderQuestion(to,forward);busy=false;
+  }
+}
+
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')document.getElementById('nextBtn')?.click();});
+
+renderWelcome();
+</script>
+</body>
+</html>
