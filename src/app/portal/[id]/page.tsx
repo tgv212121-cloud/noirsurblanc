@@ -1,7 +1,9 @@
 'use client'
 
 import { use, useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuthGuard } from '@/lib/useAuthGuard'
+import { signOut } from '@/lib/auth'
 import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders } from '@/lib/queries'
 import { formatNumber, formatRelative, cn } from '@/lib/utils'
 import type { Client, Post, PostMetrics, Reminder } from '@/types'
@@ -13,6 +15,7 @@ type Tab = 'calendar' | 'messages' | 'stats' | 'history'
 
 export default function ClientPortalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const router = useRouter()
   const { checking } = useAuthGuard({ requireClientId: id })
   const [client, setClient] = useState<Client | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
@@ -101,8 +104,8 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
   return (
     <div>
       {/* Header */}
-      <header className="mb-12">
-        <div className="flex items-center gap-4 mb-2">
+      <header className="flex items-start justify-between mb-12">
+        <div className="flex items-center gap-4">
           <div
             className="flex items-center justify-center text-white text-lg font-semibold rounded-xl"
             style={{ width: '48px', height: '48px', backgroundColor: '#8b5cf6' }}
@@ -114,6 +117,16 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
             <h1 className="text-2xl font-bold text-blanc">{client.name}</h1>
           </div>
         </div>
+        <button
+          onClick={async () => { await signOut(); router.push('/login') }}
+          className="inline-flex items-center gap-2 text-sm text-blanc-muted hover:text-blanc border border-white/[0.08] hover:border-white/[0.15] rounded-xl cursor-pointer transition-colors"
+          style={{ padding: '10px 18px' }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>
+          </svg>
+          Déconnexion
+        </button>
       </header>
 
       {/* Stats */}
