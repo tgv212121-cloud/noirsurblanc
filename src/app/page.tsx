@@ -65,8 +65,7 @@ export default function Dashboard() {
         <StatCard label="Engagement moyen" value={`${avgEngagement}%`} accent />
       </div>
 
-      {/* Two columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
+      <div>
         {/* Top posts */}
         <div className={cardBase} style={cardStyle}>
           <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
@@ -105,61 +104,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Right column */}
-        <div className="space-y-6">
-          {/* Pending reminders */}
-          <div className={cardBase} style={cardStyle}>
-            <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
-            <div className="flex items-center gap-3" style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#f59e0b', boxShadow: '0 0 10px rgba(245,158,11,0.5)' }} />
-              <h2 className="font-heading text-lg text-blanc italic">En attente de réponse</h2>
-            </div>
-            <div>
-              {pendingReminders.length === 0 ? (
-                <div className="flex items-center gap-3" style={{ padding: '24px' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  <p className="text-sm text-blanc-muted">Tous les clients ont répondu.</p>
-                </div>
-              ) : (
-                pendingReminders.map(r => (
-                  <div key={r.id} className="flex items-center gap-3" style={{ padding: '14px 24px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <div className="flex items-center justify-center shrink-0 font-semibold" style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', color: '#fbbf24', fontSize: '12px' }}>
-                      {r.client?.avatar}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-blanc">{r.client?.name}</p>
-                      <p className="text-xs text-blanc-muted/70">Envoyé {r.lastSentAt ? formatRelative(r.lastSentAt) : '—'}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Onboarding */}
-          {clients.filter(c => c.status === 'onboarding').length > 0 && (
-            <div className={cardBase} style={cardStyle}>
-              <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
-              <div className="flex items-center gap-3" style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
-                <h2 className="font-heading text-lg text-blanc italic">Onboarding en cours</h2>
-              </div>
-              <div>
-                {clients.filter(c => c.status === 'onboarding').map(c => (
-                  <div key={c.id} className="flex items-center gap-3" style={{ padding: '14px 24px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <div className="flex items-center justify-center shrink-0 font-semibold" style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(202,138,4,0.12)', border: '1px solid rgba(202,138,4,0.3)', color: '#ca8a04', fontSize: '12px' }}>
-                      {c.avatar || c.name[0]?.toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-blanc">{c.name}</p>
-                      <p className="text-xs text-blanc-muted/70">{c.company || '—'}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   )
