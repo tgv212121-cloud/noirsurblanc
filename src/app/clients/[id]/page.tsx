@@ -86,13 +86,6 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
     return msgs
   }).sort((a, b) => a.date.localeCompare(b.date))
 
-  const statusConfig: Record<string, { label: string; cls: string }> = {
-    active: { label: 'Actif', cls: 'bg-emerald-50 text-emerald-600' },
-    onboarding: { label: 'Onboarding', cls: 'bg-blue-50 text-blue-600' },
-    paused: { label: 'En pause', cls: 'bg-gray-100 text-gray-500' },
-  }
-  const status = statusConfig[client.status]
-
   const TABS: { id: Tab; label: string }[] = [
     { id: 'calendar', label: 'Calendrier' },
     { id: 'conversation', label: 'Conversation' },
@@ -128,7 +121,6 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h1 className="text-2xl font-bold text-blanc">{client.name}</h1>
-                <span className={cn('text-xs font-medium px-2.5 py-1 rounded', status.cls)}>{status.label}</span>
               </div>
               <p className="text-base text-blanc-muted">{client.company}</p>
             </div>
@@ -137,8 +129,6 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
 
         {/* Contact info */}
         <div className="flex flex-wrap items-center gap-x-8 gap-y-3 mt-8" style={{ borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
-          <div><p className="text-xs text-blanc-muted mb-1">Email</p><p className="text-sm text-blanc">{client.email}</p></div>
-          <div><p className="text-xs text-blanc-muted mb-1">Téléphone</p><p className="text-sm text-blanc">{client.phone}</p></div>
           <div><p className="text-xs text-blanc-muted mb-1">Client depuis</p><p className="text-sm text-blanc">{formatDate(client.onboardedAt)}</p></div>
           <div><p className="text-xs text-blanc-muted mb-1">LinkedIn</p>{client.linkedinUrl ? <a href={client.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-gold hover:text-gold-dark transition-colors duration-200">Voir le profil</a> : <p className="text-sm text-blanc-muted/50">Non renseigné</p>}</div>
         </div>
