@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import PulseButton from '@/components/ui/PulseButton'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
+import MessageThread from '@/components/messaging/MessageThread'
 import type { Client, Post, PostMetrics, Reminder, PostStatus } from '@/types'
 import { questions } from '@/components/onboarding/questions'
 
@@ -319,44 +320,13 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         {/* Conversation tab */}
         {activeTab === 'conversation' && (
           <motion.div key="conversation" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
-            <div className="space-y-8 mb-12">
-              {messageThread.length === 0 ? (
-                <p className="text-sm text-blanc-muted py-12 text-center">Aucun message échangé.</p>
-              ) : (
-                messageThread.map((msg, i) => (
-                  <div key={i} className={cn('max-w-[75%]', msg.type === 'sent' ? 'ml-auto' : 'mr-auto')}>
-                    <div className="rounded-2xl text-sm leading-relaxed" style={{ padding: '18px 22px', ...(msg.type === 'sent' ? { backgroundColor: '#2563eb', color: 'white' } : { backgroundColor: 'var(--noir-elevated)', color: 'var(--blanc)' }) }}>
-                      {msg.text}
-                    </div>
-                    <p className={cn('text-xs text-blanc-muted', msg.type === 'sent' ? 'text-right' : 'text-left')} style={{ marginTop: '8px' }}>
-                      {msg.type === 'sent' ? 'Vous' : client.name.split(' ')[0]} · {formatRelative(msg.date)}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '28px' }}>
-              <p className="text-xs text-blanc-muted mb-4">Message à {client.name.split(' ')[0]}</p>
-              <div className="bg-noir-elevated rounded-2xl" style={{ padding: '16px' }}>
-                <textarea value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Votre message..." rows={3} className="w-full bg-transparent text-sm text-blanc placeholder:text-blanc-muted/50 outline-none leading-relaxed" style={{ resize: 'none', padding: '4px 8px' }} />
-                <div className="flex items-center justify-between" style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
-                  <div className="flex items-center gap-2">
-                    <button className="flex items-center justify-center rounded-lg text-blanc-muted hover:text-blanc transition-colors duration-200 cursor-pointer" style={{ width: '40px', height: '40px', backgroundColor: 'var(--noir-card)' }} title="Joindre un fichier">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
-                    </button>
-                    <button className="flex items-center justify-center rounded-lg text-blanc-muted hover:text-blanc transition-colors duration-200 cursor-pointer" style={{ width: '40px', height: '40px', backgroundColor: 'var(--noir-card)' }} title="Message vocal">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" /></svg>
-                    </button>
-                  </div>
-                  <button className="inline-flex items-center gap-2 text-sm font-medium rounded-xl cursor-pointer transition-colors duration-200" style={{ padding: '12px 24px', backgroundColor: '#2563eb', color: 'white' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></svg>
-                    Envoyer
-                  </button>
-                </div>
-              </div>
-              <p className="text-xs text-blanc-muted mt-3">Via WhatsApp · {client.phone}</p>
-            </div>
+            <MessageThread
+              clientId={client.id}
+              currentUser="admin"
+              accentColor="#2563eb"
+              otherUserName={client.name.split(' ')[0]}
+              whatsappPhone={client.phone}
+            />
           </motion.div>
         )}
 
