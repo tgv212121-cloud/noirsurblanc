@@ -1,7 +1,7 @@
 'use client'
 
 import { use, useState, useEffect, useCallback } from 'react'
-import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders } from '@/lib/queries'
+import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders, createPost } from '@/lib/queries'
 import { formatNumber, formatDate, formatRelative, cn } from '@/lib/utils'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -26,6 +26,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const [expandedPost, setExpandedPost] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState('')
   const [postImages, setPostImages] = useState<string[]>([])
+  const [savingPost, setSavingPost] = useState(false)
   const [postStatuses, setPostStatuses] = useState<Record<string, PostStatus>>({})
   const [draggedPostId, setDraggedPostId] = useState<string | null>(null)
   const [dragOverCol, setDragOverCol] = useState<string | null>(null)
@@ -312,7 +313,31 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                     </div>
 
                     <div className="flex items-center gap-4 mt-6">
-                      <PulseButton onClick={() => { setEditingDate(null); setSelectedDate(null); setNewPost(''); setPostImages([]) }}>Enregistrer</PulseButton>
+                      <PulseButton
+                        onClick={async () => {
+                          if (!newPost.trim() || !editingDate || savingPost) return
+                          setSavingPost(true)
+                          const newId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'p_' + Date.now()
+                          const publishedAt = `${editingDate}T10:00:00.000Z`
+                          const status: PostStatus = new Date(editingDate) > new Date() ? 'scheduled' : 'published'
+                          const created = await createPost({
+                            id: newId,
+                            clientId: id,
+                            content: newPost.trim(),
+                            publishedAt,
+                            status,
+                            images: postImages,
+                          })
+                          setSavingPost(false)
+                          if (!created) { alert("Erreur lors de l'enregistrement du post."); return }
+                          // Refresh the client posts locally
+                          const refreshed = await fetchClientPosts(id)
+                          setInitialPosts(refreshed)
+                          setEditingDate(null); setSelectedDate(null); setNewPost(''); setPostImages([])
+                        }}
+                      >
+                        {savingPost ? 'Enregistrement...' : 'Enregistrer'}
+                      </PulseButton>
                       <button onClick={() => { setEditingDate(null); setSelectedDate(null); setNewPost(''); setPostImages([]) }} className="text-sm text-blanc-muted hover:text-blanc transition-colors duration-200 cursor-pointer" style={{ padding: '14px 24px' }}>
                         Annuler
                       </button>
