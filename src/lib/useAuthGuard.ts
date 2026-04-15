@@ -18,12 +18,17 @@ export function useAuthGuard(opts: Options = {}) {
     (async () => {
       const p = await getMyProfile()
       if (!p) { router.push('/login'); return }
-      if (opts.requireRole && p.role !== opts.requireRole) {
-        // Admin can see client pages too, client cannot see admin pages
-        if (opts.requireRole === 'admin') { router.push('/login'); return }
+      // Role mismatch : redirect to user's own home (no loop to /login)
+      if (opts.requireRole === 'admin' && p.role !== 'admin') {
+        if (p.clientId) router.push(`/portal/${p.clientId}`)
+        else router.push('/login')
+        return
       }
+      // Client trying to access another client's portal
       if (opts.requireClientId && p.role === 'client' && p.clientId !== opts.requireClientId) {
-        router.push('/login'); return
+        if (p.clientId) router.push(`/portal/${p.clientId}`)
+        else router.push('/login')
+        return
       }
       setProfile(p); setChecking(false)
     })()
