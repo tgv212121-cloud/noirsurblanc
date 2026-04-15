@@ -1,6 +1,7 @@
 'use client'
 
 import { use, useState, useEffect, useCallback } from 'react'
+import { useAuthGuard } from '@/lib/useAuthGuard'
 import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders, createPost } from '@/lib/queries'
 import { formatNumber, formatDate, formatRelative, cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -15,6 +16,7 @@ type Tab = 'calendar' | 'conversation' | 'stats' | 'onboarding'
 
 export default function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const { checking } = useAuthGuard({ requireRole: 'admin' })
   const [client, setClient] = useState<Client | null>(null)
   const [initialPosts, setInitialPosts] = useState<Post[]>([])
   const [metrics, setMetrics] = useState<PostMetrics[]>([])
@@ -51,7 +53,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
     setPostStatuses(prev => ({ ...prev, [postId]: newStatus }))
   }, [])
 
-  if (loading) {
+  if (checking || loading) {
     return (
       <div className="py-10">
         <p className="text-blanc-muted">Chargement...</p>

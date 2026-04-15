@@ -1,6 +1,7 @@
 'use client'
 
 import { use, useState, useEffect } from 'react'
+import { useAuthGuard } from '@/lib/useAuthGuard'
 import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders } from '@/lib/queries'
 import { formatNumber, formatRelative, cn } from '@/lib/utils'
 import type { Client, Post, PostMetrics, Reminder } from '@/types'
@@ -12,6 +13,7 @@ type Tab = 'calendar' | 'messages' | 'stats' | 'history'
 
 export default function ClientPortalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const { checking } = useAuthGuard({ requireClientId: id })
   const [client, setClient] = useState<Client | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
   const [metrics, setMetrics] = useState<PostMetrics[]>([])
@@ -32,7 +34,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
   const [calendarYear, setCalendarYear] = useState(now.getFullYear())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
-  if (loading) {
+  if (checking || loading) {
     return (
       <div className="py-20 text-center">
         <p className="text-blanc-muted text-lg">Chargement...</p>

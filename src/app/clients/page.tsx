@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuthGuard } from '@/lib/useAuthGuard'
 import { fetchClients, fetchPosts, fetchMetrics } from '@/lib/queries'
 import { formatRelative, cn } from '@/lib/utils'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
@@ -28,6 +29,7 @@ type ClientRow = Client & {
 
 export default function ClientsPage() {
   const router = useRouter()
+  const { checking } = useAuthGuard({ requireRole: 'admin' })
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<ClientStatus | 'all'>('all')
   const [clients, setClients] = useState<Client[]>([])
@@ -146,6 +148,8 @@ export default function ClientsPage() {
       ),
     },
   ], [])
+
+  if (checking) return <p className="text-sm text-blanc-muted text-center py-20">Chargement...</p>
 
   return (
     <div>

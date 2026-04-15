@@ -373,8 +373,8 @@ async function renderDone(){
     <div class="done" id="scr">
       <div class="check-ring" id="chk">${ico.check}</div>
       <h2 class="done-title">Merci pour<br>ton <em>temps</em></h2>
-      <p class="done-text">Ça nous permet d'être parfaitement alignés pour créer le meilleur contenu LinkedIn possible. Ton espace personnel est prêt.</p>
-      <div class="btn-wrap" style="margin-top:32px"><a id="portalLink" class="btn-next" style="text-decoration:none;max-width:320px" aria-label="Accéder à mon portail">Accéder à mon portail ${ico.arrow}</a></div>
+      <p class="done-text">Ton compte est prêt. Connecte-toi pour accéder à ton espace personnel.</p>
+      <div class="btn-wrap" style="margin-top:32px"><a id="portalLink" class="btn-next" style="text-decoration:none;max-width:320px" aria-label="Se connecter">Se connecter ${ico.arrow}</a></div>
     </div>`;
 
   const tl=gsap.timeline({defaults:{ease:'power3.out'}});
@@ -383,24 +383,75 @@ async function renderDone(){
     .from('.done-text',{opacity:0,y:16,duration:0.5},0.56)
     .from('.btn-wrap',{opacity:0,y:10,duration:0.45},0.68);
 
-  // Sauvegarde auto dans Supabase
   const link = document.getElementById('portalLink');
-  link.style.cursor = 'wait';
-  link.textContent = 'Enregistrement...';
-  try {
-    await saveAnswersToSupabase();
-  } catch(e){ console.error(e); }
-  link.innerHTML = 'Accéder à mon portail ' + ico.arrow;
-  link.style.cursor = 'pointer';
   link.addEventListener('click', (e)=>{
     e.preventDefault();
-    if(CLIENT_ID){
-      window.location.href = '/portal/' + CLIENT_ID;
-    } else {
-      alert("Ton compte n'a pas pu être créé. Contacte ton copywriter pour obtenir ton lien d'accès.");
-    }
+    window.location.href = '/login';
   });
-  if(CLIENT_ID) link.href = '/portal/' + CLIENT_ID;
+  link.href = '/login';
+}
+
+function renderAccount(){
+  document.getElementById('app').innerHTML=`
+    <div class="q-card" id="scr" style="max-width:520px">
+      <div class="q-num" aria-hidden="true">Dernière étape</div>
+      <h2 class="q-text">Crée ton compte</h2>
+      <p class="q-sub">Pour accéder à ton espace personnel et discuter avec ton copywriter.</p>
+      <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px">
+        <input type="email" id="acc-email" placeholder="ton@email.com" required style="width:100%">
+        <input type="password" id="acc-pass" placeholder="Mot de passe (≥ 6 caractères)" minlength="6" required style="width:100%">
+      </div>
+      <p id="acc-err" style="color:#f87171;font-size:12px;margin-top:10px;display:none"></p>
+      <div class="btn-wrap">
+        <button class="btn-next" id="createAcc">Créer mon espace ${ico.arrow}</button>
+      </div>
+    </div>`;
+  gsap.fromTo('#scr',{opacity:0,y:20},{opacity:1,y:0,duration:0.55,ease:'power3.out'});
+  const btn=document.getElementById('createAcc');
+  attachMagnetic(btn);
+  btn.addEventListener('click',async ()=>{
+    const email=document.getElementById('acc-email').value.trim();
+    const pass=document.getElementById('acc-pass').value;
+    const err=document.getElementById('acc-err');
+    err.style.display='none';
+    if(!email || !/^\S+@\S+\.\S+$/.test(email)){ err.textContent='Email invalide.'; err.style.display='block'; return; }
+    if(!pass || pass.length<6){ err.textContent='Mot de passe trop court (6 caractères minimum).'; err.style.display='block'; return; }
+    btn.disabled=true; btn.textContent='Création...';
+    // Ensure client record first
+    const cid=await ensureClient();
+    if(!cid){ err.textContent="Erreur lors de la création du compte client."; err.style.display='block'; btn.disabled=false; return; }
+    // Save answers + update client email + Linkedin
+    try{
+      await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${cid}`,{
+        method:'PATCH', headers:SB_HEADERS, body:JSON.stringify({email})
+      });
+    }catch(e){}
+    await saveAnswersToSupabase();
+    // Create auth user
+    try{
+      const r=await fetch(`${SUPABASE_URL}/auth/v1/signup`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},
+        body:JSON.stringify({email,password:pass})
+      });
+      const d=await r.json();
+      if(d.user && d.user.id){
+        // Create profile
+        await fetch(`${SUPABASE_URL}/rest/v1/profiles`,{
+          method:'POST', headers:SB_HEADERS,
+          body:JSON.stringify({id:d.user.id, email, role:'client', client_id:cid})
+        });
+        // Link client to auth user
+        await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${cid}`,{
+          method:'PATCH', headers:SB_HEADERS, body:JSON.stringify({auth_user_id:d.user.id})
+        });
+      } else if(d.msg || d.error_description || d.error){
+        err.textContent='Erreur : '+(d.msg||d.error_description||d.error);
+        err.style.display='block'; btn.disabled=false; btn.textContent='Créer mon espace'; return;
+      }
+    }catch(e){ console.error('auth signup',e); }
+    renderDone();
+  });
 }
 
 function go(to,forward){
@@ -409,12 +460,12 @@ function go(to,forward){
   const dir=forward?-1:1;
   if(card){
     gsap.to(card,{opacity:0,x:dir*50,scale:0.97,duration:0.3,ease:'power2.in',onComplete:()=>{
-      if(to===null)renderDone();
+      if(to===null)renderAccount();
       else renderQuestion(to,forward);
       busy=false;
     }});
   } else {
-    if(to===null)renderDone();else renderQuestion(to,forward);busy=false;
+    if(to===null)renderAccount();else renderQuestion(to,forward);busy=false;
   }
 }
 

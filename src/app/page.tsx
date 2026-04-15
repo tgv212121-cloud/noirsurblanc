@@ -5,8 +5,10 @@ import { fetchClients, fetchPosts, fetchMetrics, fetchReminders } from '@/lib/qu
 import { formatNumber, formatRelative } from '@/lib/utils'
 import Link from 'next/link'
 import type { Client, Post, PostMetrics, Reminder } from '@/types'
+import { useAuthGuard } from '@/lib/useAuthGuard'
 
 export default function Dashboard() {
+  const { checking } = useAuthGuard({ requireRole: 'admin' })
   const [clients, setClients] = useState<Client[]>([])
   const [posts, setPosts] = useState<Post[]>([])
   const [metrics, setMetrics] = useState<PostMetrics[]>([])
@@ -39,6 +41,8 @@ export default function Dashboard() {
   const pendingReminders = reminders
     .filter(r => r.status === 'sent')
     .map(r => ({ ...r, client: clients.find(c => c.id === r.clientId) }))
+
+  if (checking) return <p className="text-sm text-blanc-muted text-center py-20">Chargement...</p>
 
   return (
     <div>
