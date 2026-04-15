@@ -242,10 +242,20 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                     <textarea
                       value={newPost}
                       onChange={e => setNewPost(e.target.value)}
+                      onInput={e => {
+                        const el = e.currentTarget
+                        el.style.height = 'auto'
+                        el.style.height = el.scrollHeight + 'px'
+                      }}
+                      ref={(el) => {
+                        if (el) {
+                          el.style.height = 'auto'
+                          el.style.height = Math.max(el.scrollHeight, 220) + 'px'
+                        }
+                      }}
                       placeholder="Écrivez le post LinkedIn ici..."
-                      rows={8}
                       className="w-full bg-noir-card rounded-xl text-sm text-blanc placeholder:text-blanc-muted/50 outline-none leading-relaxed"
-                      style={{ padding: '18px 22px', resize: 'none' }}
+                      style={{ padding: '18px 22px', resize: 'none', minHeight: '220px', overflow: 'hidden' }}
                       autoFocus
                     />
 
