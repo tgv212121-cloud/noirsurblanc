@@ -177,7 +177,8 @@ const Q = [
   {id:15,text:"Sur quel lien envoyer les prospects ?",sub:"Si tu veux que je gère ta messagerie",type:"url",placeholder:"https://calendly.com/toi"},
   {id:16,text:"Pourquoi c'est important pour toi de monter une audience ?",type:"textarea",placeholder:"Ta motivation profonde, ce que ça représente pour toi…"},
   {id:17,text:"Si ton audience avait un ou plusieurs ennemis communs, ce serait qui ?",type:"textarea",placeholder:"Une croyance limitante, un système, un type de personne…"},
-  {id:18,text:"L'URL de ton profil LinkedIn",sub:"Obligatoire — pour qu'on puisse accéder directement à ton profil depuis ton espace",type:"url",placeholder:"https://linkedin.com/in/ton-profil"}
+  {id:18,text:"L'URL de ton profil LinkedIn",sub:"Obligatoire — pour qu'on puisse accéder directement à ton profil depuis ton espace",type:"url",placeholder:"https://linkedin.com/in/ton-profil"},
+  {id:19,text:"Comment tu t'appelles ?",sub:"Pour qu'on puisse personnaliser ton espace",type:"multi",fields:[{label:"Prénom",ph:"Ex : Léa"},{label:"Nom",ph:"Ex : Fournier"}]}
 ];
 
 const TOTAL=Q.length, answers={};
@@ -311,6 +312,31 @@ function renderQuestion(idx,forward=true){
         return;
       }
     }
+    // Q19 (Prénom + Nom) : les 2 champs requis
+    if(q.id===19){
+      const v = answers[19] || {};
+      const prenom = (v[0]||'').trim();
+      const nom = (v[1]||'').trim();
+      if(!prenom || !nom){
+        document.querySelectorAll('[data-i]').forEach(el=>{
+          if(!el.value.trim()){
+            el.style.borderColor='rgba(239,68,68,0.6)';
+            el.style.boxShadow='0 0 0 3px rgba(239,68,68,0.1)';
+          }
+        });
+        let msg=document.getElementById('q19-err');
+        if(!msg){
+          msg=document.createElement('p');
+          msg.id='q19-err';
+          msg.style.cssText='color:#f87171;font-size:12px;margin-top:10px;';
+          msg.textContent="Renseigne ton prénom et ton nom.";
+          document.querySelector('.field-group').appendChild(msg);
+        }
+        const first = document.querySelector('[data-i]');
+        if(first) first.focus();
+        return;
+      }
+    }
     go(isLast?null:idx+1,true);
   });
   if(idx>0)document.getElementById('backBtn').addEventListener('click',()=>{collect(idx);go(idx-1,false);});
@@ -323,10 +349,20 @@ const SB_HEADERS={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Autho
 
 let CLIENT_ID = new URLSearchParams(window.location.search).get('client');
 
+function buildFullName(){
+  const v = answers[19];
+  if(v && typeof v==='object'){
+    const prenom = ((v[0]||v['0'])||'').trim();
+    const nom = ((v[1]||v['1'])||'').trim();
+    if(prenom || nom) return (prenom+' '+nom).trim();
+  }
+  return '';
+}
+
 async function ensureClient(){
   if(CLIENT_ID) return CLIENT_ID;
   const id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : ('c_'+Date.now()+'_'+Math.random().toString(36).slice(2,8));
-  const name = (answers[2] && typeof answers[2]==='string') ? answers[2].slice(0,60) : 'Nouveau client';
+  const name = buildFullName() || 'Nouveau client';
   const r = await fetch(`${SUPABASE_URL}/rest/v1/clients`,{
     method:'POST',
     headers:SB_HEADERS,
@@ -357,9 +393,16 @@ async function saveAnswersToSupabase(){
       });
     }catch(e){ console.error('Supabase error',e); }
   }
-  // Flip status to active + save LinkedIn URL if Q18 answered
+  // Flip status to active + save LinkedIn URL (Q18) + real name (Q19) + auto-derive avatar (2 initials)
   const patch = {status:'active'};
   if(typeof answers[18]==='string' && answers[18].trim()) patch.linkedin_url = answers[18].trim();
+  const fullName = buildFullName();
+  if(fullName){
+    patch.name = fullName;
+    const parts = fullName.split(/\s+/);
+    const initials = (parts[0][0]||'').toUpperCase() + (parts.length>1 ? (parts[parts.length-1][0]||'').toUpperCase() : '');
+    if(initials) patch.avatar = initials;
+  }
   try{
     await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${id}`,{
       method:'PATCH', headers:SB_HEADERS, body:JSON.stringify(patch)
