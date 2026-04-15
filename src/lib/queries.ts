@@ -26,6 +26,12 @@ export async function fetchClient(id: string): Promise<Client | null> {
   return data ? mapClient(data) : null
 }
 
+export async function deleteClient(id: string): Promise<boolean> {
+  const { error } = await supabase.from('clients').delete().eq('id', id)
+  if (error) { console.error('deleteClient', error); return false }
+  return true
+}
+
 export async function createClient(input: {
   name: string
   company: string

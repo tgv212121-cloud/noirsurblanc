@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthGuard } from '@/lib/useAuthGuard'
-import { fetchClients, fetchPosts, fetchMetrics } from '@/lib/queries'
+import { fetchClients, fetchPosts, fetchMetrics, deleteClient } from '@/lib/queries'
 import { formatRelative, cn } from '@/lib/utils'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
 import PulseButton from '@/components/ui/PulseButton'
@@ -145,6 +145,32 @@ export default function ClientsPage() {
         <span className="text-sm text-blanc-muted">
           {row.original.lastPostDate ? formatRelative(row.original.lastPostDate) : '—'}
         </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => <span className="text-xs font-semibold uppercase tracking-wider text-blanc-muted">Actions</span>,
+      cell: ({ row }) => (
+        <button
+          onClick={async (e) => {
+            e.stopPropagation()
+            const name = row.original.name
+            const ok = window.confirm(
+              `Supprimer définitivement ${name} ?\n\nCette action est irréversible : tous les posts, messages, réponses d'onboarding et métriques liés seront aussi supprimés.`
+            )
+            if (!ok) return
+            const done = await deleteClient(row.original.id)
+            if (!done) { alert('Erreur lors de la suppression.'); return }
+            setClients(prev => prev.filter(c => c.id !== row.original.id))
+          }}
+          title="Supprimer le client"
+          className="inline-flex items-center justify-center rounded-lg text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+          style={{ width: '32px', height: '32px' }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
       ),
     },
   ], [])
