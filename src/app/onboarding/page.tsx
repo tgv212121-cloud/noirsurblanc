@@ -6,30 +6,45 @@ import QuestionCard from '@/components/onboarding/QuestionCard'
 import ProgressBar from '@/components/onboarding/ProgressBar'
 import { questions } from '@/components/onboarding/questions'
 import { ChevronLeft, ChevronRight, ArrowRight, Check } from '@/components/onboarding/icons'
-import { fetchClients } from '@/lib/queries'
+import { createClient, saveOnboardingAnswer } from '@/lib/queries'
 import type { Client } from '@/types'
 
 type Answers = Record<number, string | Record<number, string>>
 
 export default function OnboardingPage() {
-  const [selectedClient, setSelectedClient] = useState('')
+  const [form, setForm] = useState({ name: '', company: '', email: '', phone: '' })
+  const [createdClient, setCreatedClient] = useState<Client | null>(null)
+  const [creating, setCreating] = useState(false)
   const [started, setStarted] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [answers, setAnswers] = useState<Answers>({})
   const [completed, setCompleted] = useState(false)
   const [direction, setDirection] = useState(1)
-  const [clients, setClients] = useState<Client[]>([])
 
-  useEffect(() => { fetchClients().then(setClients) }, [])
-
-  const handleStart = useCallback(() => {
-    if (!selectedClient) return
-    setStarted(true)
-  }, [selectedClient])
+  const handleStart = useCallback(async () => {
+    if (!form.name.trim() || !form.company.trim() || !form.email.trim()) return
+    setCreating(true)
+    const client = await createClient({
+      name: form.name.trim(),
+      company: form.company.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim() || undefined,
+    })
+    setCreating(false)
+    if (client) {
+      setCreatedClient(client)
+      setStarted(true)
+    } else {
+      alert("Erreur lors de la création du compte. Vérifie les informations et réessaye.")
+    }
+  }, [form])
 
   const handleAnswer = useCallback((questionId: number, value: string | Record<number, string>) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }))
-  }, [])
+    if (createdClient) {
+      saveOnboardingAnswer(createdClient.id, questionId, value)
+    }
+  }, [createdClient])
 
   const handleNext = useCallback(() => {
     if (currentStep < questions.length - 1) {
@@ -63,7 +78,7 @@ export default function OnboardingPage() {
       return typeof val === 'string' && val.trim() !== ''
     }).length
 
-    const clientName = clients.find(c => c.id === selectedClient)?.name || ''
+    const clientName = createdClient?.name || ''
 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 relative">
@@ -135,7 +150,8 @@ export default function OnboardingPage() {
                 setStarted(false)
                 setCurrentStep(0)
                 setAnswers({})
-                setSelectedClient('')
+                setCreatedClient(null)
+                setForm({ name: '', company: '', email: '', phone: '' })
               }}
               className="px-6 py-3 text-sm text-gold border-2 border-gold font-medium rounded-xl hover:bg-gold-muted transition-colors duration-200 cursor-pointer"
             >
@@ -177,29 +193,56 @@ export default function OnboardingPage() {
           transition={{ delay: 0.6, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="relative z-10 w-full max-w-md"
         >
-          <div className="border border-blanc/[0.08] px-8 py-10">
-            <label className="text-[10px] text-blanc-muted/40 uppercase tracking-[0.15em] block mb-3">
-              Client à onboarder
-            </label>
-            <select
-              value={selectedClient}
-              onChange={e => setSelectedClient(e.target.value)}
-              className="w-full bg-noir-card border border-blanc/[0.08] px-4 py-3 text-sm text-blanc focus:border-gold/30 transition-all duration-300 mb-6 outline-none"
-            >
-              <option value="" className="bg-noir text-blanc-muted">Sélectionner un client...</option>
-              {clients.filter(c => c.status === 'onboarding' || c.status === 'active').map(c => (
-                <option key={c.id} value={c.id} className="bg-noir text-blanc">{c.name} — {c.company}</option>
-              ))}
-            </select>
+          <div className="border border-blanc/[0.08] px-8 py-10 space-y-5">
+            <div>
+              <label className="text-[10px] text-blanc-muted/40 uppercase tracking-[0.15em] block mb-2">Nom complet</label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="Ex. Léa Fournier"
+                className="w-full bg-noir-card border border-blanc/[0.08] px-4 py-3 text-sm text-blanc focus:border-gold/30 transition-all duration-300 outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-blanc-muted/40 uppercase tracking-[0.15em] block mb-2">Entreprise</label>
+              <input
+                type="text"
+                value={form.company}
+                onChange={e => setForm(f => ({ ...f, company: e.target.value }))}
+                placeholder="Ex. Fournier Group"
+                className="w-full bg-noir-card border border-blanc/[0.08] px-4 py-3 text-sm text-blanc focus:border-gold/30 transition-all duration-300 outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-blanc-muted/40 uppercase tracking-[0.15em] block mb-2">Email</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                placeholder="lea@fourniergroup.fr"
+                className="w-full bg-noir-card border border-blanc/[0.08] px-4 py-3 text-sm text-blanc focus:border-gold/30 transition-all duration-300 outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-blanc-muted/40 uppercase tracking-[0.15em] block mb-2">Téléphone (optionnel)</label>
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                placeholder="+33 6 45 67 89 02"
+                className="w-full bg-noir-card border border-blanc/[0.08] px-4 py-3 text-sm text-blanc focus:border-gold/30 transition-all duration-300 outline-none"
+              />
+            </div>
 
             <button
               onClick={handleStart}
-              disabled={!selectedClient}
-              className="group relative flex items-center justify-center gap-3 w-full px-10 py-4 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+              disabled={creating || !form.name.trim() || !form.company.trim() || !form.email.trim()}
+              className="group relative flex items-center justify-center gap-3 w-full px-10 py-4 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed mt-2"
             >
               <div className="absolute inset-0 bg-gold border border-gold" />
               <span className="relative z-10 text-white font-semibold text-base tracking-wide">
-                Commencer
+                {creating ? 'Création...' : 'Commencer'}
               </span>
               <ArrowRight className="relative z-10 text-white group-hover:translate-x-1 transition-transform duration-300" />
             </button>

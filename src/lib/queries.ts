@@ -26,6 +26,29 @@ export async function fetchClient(id: string): Promise<Client | null> {
   return data ? mapClient(data) : null
 }
 
+export async function createClient(input: {
+  name: string
+  company: string
+  email: string
+  phone?: string
+}): Promise<Client | null> {
+  const { data, error } = await supabase
+    .from('clients')
+    .insert({
+      name: input.name,
+      company: input.company,
+      email: input.email,
+      phone: input.phone || null,
+      status: 'onboarding',
+      onboarded_at: new Date().toISOString(),
+    })
+    .select()
+    .single()
+
+  if (error) { console.error('createClient', error); return null }
+  return data ? mapClient(data) : null
+}
+
 function mapClient(row: any): Client {
   return {
     id: row.id,
