@@ -176,7 +176,8 @@ const Q = [
   {id:14,text:"Quel est le cheminement type de ton client sur LinkedIn pour arriver à l'achat ?",type:"textarea",placeholder:"Découverte → Intérêt → Confiance → DM → Achat ?"},
   {id:15,text:"Sur quel lien envoyer les prospects ?",sub:"Si tu veux que je gère ta messagerie",type:"url",placeholder:"https://calendly.com/toi"},
   {id:16,text:"Pourquoi c'est important pour toi de monter une audience ?",type:"textarea",placeholder:"Ta motivation profonde, ce que ça représente pour toi…"},
-  {id:17,text:"Si ton audience avait un ou plusieurs ennemis communs, ce serait qui ?",type:"textarea",placeholder:"Une croyance limitante, un système, un type de personne…"}
+  {id:17,text:"Si ton audience avait un ou plusieurs ennemis communs, ce serait qui ?",type:"textarea",placeholder:"Une croyance limitante, un système, un type de personne…"},
+  {id:18,text:"L'URL de ton profil LinkedIn",sub:"Pour qu'on puisse accéder directement à ton profil depuis ton espace",type:"url",placeholder:"https://linkedin.com/in/ton-profil"}
 ];
 
 const TOTAL=Q.length, answers={};
@@ -330,10 +331,12 @@ async function saveAnswersToSupabase(){
       });
     }catch(e){ console.error('Supabase error',e); }
   }
-  // Flip status to active
+  // Flip status to active + save LinkedIn URL if Q18 answered
+  const patch = {status:'active'};
+  if(typeof answers[18]==='string' && answers[18].trim()) patch.linkedin_url = answers[18].trim();
   try{
     await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${id}`,{
-      method:'PATCH', headers:SB_HEADERS, body:JSON.stringify({status:'active'})
+      method:'PATCH', headers:SB_HEADERS, body:JSON.stringify(patch)
     });
   }catch(e){ console.error('status update error',e); }
 }

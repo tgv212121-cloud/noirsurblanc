@@ -138,7 +138,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
           <div><p className="text-xs text-blanc-muted mb-1">Email</p><p className="text-sm text-blanc">{client.email}</p></div>
           <div><p className="text-xs text-blanc-muted mb-1">Téléphone</p><p className="text-sm text-blanc">{client.phone}</p></div>
           <div><p className="text-xs text-blanc-muted mb-1">Client depuis</p><p className="text-sm text-blanc">{formatDate(client.onboardedAt)}</p></div>
-          <div><p className="text-xs text-blanc-muted mb-1">LinkedIn</p><a href={client.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-gold hover:text-gold-dark transition-colors duration-200">Voir le profil</a></div>
+          <div><p className="text-xs text-blanc-muted mb-1">LinkedIn</p>{client.linkedinUrl ? <a href={client.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-gold hover:text-gold-dark transition-colors duration-200">Voir le profil</a> : <p className="text-sm text-blanc-muted/50">Non renseigné</p>}</div>
         </div>
       </div>
 
