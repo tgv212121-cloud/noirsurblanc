@@ -129,21 +129,24 @@ export default function ClientsPage() {
     },
     {
       id: 'actions',
-      header: () => <span className="text-xs font-semibold uppercase tracking-wider text-blanc-muted">Actions</span>,
+      header: () => null,
+      size: 48,
       cell: ({ row }) => (
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            setToDelete(row.original)
-          }}
-          title="Supprimer le client"
-          className="inline-flex items-center justify-center rounded-lg text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-          style={{ width: '32px', height: '32px' }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-          </svg>
-        </button>
+        <div className="flex items-center justify-center">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setToDelete(row.original)
+            }}
+            title="Supprimer"
+            className="inline-flex items-center justify-center rounded-md text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+            style={{ width: '28px', height: '28px' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          </button>
+        </div>
       ),
     },
   ], [])
