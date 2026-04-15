@@ -161,7 +161,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 lg:grid-cols-[minmax(0,520px)_1fr] gap-8 items-start"
+            className="grid grid-cols-1 lg:grid-cols-[minmax(0,380px)_1fr] gap-10 items-start"
           >
           <div>
             {/* Month navigation */}
@@ -523,7 +523,7 @@ function PostCopyCard({ content }: { content: string }) {
       {/* Post text — preserves line breaks exactly as written */}
       <div
         className="text-[15px] text-blanc leading-[1.9] whitespace-pre-line mb-8"
-        style={{ maxWidth: '60ch' }}
+        style={{ maxWidth: 'none' }}
       >
         {content}
       </div>
