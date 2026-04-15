@@ -161,7 +161,9 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
+            className="grid grid-cols-1 lg:grid-cols-[minmax(0,520px)_1fr] gap-8 items-start"
           >
+          <div>
             {/* Month navigation */}
             <div className="flex items-center justify-between mb-8">
               <button onClick={prevMonth} className="text-blanc-muted hover:text-blanc text-sm cursor-pointer" style={{ padding: '8px 16px' }}>
@@ -229,13 +231,15 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
               })}
             </div>
 
-            {/* Selected date — show post content + copy button */}
-            {selectedDate && postsByDate[selectedDate] && (
+          </div>
+
+          {/* Right column : post content */}
+          <div className="lg:sticky lg:top-6">
+            {selectedDate && postsByDate[selectedDate] ? (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 }}
-                className="mt-8"
               >
                 <p className="text-xs text-blanc-muted mb-6">
                   Post du {new Date(selectedDate + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
@@ -244,11 +248,14 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                   <PostCopyCard key={post.id} content={post.content} />
                 ))}
               </motion.div>
+            ) : (
+              <div className="bg-noir-elevated rounded-xl text-center" style={{ padding: '60px 28px' }}>
+                <p className="text-sm text-blanc-muted">
+                  {selectedDate ? "Aucun post prévu ce jour-là." : "Clique sur un jour pour voir le post à publier."}
+                </p>
+              </div>
             )}
-
-            {!selectedDate && (
-              <p className="text-sm text-blanc-muted text-center py-8">Cliquez sur un jour pour voir le post à publier.</p>
-            )}
+          </div>
           </motion.div>
         )}
 
