@@ -477,12 +477,21 @@ function renderAccount(){
       });
       const d=await r.json();
       if(d.user && d.user.id){
-        // Create profile
-        await fetch(`${SUPABASE_URL}/rest/v1/profiles`,{
-          method:'POST', headers:SB_HEADERS,
+        // Get access token (might be in d.access_token or d.session.access_token)
+        const token = d.access_token || (d.session && d.session.access_token);
+        const authHeaders = token
+          ? {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+token,'Prefer':'return=representation'}
+          : SB_HEADERS;
+        // Create profile (with user's session token so RLS allows it)
+        const pr = await fetch(`${SUPABASE_URL}/rest/v1/profiles`,{
+          method:'POST', headers:authHeaders,
           body:JSON.stringify({id:d.user.id, email, role:'client', client_id:cid})
         });
-        // Link client to auth user
+        if(!pr.ok){
+          const pe = await pr.text();
+          console.error('profile insert failed', pe);
+        }
+        // Link client to auth user (clients has public write policy)
         await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${cid}`,{
           method:'PATCH', headers:SB_HEADERS, body:JSON.stringify({auth_user_id:d.user.id})
         });

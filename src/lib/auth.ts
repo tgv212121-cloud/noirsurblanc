@@ -62,9 +62,13 @@ export async function getMyProfile(): Promise<Profile | null> {
   if (data) {
     return { id: data.id, email: data.email, role: data.role, clientId: data.client_id }
   }
-  // Auto-create a default 'client' profile if missing (admins must be promoted via SQL or /settings)
+  // Auto-create a default 'client' profile if missing. Try to find a linked client by auth_user_id.
+  const { data: linkedClient } = await supabase.from('clients').select('id').eq('auth_user_id', user.id).maybeSingle()
   const { data: created } = await supabase.from('profiles').insert({
-    id: user.id, email: user.email, role: 'client', client_id: null,
+    id: user.id,
+    email: user.email,
+    role: 'client',
+    client_id: linkedClient?.id || null,
   }).select().single()
   if (!created) return null
   return { id: created.id, email: created.email, role: created.role, clientId: created.client_id }
