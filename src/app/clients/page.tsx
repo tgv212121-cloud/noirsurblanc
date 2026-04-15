@@ -74,12 +74,7 @@ export default function ClientsPage() {
         </button>
       ),
       cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gold-muted text-gold text-xs font-medium flex items-center justify-center shrink-0">
-            {row.original.avatar}
-          </div>
-          <span className="text-sm font-medium text-blanc">{row.original.name}</span>
-        </div>
+        <span className="text-sm font-medium text-blanc">{row.original.name}</span>
       ),
     },
     {
