@@ -161,7 +161,8 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       <AnimatePresence mode="wait">
         {/* Calendar tab */}
         {activeTab === 'calendar' && (
-          <motion.div key="calendar" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+          <motion.div key="calendar" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 lg:grid-cols-[minmax(0,520px)_1fr] gap-8 items-start">
+          <div>
             <div className="flex items-center justify-between mb-8">
               <button onClick={prevMonth} className="text-blanc-muted hover:text-blanc text-sm cursor-pointer" style={{ padding: '8px 16px' }}>← {MONTHS_FR[calendarMonth === 0 ? 11 : calendarMonth - 1]}</button>
               <h2 className="text-lg font-semibold text-blanc">{MONTHS_FR[calendarMonth]} {calendarYear}</h2>
@@ -192,9 +193,17 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
               })}
             </div>
 
-            {/* Selected date — show existing post or write new one */}
+          </div>
+
+          {/* Right column: editor / post viewer */}
+          <div className="lg:sticky lg:top-6">
+            {!editingDate && (
+              <div className="bg-noir-elevated rounded-xl text-center" style={{ padding: '60px 28px' }}>
+                <p className="text-sm text-blanc-muted">Clique sur un jour pour rédiger ou voir un post.</p>
+              </div>
+            )}
             {editingDate && (
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-8">
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="flex items-center justify-between mb-6">
                   <p className="text-sm text-blanc">
                     {new Date(editingDate + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -312,8 +321,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                 )}
               </motion.div>
             )}
-
-            {!editingDate && <p className="text-sm text-blanc-muted text-center py-8">Cliquez sur un jour pour rédiger ou voir un post.</p>}
+          </div>
           </motion.div>
         )}
 
