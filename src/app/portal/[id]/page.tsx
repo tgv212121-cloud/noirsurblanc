@@ -161,7 +161,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 lg:grid-cols-[minmax(0,380px)_1fr] gap-10 items-start"
+            className="grid grid-cols-1 lg:grid-cols-[minmax(0,280px)_1fr] gap-12 items-start"
           >
           <div>
             {/* Month navigation */}
