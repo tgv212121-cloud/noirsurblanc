@@ -44,16 +44,21 @@ export default function Dashboard() {
 
   if (checking) return <p className="text-sm text-blanc-muted text-center py-20">Chargement...</p>
 
+  const cardBase = 'relative rounded-2xl overflow-hidden'
+  const cardStyle = { background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.09)' } as const
+
   return (
     <div>
       {/* Page title */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-blanc">Dashboard</h1>
-        <p className="text-sm text-blanc-muted mt-1">Vue d&apos;ensemble de l&apos;activité</p>
+      <div className="flex items-end justify-between" style={{ marginBottom: '36px' }}>
+        <div>
+          <h1 className="font-heading text-4xl font-medium text-blanc italic leading-none" style={{ marginBottom: '10px' }}>Dashboard</h1>
+          <p className="text-sm text-blanc-muted/70">Vue d&apos;ensemble de l&apos;activité</p>
+        </div>
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5" style={{ marginBottom: '40px' }}>
         <StatCard label="Clients actifs" value={activeClients.toString()} />
         <StatCard label="Posts ce mois" value={publishedThisMonth.toString()} />
         <StatCard label="Impressions" value={formatNumber(totalImpressions)} />
@@ -61,32 +66,39 @@ export default function Dashboard() {
       </div>
 
       {/* Two columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
         {/* Top posts */}
-        <div className="bg-noir-card border border-border rounded-lg overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-            <h2 className="text-base font-semibold text-blanc">Top posts du mois</h2>
-            <Link href="/analytics" className="text-sm text-gold hover:text-gold-dark transition-colors duration-200">
+        <div className={cardBase} style={cardStyle}>
+          <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+          <div className="flex items-center justify-between" style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-3">
+              <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
+              <h2 className="font-heading text-lg text-blanc italic">Top posts du mois</h2>
+            </div>
+            <Link href="/analytics" className="text-xs tracking-[0.14em] uppercase text-gold hover:text-gold-light transition-colors duration-200">
               Tout voir →
             </Link>
           </div>
           <div>
-            {topPosts.map((post, i) => (
+            {topPosts.length === 0 ? (
+              <p className="text-sm text-blanc-muted/60 text-center" style={{ padding: '40px 24px' }}>Aucun post publié ce mois-ci.</p>
+            ) : topPosts.map((post, i) => (
               <Link
                 key={post.id}
                 href={`/clients/${post.clientId}`}
-                className="flex items-center gap-4 px-5 py-4 border-b border-border last:border-b-0 hover:bg-noir-elevated transition-colors duration-200"
+                className="flex items-center gap-4 hover:bg-white/[0.025] transition-colors duration-200 group"
+                style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}
               >
-                <span className="w-7 h-7 rounded-full bg-noir-elevated text-blanc-muted text-xs font-medium flex items-center justify-center shrink-0">
+                <span className="flex items-center justify-center shrink-0 font-heading italic" style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(202,138,4,0.12)', border: '1px solid rgba(202,138,4,0.3)', color: '#ca8a04', fontSize: '13px' }}>
                   {i + 1}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-blanc truncate">{post.content.split('\n')[0]}</p>
-                  <p className="text-xs text-blanc-muted mt-0.5">{post.client?.name} · {formatRelative(post.publishedAt)}</p>
+                  <p className="text-sm font-medium text-blanc truncate group-hover:text-gold transition-colors">{post.content.split('\n')[0]}</p>
+                  <p className="text-xs text-blanc-muted/70" style={{ marginTop: '4px' }}>{post.client?.name} · {formatRelative(post.publishedAt)}</p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-sm font-semibold text-blanc">{formatNumber(post.metrics!.impressions)}</p>
-                  <p className="text-xs text-gold">{post.metrics!.engagementRate}%</p>
+                  <p className="text-xs text-gold" style={{ marginTop: '2px' }}>{post.metrics!.engagementRate}%</p>
                 </div>
               </Link>
             ))}
@@ -96,24 +108,28 @@ export default function Dashboard() {
         {/* Right column */}
         <div className="space-y-6">
           {/* Pending reminders */}
-          <div className="bg-noir-card border border-border rounded-lg overflow-hidden">
-            <div className="px-5 py-4 border-b border-border">
-              <h2 className="text-base font-semibold text-blanc">En attente de réponse</h2>
+          <div className={cardBase} style={cardStyle}>
+            <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+            <div className="flex items-center gap-3" style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#f59e0b', boxShadow: '0 0 10px rgba(245,158,11,0.5)' }} />
+              <h2 className="font-heading text-lg text-blanc italic">En attente de réponse</h2>
             </div>
             <div>
               {pendingReminders.length === 0 ? (
-                <p className="px-5 py-6 text-sm text-blanc-muted">Tous les clients ont répondu ✓</p>
+                <div className="flex items-center gap-3" style={{ padding: '24px' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <p className="text-sm text-blanc-muted">Tous les clients ont répondu.</p>
+                </div>
               ) : (
                 pendingReminders.map(r => (
-                  <div key={r.id} className="flex items-center gap-3 px-5 py-3.5 border-b border-border last:border-b-0">
-                    <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 text-xs font-medium flex items-center justify-center shrink-0">
+                  <div key={r.id} className="flex items-center gap-3" style={{ padding: '14px 24px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div className="flex items-center justify-center shrink-0 font-semibold" style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', color: '#fbbf24', fontSize: '12px' }}>
                       {r.client?.avatar}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-blanc">{r.client?.name}</p>
-                      <p className="text-xs text-blanc-muted">Envoyé {r.lastSentAt ? formatRelative(r.lastSentAt) : '—'}</p>
+                      <p className="text-xs text-blanc-muted/70">Envoyé {r.lastSentAt ? formatRelative(r.lastSentAt) : '—'}</p>
                     </div>
-                    <span className="px-2 py-1 bg-amber-50 text-amber-600 text-[10px] font-medium rounded">En attente</span>
                   </div>
                 ))
               )}
@@ -122,19 +138,21 @@ export default function Dashboard() {
 
           {/* Onboarding */}
           {clients.filter(c => c.status === 'onboarding').length > 0 && (
-            <div className="bg-noir-card border border-border rounded-lg overflow-hidden">
-              <div className="px-5 py-4 border-b border-border">
-                <h2 className="text-base font-semibold text-blanc">Onboarding en cours</h2>
+            <div className={cardBase} style={cardStyle}>
+              <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+              <div className="flex items-center gap-3" style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
+                <h2 className="font-heading text-lg text-blanc italic">Onboarding en cours</h2>
               </div>
               <div>
                 {clients.filter(c => c.status === 'onboarding').map(c => (
-                  <div key={c.id} className="flex items-center gap-3 px-5 py-3.5 border-b border-border last:border-b-0">
-                    <div className="w-8 h-8 rounded-full bg-gold-muted text-gold text-xs font-medium flex items-center justify-center shrink-0">
-                      {c.avatar}
+                  <div key={c.id} className="flex items-center gap-3" style={{ padding: '14px 24px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div className="flex items-center justify-center shrink-0 font-semibold" style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(202,138,4,0.12)', border: '1px solid rgba(202,138,4,0.3)', color: '#ca8a04', fontSize: '12px' }}>
+                      {c.avatar || c.name[0]?.toUpperCase()}
                     </div>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-blanc">{c.name}</p>
-                      <p className="text-xs text-blanc-muted">{c.company}</p>
+                      <p className="text-xs text-blanc-muted/70">{c.company || '—'}</p>
                     </div>
                   </div>
                 ))}
@@ -149,9 +167,19 @@ export default function Dashboard() {
 
 function StatCard({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="bg-noir-card border border-border rounded-lg px-5 py-5">
-      <p className="text-sm text-blanc-muted mb-2">{label}</p>
-      <p className={`text-3xl font-bold ${accent ? 'text-gold' : 'text-blanc'}`}>{value}</p>
+    <div
+      className="relative rounded-2xl overflow-hidden"
+      style={{
+        background: accent
+          ? 'linear-gradient(135deg, rgba(202,138,4,0.08), rgba(202,138,4,0.02))'
+          : 'rgba(255,255,255,0.025)',
+        border: `1px solid ${accent ? 'rgba(202,138,4,0.25)' : 'rgba(255,255,255,0.09)'}`,
+        padding: '22px 24px',
+      }}
+    >
+      <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+      <p className="text-[11px] text-blanc-muted/60 uppercase tracking-[0.16em]" style={{ marginBottom: '14px' }}>{label}</p>
+      <p className={`font-heading font-medium leading-none ${accent ? 'text-gold italic' : 'text-blanc'}`} style={{ fontSize: '40px' }}>{value}</p>
     </div>
   )
 }
