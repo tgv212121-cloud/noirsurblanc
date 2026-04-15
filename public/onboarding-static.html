@@ -177,7 +177,7 @@ const Q = [
   {id:15,text:"Sur quel lien envoyer les prospects ?",sub:"Si tu veux que je gère ta messagerie",type:"url",placeholder:"https://calendly.com/toi"},
   {id:16,text:"Pourquoi c'est important pour toi de monter une audience ?",type:"textarea",placeholder:"Ta motivation profonde, ce que ça représente pour toi…"},
   {id:17,text:"Si ton audience avait un ou plusieurs ennemis communs, ce serait qui ?",type:"textarea",placeholder:"Une croyance limitante, un système, un type de personne…"},
-  {id:18,text:"L'URL de ton profil LinkedIn",sub:"Pour qu'on puisse accéder directement à ton profil depuis ton espace",type:"url",placeholder:"https://linkedin.com/in/ton-profil"}
+  {id:18,text:"L'URL de ton profil LinkedIn",sub:"Obligatoire — pour qu'on puisse accéder directement à ton profil depuis ton espace",type:"url",placeholder:"https://linkedin.com/in/ton-profil"}
 ];
 
 const TOTAL=Q.length, answers={};
@@ -286,7 +286,33 @@ function renderQuestion(idx,forward=true){
   const nextBtn=document.getElementById('nextBtn');
   attachMagnetic(nextBtn);
 
-  nextBtn.addEventListener('click',()=>{collect(idx);go(isLast?null:idx+1,true);});
+  nextBtn.addEventListener('click',()=>{
+    collect(idx);
+    // Q18 (LinkedIn URL) is required
+    const q=Q[idx];
+    if(q.id===18){
+      const v=(answers[18]||'').trim();
+      const ok=/^https?:\/\/(www\.)?linkedin\.com\//i.test(v);
+      if(!ok){
+        const input=document.getElementById('ans');
+        if(input){
+          input.style.borderColor='rgba(239,68,68,0.6)';
+          input.style.boxShadow='0 0 0 3px rgba(239,68,68,0.1)';
+          input.focus();
+        }
+        let msg=document.getElementById('q18-err');
+        if(!msg){
+          msg=document.createElement('p');
+          msg.id='q18-err';
+          msg.style.cssText='color:#f87171;font-size:12px;margin-top:10px;';
+          msg.textContent="Entre un lien LinkedIn valide (ex: https://linkedin.com/in/ton-profil).";
+          input.parentNode.appendChild(msg);
+        }
+        return;
+      }
+    }
+    go(isLast?null:idx+1,true);
+  });
   if(idx>0)document.getElementById('backBtn').addEventListener('click',()=>{collect(idx);go(idx-1,false);});
 }
 
