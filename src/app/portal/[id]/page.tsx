@@ -1,15 +1,11 @@
 'use client'
 
-import { use, useState, useEffect, useCallback } from 'react'
+import { use, useState, useEffect } from 'react'
 import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders } from '@/lib/queries'
 import { formatNumber, formatRelative, cn } from '@/lib/utils'
 import type { Client, Post, PostMetrics, Reminder } from '@/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
-import QuestionCard from '@/components/onboarding/QuestionCard'
-import ProgressBar from '@/components/onboarding/ProgressBar'
-import { questions } from '@/components/onboarding/questions'
-import { ChevronRight, ChevronLeft } from '@/components/onboarding/icons'
 import MessageThread from '@/components/messaging/MessageThread'
 
 type Tab = 'calendar' | 'messages' | 'stats' | 'history'
@@ -30,41 +26,11 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
     })
   }, [id])
 
-  // Onboarding state
-  const [onboardingDone, setOnboardingDone] = useState(false)
-  const [currentStep, setCurrentStep] = useState(0)
-  const [answers, setAnswers] = useState<Record<number, string | Record<number, string>>>({})
-  const [direction, setDirection] = useState(1)
-
   // Calendar state (must be before any conditional return)
   const now = new Date()
   const [calendarMonth, setCalendarMonth] = useState(now.getMonth())
   const [calendarYear, setCalendarYear] = useState(now.getFullYear())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-
-  const handleAnswer = useCallback((questionId: number, value: string | Record<number, string>) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }))
-  }, [])
-
-  const handleNext = useCallback(() => {
-    if (currentStep < questions.length - 1) {
-      setDirection(1)
-      setCurrentStep(prev => prev + 1)
-    } else {
-      setOnboardingDone(true)
-    }
-  }, [currentStep])
-
-  const handlePrev = useCallback(() => {
-    if (currentStep > 0) {
-      setDirection(-1)
-      setCurrentStep(prev => prev - 1)
-    }
-  }, [currentStep])
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleNext()
-  }, [handleNext])
 
   if (loading) {
     return (
@@ -78,78 +44,6 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
     return (
       <div className="py-20 text-center">
         <p className="text-blanc-muted text-lg">Espace introuvable.</p>
-      </div>
-    )
-  }
-
-  // Show onboarding if client status is 'onboarding' and not done yet
-  const needsOnboarding = client.status === 'onboarding' && !onboardingDone
-
-  if (needsOnboarding) {
-    return (
-      <div className="min-h-screen flex flex-col" onKeyDown={handleKeyDown} style={{ margin: '-40px -32px' }}>
-        {/* Header */}
-        <header className="flex items-center justify-between px-8 py-6">
-          <div className="flex items-center gap-3">
-            <div
-              className="flex items-center justify-center text-white text-sm font-semibold rounded-lg"
-              style={{ width: '36px', height: '36px', backgroundColor: '#8b5cf6' }}
-            >
-              {client.avatar}
-            </div>
-            <div>
-              <p className="text-sm font-medium text-blanc">{client.name}</p>
-              <p className="text-xs text-blanc-muted">Onboarding</p>
-            </div>
-          </div>
-          <span className="text-blanc-muted text-xs tracking-widest uppercase">
-            {String(currentStep + 1).padStart(2, '0')} / {String(questions.length).padStart(2, '0')}
-          </span>
-        </header>
-
-        <ProgressBar current={currentStep} total={questions.length} />
-
-        {/* Question */}
-        <main className="flex-1 flex items-center justify-center px-8 py-8">
-          <div className="w-full max-w-2xl">
-            <AnimatePresence mode="wait" custom={direction}>
-              <QuestionCard
-                key={questions[currentStep].id}
-                question={questions[currentStep]}
-                answer={answers[questions[currentStep].id]}
-                onAnswer={handleAnswer}
-                direction={direction}
-              />
-            </AnimatePresence>
-          </div>
-        </main>
-
-        {/* Navigation */}
-        <nav className="flex flex-col items-center gap-4 px-8 py-8">
-          <button
-            onClick={handleNext}
-            className="inline-flex items-center gap-2 text-sm font-medium cursor-pointer rounded-xl transition-colors duration-200"
-            style={{ padding: '14px 32px', backgroundColor: '#8b5cf6', color: 'white' }}
-          >
-            {currentStep === questions.length - 1 ? 'Terminer' : 'Continuer'}
-            <ChevronRight width={16} height={16} />
-          </button>
-
-          <button
-            onClick={handlePrev}
-            disabled={currentStep === 0}
-            className="flex items-center gap-1.5 text-blanc-muted text-xs cursor-pointer disabled:opacity-0 disabled:pointer-events-none"
-          >
-            <ChevronLeft width={14} height={14} />
-            Précédent
-          </button>
-        </nav>
-
-        <div className="text-center pb-5">
-          <span className="text-blanc-muted text-[10px] tracking-widest uppercase">
-            Ctrl + Enter pour continuer
-          </span>
-        </div>
       </div>
     )
   }
