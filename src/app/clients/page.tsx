@@ -4,21 +4,13 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthGuard } from '@/lib/useAuthGuard'
 import { fetchClients, fetchPosts, fetchMetrics, deleteClient } from '@/lib/queries'
-import { formatRelative, cn } from '@/lib/utils'
-import GooeyNav from '@/components/ui/GooeyNavComponent'
+import { formatRelative } from '@/lib/utils'
 import PulseButton from '@/components/ui/PulseButton'
 import { GooeyInput } from '@/components/ui/GooeyInput'
 import { DataTable } from '@/components/ui/DataTable'
 import type { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown } from 'lucide-react'
-import type { Client, Post, PostMetrics, ClientStatus } from '@/types'
-
-const STATUSES: { value: ClientStatus | 'all'; label: string }[] = [
-  { value: 'all', label: 'Tous' },
-  { value: 'active', label: 'Actifs' },
-  { value: 'onboarding', label: 'Onboarding' },
-  { value: 'paused', label: 'En pause' },
-]
+import type { Client, Post, PostMetrics } from '@/types'
 
 // Enriched row type
 type ClientRow = Client & {
@@ -31,7 +23,6 @@ export default function ClientsPage() {
   const router = useRouter()
   const { checking } = useAuthGuard({ requireRole: 'admin' })
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<ClientStatus | 'all'>('all')
   const [clients, setClients] = useState<Client[]>([])
   const [posts, setPosts] = useState<Post[]>([])
   const [metrics, setMetrics] = useState<PostMetrics[]>([])
@@ -46,7 +37,6 @@ export default function ClientsPage() {
   // Build enriched rows
   const rows: ClientRow[] = useMemo(() => {
     return clients
-      .filter(c => statusFilter === 'all' || c.status === statusFilter)
       .map(client => {
         const clientPosts = posts.filter(p => p.clientId === client.id && p.status === 'published')
         const clientMetrics = clientPosts.map(p => metrics.find(m => m.postId === p.id)).filter(Boolean)
@@ -61,7 +51,7 @@ export default function ClientsPage() {
           lastPostDate: lastPost?.publishedAt || null,
         }
       })
-  }, [clients, posts, metrics, statusFilter])
+  }, [clients, posts, metrics])
 
   const columns: ColumnDef<ClientRow>[] = useMemo(() => [
     {
@@ -89,19 +79,6 @@ export default function ClientsPage() {
         </button>
       ),
       cell: ({ row }) => <span className="text-sm text-blanc-muted">{row.original.company}</span>,
-    },
-    {
-      accessorKey: 'status',
-      header: 'Statut',
-      cell: ({ row }) => {
-        const config: Record<string, { label: string; cls: string }> = {
-          active: { label: 'Actif', cls: 'bg-emerald-50 text-emerald-600' },
-          onboarding: { label: 'Onboarding', cls: 'bg-blue-50 text-blue-600' },
-          paused: { label: 'En pause', cls: 'bg-gray-100 text-gray-500' },
-        }
-        const s = config[row.original.status]
-        return <span className={cn('text-xs font-medium px-2.5 py-1 rounded inline-block', s.cls)}>{s.label}</span>
-      },
     },
     {
       accessorKey: 'postCount',
@@ -216,17 +193,6 @@ export default function ClientsPage() {
           collapsedWidth={140}
           expandedWidth={260}
           expandedOffset={40}
-        />
-        <GooeyNav
-          items={STATUSES.map(s => ({ label: s.label }))}
-          initialActiveIndex={0}
-          particleCount={18}
-          particleDistances={[70, 10]}
-          particleR={80}
-          animationTime={500}
-          timeVariance={400}
-          colors={[1, 2, 3, 1, 2, 3, 1, 4]}
-          onActiveChange={(index) => setStatusFilter(STATUSES[index].value)}
         />
       </div>
 
