@@ -8,6 +8,7 @@ import { formatRelative } from '@/lib/utils'
 import PulseButton from '@/components/ui/PulseButton'
 import { GooeyInput } from '@/components/ui/GooeyInput'
 import { DataTable } from '@/components/ui/DataTable'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 import type { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown } from 'lucide-react'
 import type { Client, Post, PostMetrics } from '@/types'
@@ -24,6 +25,8 @@ export default function ClientsPage() {
   const { checking } = useAuthGuard({ requireRole: 'admin' })
   const [search, setSearch] = useState('')
   const [clients, setClients] = useState<Client[]>([])
+  const [toDelete, setToDelete] = useState<Client | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [posts, setPosts] = useState<Post[]>([])
   const [metrics, setMetrics] = useState<PostMetrics[]>([])
   const [loading, setLoading] = useState(true)
@@ -129,16 +132,9 @@ export default function ClientsPage() {
       header: () => <span className="text-xs font-semibold uppercase tracking-wider text-blanc-muted">Actions</span>,
       cell: ({ row }) => (
         <button
-          onClick={async (e) => {
+          onClick={(e) => {
             e.stopPropagation()
-            const name = row.original.name
-            const ok = window.confirm(
-              `Supprimer définitivement ${name} ?\n\nCette action est irréversible : tous les posts, messages, réponses d'onboarding et métriques liés seront aussi supprimés.`
-            )
-            if (!ok) return
-            const done = await deleteClient(row.original.id)
-            if (!done) { alert('Erreur lors de la suppression.'); return }
-            setClients(prev => prev.filter(c => c.id !== row.original.id))
+            setToDelete(row.original)
           }}
           title="Supprimer le client"
           className="inline-flex items-center justify-center rounded-lg text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
@@ -202,6 +198,29 @@ export default function ClientsPage() {
         data={rows}
         globalFilter={search}
         onRowClick={(row) => router.push(`/clients/${row.id}`)}
+      />
+
+      <ConfirmModal
+        open={!!toDelete}
+        danger
+        title="Supprimer ce client ?"
+        message={
+          toDelete
+            ? `${toDelete.name}${toDelete.company ? ' — ' + toDelete.company : ''} sera supprimé définitivement. Tous ses posts, messages, réponses d'onboarding et métriques le seront aussi. Cette action est irréversible.`
+            : ''
+        }
+        confirmLabel={deleting ? 'Suppression…' : 'Supprimer'}
+        cancelLabel="Annuler"
+        onCancel={() => { if (!deleting) setToDelete(null) }}
+        onConfirm={async () => {
+          if (!toDelete || deleting) return
+          setDeleting(true)
+          const done = await deleteClient(toDelete.id)
+          setDeleting(false)
+          if (!done) { alert("Erreur lors de la suppression."); return }
+          setClients(prev => prev.filter(c => c.id !== toDelete.id))
+          setToDelete(null)
+        }}
       />
     </div>
   )
