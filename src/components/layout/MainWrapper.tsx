@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 
 export default function MainWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const fullBleed = pathname.startsWith('/onboarding') || pathname.startsWith('/portal')
+  const fullBleed = pathname.startsWith('/onboarding') || pathname.startsWith('/portal') || pathname.startsWith('/login')
 
   if (fullBleed) {
     return <main style={{ minHeight: '100vh' }}>{children}</main>
