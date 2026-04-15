@@ -39,6 +39,17 @@ export async function signOut() {
   await supabase.auth.signOut()
 }
 
+export async function sendResetEmail(email: string) {
+  const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : undefined
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+  return { error: error?.message || null }
+}
+
+export async function updatePassword(newPassword: string) {
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  return { error: error?.message || null }
+}
+
 export async function getSession() {
   const { data } = await supabase.auth.getSession()
   return data.session
