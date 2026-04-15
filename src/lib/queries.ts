@@ -104,6 +104,7 @@ export async function createPost(post: {
   publishedAt: string
   status: 'draft' | 'scheduled' | 'published'
   images?: string[]
+  files?: { name: string; url: string; size?: number }[]
 }): Promise<Post | null> {
   const { data, error } = await supabase
     .from('posts')
@@ -114,6 +115,7 @@ export async function createPost(post: {
       published_at: post.publishedAt,
       status: post.status,
       images: post.images || [],
+      files: post.files || [],
     })
     .select()
     .single()

@@ -14,6 +14,8 @@ export type Client = {
 
 export type PostStatus = 'draft' | 'published' | 'scheduled'
 
+export type PostFile = { name: string; url: string; size?: number }
+
 export type Post = {
   id: string
   clientId: string
@@ -21,6 +23,7 @@ export type Post = {
   publishedAt: string
   status: PostStatus
   linkedinUrl?: string
+  files?: PostFile[]
 }
 
 export type PostMetrics = {
