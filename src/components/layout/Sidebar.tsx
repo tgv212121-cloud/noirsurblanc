@@ -21,8 +21,8 @@ export default function Sidebar() {
   const mouseX = useMotionValue(Infinity)
   const pathname = usePathname()
 
-  // Hide dock on portal pages
-  if (pathname.startsWith('/portal')) return null
+  // Hide dock on public client-facing pages
+  if (pathname.startsWith('/portal') || pathname.startsWith('/onboarding')) return null
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">

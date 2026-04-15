@@ -7,9 +7,9 @@ export default function ProgressBar({ current, total }: { current: number; total
 
   return (
     <div className="px-8 md:px-16">
-      <div className="relative w-full h-px bg-blanc/[0.08]">
+      <div className="relative w-full h-px bg-white/[0.06]">
         <motion.div
-          className="absolute top-0 left-0 h-full bg-gold"
+          className="absolute top-0 left-0 h-full bg-gradient-to-r from-gold-dark via-gold to-gold-light"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}

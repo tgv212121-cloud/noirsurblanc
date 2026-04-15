@@ -1,13 +1,22 @@
 import type { Metadata } from "next";
-import { Jost } from "next/font/google";
+import { Jost, Bodoni_Moda } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/layout/Sidebar";
+import MainWrapper from "@/components/layout/MainWrapper";
 
 const jost = Jost({
   subsets: ["latin"],
   variable: "--font-body",
   display: "swap",
   weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
+});
+
+const bodoni = Bodoni_Moda({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
 });
 
@@ -22,14 +31,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`h-full ${jost.variable}`}>
+    <html lang="fr" className={`h-full ${jost.variable} ${bodoni.variable}`}>
       <body className="h-full">
         <Sidebar />
-        <main style={{ minHeight: '100vh' }}>
-          <div style={{ padding: '32px 60px 120px 60px' }}>
-            {children}
-          </div>
-        </main>
+        <MainWrapper>{children}</MainWrapper>
       </body>
     </html>
   );

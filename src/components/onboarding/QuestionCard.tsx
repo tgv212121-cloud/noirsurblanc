@@ -23,15 +23,17 @@ const variants = {
   }),
 }
 
+type Answer = string | Record<number, string> | undefined
+
 type Props = {
   question: Question
-  answer: string | Record<number, string> | undefined
-  onAnswer: (questionId: number, value: string | Record<number, string>) => void
+  answer: Answer
+  onAnswer: (id: number, value: string | Record<number, string>) => void
   direction: number
 }
 
 export default function QuestionCard({ question, answer, onAnswer, direction }: Props) {
-  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null)
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null)
   const Icon = questionIcons[question.id - 1]
 
   useEffect(() => {
@@ -42,16 +44,19 @@ export default function QuestionCard({ question, answer, onAnswer, direction }: 
   }, [question.id])
 
   const handleChange = (value: string, fieldIndex?: number) => {
-    if ((question.type === 'multi-input' || question.type === 'triple-input') && fieldIndex !== undefined) {
-      const currentAnswer = (answer as Record<number, string>) || {}
-      onAnswer(question.id, { ...currentAnswer, [fieldIndex]: value })
+    if (question.type === 'multi-input' || question.type === 'triple-input') {
+      const currentAnswer = (typeof answer === 'object' ? answer : {}) as Record<number, string>
+      onAnswer(question.id, { ...currentAnswer, [fieldIndex!]: value })
     } else {
       onAnswer(question.id, value)
     }
   }
 
-  const inputClasses = "w-full bg-noir-card border border-blanc/[0.08] px-6 py-5 text-blanc text-[15px] font-body placeholder:text-blanc-muted/25 focus:border-gold/30 focus:bg-noir-elevated transition-all duration-500 hover:border-gold/30 outline-none"
-  const smallInputClasses = "flex-1 bg-noir-card border border-blanc/[0.08] px-5 py-4 text-blanc text-sm font-body placeholder:text-blanc-muted/25 focus:border-gold/30 focus:bg-noir-elevated transition-all duration-500 hover:border-gold/30 outline-none"
+  const inputClasses = "w-full bg-white/[0.02] border border-white/[0.07] rounded-2xl px-6 py-5 text-blanc text-[15px] font-body placeholder:text-blanc-muted/25 focus:border-gold/30 focus:bg-white/[0.04] focus:shadow-[0_0_30px_rgba(202,138,4,0.05)] transition-all duration-500 hover:border-white/[0.12] outline-none"
+  const smallInputClasses = "flex-1 bg-white/[0.02] border border-white/[0.07] rounded-xl px-5 py-4 text-blanc text-sm font-body placeholder:text-blanc-muted/25 focus:border-gold/30 focus:bg-white/[0.04] focus:shadow-[0_0_30px_rgba(202,138,4,0.05)] transition-all duration-500 hover:border-white/[0.12] outline-none"
+
+  const obj = (typeof answer === 'object' ? answer : {}) as Record<number, string>
+  const str = typeof answer === 'string' ? answer : ''
 
   return (
     <motion.div
@@ -70,7 +75,7 @@ export default function QuestionCard({ question, answer, onAnswer, direction }: 
           className="inline-flex items-center gap-2.5 mb-6"
         >
           {Icon && (
-            <div className="flex items-center justify-center w-8 h-8 bg-gold-muted text-gold">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gold-muted text-gold">
               <Icon width={16} height={16} />
             </div>
           )}
@@ -107,38 +112,39 @@ export default function QuestionCard({ question, answer, onAnswer, direction }: 
       >
         {question.type === 'textarea' && (
           <textarea
-            ref={inputRef as React.RefObject<HTMLTextAreaElement>}
-            value={(answer as string) || ''}
+            ref={el => { inputRef.current = el }}
+            value={str}
             onChange={(e) => handleChange(e.target.value)}
             placeholder={question.placeholder}
             rows={question.large ? 5 : 3}
-            className={inputClasses + ' resize-none'}
+            className={inputClasses}
+            style={{ resize: 'none' }}
           />
         )}
 
         {question.type === 'text' && (
           <input
-            ref={inputRef as React.RefObject<HTMLInputElement>}
+            ref={el => { inputRef.current = el }}
             type="text"
-            value={(answer as string) || ''}
+            value={str}
             onChange={(e) => handleChange(e.target.value)}
             placeholder={question.placeholder}
             className={inputClasses}
           />
         )}
 
-        {question.type === 'multi-input' && question.fields && (
+        {question.type === 'multi-input' && (
           <div className="space-y-3">
-            {question.fields.map((field, index) => (
+            {question.fields!.map((field, index) => (
               <div key={index} className="flex items-center gap-4">
                 <span className="text-gold/80 font-heading text-sm w-16 shrink-0 text-right italic">
                   {field.label}
                 </span>
-                <div className="w-px h-8 bg-blanc/[0.06]" />
+                <div className="w-px h-8 bg-white/[0.06]" />
                 <input
-                  ref={index === 0 ? inputRef as React.RefObject<HTMLInputElement> : null}
+                  ref={index === 0 ? el => { inputRef.current = el } : undefined}
                   type="text"
-                  value={((answer as Record<number, string>)?.[index]) || ''}
+                  value={obj[index] || ''}
                   onChange={(e) => handleChange(e.target.value, index)}
                   placeholder={field.placeholder}
                   className={smallInputClasses}
@@ -148,17 +154,17 @@ export default function QuestionCard({ question, answer, onAnswer, direction }: 
           </div>
         )}
 
-        {question.type === 'triple-input' && question.fields && (
+        {question.type === 'triple-input' && (
           <div className="space-y-3">
-            {question.fields.map((field, index) => (
+            {question.fields!.map((field, index) => (
               <div key={index} className="flex items-center gap-4">
-                <div className="flex items-center justify-center w-8 h-8 border border-gold/20 text-gold font-heading text-sm shrink-0">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg border border-gold/20 text-gold font-heading text-sm shrink-0">
                   {index + 1}
                 </div>
                 <input
-                  ref={index === 0 ? inputRef as React.RefObject<HTMLInputElement> : null}
+                  ref={index === 0 ? el => { inputRef.current = el } : undefined}
                   type="text"
-                  value={((answer as Record<number, string>)?.[index]) || ''}
+                  value={obj[index] || ''}
                   onChange={(e) => handleChange(e.target.value, index)}
                   placeholder={field.placeholder}
                   className={smallInputClasses}

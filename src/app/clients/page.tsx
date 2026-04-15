@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchClients, fetchPosts, fetchMetrics } from '@/lib/queries'
 import { formatRelative, cn } from '@/lib/utils'
-import Link from 'next/link'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
 import PulseButton from '@/components/ui/PulseButton'
 import { GooeyInput } from '@/components/ui/GooeyInput'
@@ -156,9 +155,25 @@ export default function ClientsPage() {
           <h1 className="text-2xl font-semibold text-blanc">Clients</h1>
           <p className="text-sm text-blanc-muted mt-1">{rows.length} clients</p>
         </div>
-        <Link href="/onboarding">
-          <PulseButton>+ Nouveau client</PulseButton>
-        </Link>
+        <PulseButton
+          onClick={() => {
+            const name = prompt('Nom complet du client ?')
+            if (!name) return
+            const company = prompt('Entreprise ?') || ''
+            const email = prompt('Email ?') || ''
+            import('@/lib/queries').then(({ createClient }) =>
+              createClient({ name, company, email }).then(c => {
+                if (!c) { alert('Erreur création'); return }
+                const url = `${window.location.origin}/onboarding?client=${c.id}`
+                navigator.clipboard.writeText(url)
+                alert(`Lien d'onboarding copié :\n\n${url}\n\nEnvoie-le au client par WhatsApp / email.`)
+                window.location.reload()
+              })
+            )
+          }}
+        >
+          + Inviter un client
+        </PulseButton>
       </div>
 
       {/* Toolbar */}
