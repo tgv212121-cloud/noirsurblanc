@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect, useCallback } from 'react'
 import { useAuthGuard } from '@/lib/useAuthGuard'
-import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders, createPost } from '@/lib/queries'
+import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders, createPost, fetchOnboardingAnswers } from '@/lib/queries'
 import { formatNumber, formatDate, formatRelative, cn } from '@/lib/utils'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -38,10 +38,14 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const [calendarMonth, setCalendarMonth] = useState(now.getMonth())
   const [calendarYear, setCalendarYear] = useState(now.getFullYear())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [onboardingAnswers, setOnboardingAnswers] = useState<Record<number, unknown>>({})
 
   useEffect(() => {
-    Promise.all([fetchClient(id), fetchClientPosts(id), fetchMetrics(), fetchReminders()]).then(([c, p, m, r]) => {
-      setClient(c); setInitialPosts(p); setMetrics(m); setReminders(r.filter(x => x.clientId === id)); setLoading(false)
+    Promise.all([
+      fetchClient(id), fetchClientPosts(id), fetchMetrics(), fetchReminders(), fetchOnboardingAnswers(id),
+    ]).then(([c, p, m, r, a]) => {
+      setClient(c); setInitialPosts(p); setMetrics(m); setReminders(r.filter(x => x.clientId === id))
+      setOnboardingAnswers(a); setLoading(false)
     })
   }, [id])
 
@@ -409,7 +413,11 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
             </div>
 
             <div className="space-y-6">
-              {questions.map((q, i) => (
+              {questions.map((q, i) => {
+                const raw = onboardingAnswers[q.id]
+                const objAnswer = (raw && typeof raw === 'object') ? raw as Record<string, string> : null
+                const strAnswer = typeof raw === 'string' ? raw : null
+                return (
                 <div key={q.id} className="bg-noir-elevated rounded-xl" style={{ padding: '24px 28px' }}>
                   <div className="flex items-start gap-4">
                     <span className="text-xs font-medium text-blanc-muted shrink-0" style={{ padding: '4px 10px', backgroundColor: 'var(--noir-card)', borderRadius: '6px', marginTop: '2px' }}>
@@ -419,38 +427,56 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                       <p className="text-sm font-medium text-blanc mb-3">{q.question}</p>
                       {q.subtitle && <p className="text-xs text-blanc-muted mb-3">{q.subtitle}</p>}
 
-                      {/* Mock answers based on question type */}
                       {q.type === 'multi-input' && q.fields ? (
                         <div className="space-y-2">
-                          {q.fields.map((field, fi) => (
+                          {q.fields.map((field, fi) => {
+                            const v = objAnswer?.[fi as unknown as string] ?? objAnswer?.[String(fi)]
+                            return (
                             <div key={fi} className="flex items-center gap-3">
                               <span className="text-xs text-gold font-medium" style={{ width: '60px' }}>{field.label}</span>
                               <div className="flex-1 bg-noir-card rounded-lg" style={{ padding: '10px 14px' }}>
-                                <p className="text-sm text-blanc-muted italic">Non renseigné</p>
+                                {v && v.trim() ? (
+                                  <p className="text-sm text-blanc whitespace-pre-line">{v}</p>
+                                ) : (
+                                  <p className="text-sm text-blanc-muted italic">Non renseigné</p>
+                                )}
                               </div>
                             </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       ) : q.type === 'triple-input' && q.fields ? (
                         <div className="space-y-2">
-                          {q.fields.map((field, fi) => (
+                          {q.fields.map((field, fi) => {
+                            const v = objAnswer?.[fi as unknown as string] ?? objAnswer?.[String(fi)]
+                            return (
                             <div key={fi} className="flex items-center gap-3">
                               <span className="text-xs font-medium flex items-center justify-center rounded-lg" style={{ width: '28px', height: '28px', backgroundColor: 'var(--noir-card)', color: 'var(--gold)' }}>{fi + 1}</span>
                               <div className="flex-1 bg-noir-card rounded-lg" style={{ padding: '10px 14px' }}>
-                                <p className="text-sm text-blanc-muted italic">Non renseigné</p>
+                                {v && v.trim() ? (
+                                  <p className="text-sm text-blanc whitespace-pre-line">{v}</p>
+                                ) : (
+                                  <p className="text-sm text-blanc-muted italic">Non renseigné</p>
+                                )}
                               </div>
                             </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       ) : (
                         <div className="bg-noir-card rounded-lg" style={{ padding: '14px 18px' }}>
-                          <p className="text-sm text-blanc-muted italic">Non renseigné</p>
+                          {strAnswer && strAnswer.trim() ? (
+                            <p className="text-sm text-blanc whitespace-pre-line leading-relaxed">{strAnswer}</p>
+                          ) : (
+                            <p className="text-sm text-blanc-muted italic">Non renseigné</p>
+                          )}
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
           </motion.div>
         )}
