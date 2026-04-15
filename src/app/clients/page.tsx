@@ -1,12 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { fetchClients, fetchPosts, fetchMetrics } from '@/lib/queries'
 import { formatRelative, cn } from '@/lib/utils'
 import Link from 'next/link'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
 import PulseButton from '@/components/ui/PulseButton'
 import { GooeyInput } from '@/components/ui/GooeyInput'
+import { DataTable } from '@/components/ui/DataTable'
+import type { ColumnDef } from '@tanstack/react-table'
+import { ArrowUpDown } from 'lucide-react'
 import type { Client, Post, PostMetrics, ClientStatus } from '@/types'
 
 const STATUSES: { value: ClientStatus | 'all'; label: string }[] = [
@@ -16,7 +20,15 @@ const STATUSES: { value: ClientStatus | 'all'; label: string }[] = [
   { value: 'paused', label: 'En pause' },
 ]
 
+// Enriched row type
+type ClientRow = Client & {
+  postCount: number
+  avgEngagement: number | null
+  lastPostDate: string | null
+}
+
 export default function ClientsPage() {
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<ClientStatus | 'all'>('all')
   const [clients, setClients] = useState<Client[]>([])
@@ -30,13 +42,116 @@ export default function ClientsPage() {
     })
   }, [])
 
-  const filtered = clients.filter(c => {
-    const matchesSearch = search === '' ||
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.company.toLowerCase().includes(search.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || c.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+  // Build enriched rows
+  const rows: ClientRow[] = useMemo(() => {
+    return clients
+      .filter(c => statusFilter === 'all' || c.status === statusFilter)
+      .map(client => {
+        const clientPosts = posts.filter(p => p.clientId === client.id && p.status === 'published')
+        const clientMetrics = clientPosts.map(p => metrics.find(m => m.postId === p.id)).filter(Boolean)
+        const avgEng = clientMetrics.length > 0
+          ? clientMetrics.reduce((s, m) => s + m!.engagementRate, 0) / clientMetrics.length
+          : null
+        const lastPost = [...clientPosts].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))[0]
+        return {
+          ...client,
+          postCount: clientPosts.length,
+          avgEngagement: avgEng,
+          lastPostDate: lastPost?.publishedAt || null,
+        }
+      })
+  }, [clients, posts, metrics, statusFilter])
+
+  const columns: ColumnDef<ClientRow>[] = useMemo(() => [
+    {
+      accessorKey: 'name',
+      header: ({ column }) => (
+        <button
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-blanc-muted hover:text-blanc cursor-pointer"
+        >
+          Client <ArrowUpDown className="w-3 h-3" />
+        </button>
+      ),
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-gold-muted text-gold text-xs font-medium flex items-center justify-center shrink-0">
+            {row.original.avatar}
+          </div>
+          <span className="text-sm font-medium text-blanc">{row.original.name}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'company',
+      header: ({ column }) => (
+        <button
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-blanc-muted hover:text-blanc cursor-pointer"
+        >
+          Entreprise <ArrowUpDown className="w-3 h-3" />
+        </button>
+      ),
+      cell: ({ row }) => <span className="text-sm text-blanc-muted">{row.original.company}</span>,
+    },
+    {
+      accessorKey: 'status',
+      header: 'Statut',
+      cell: ({ row }) => {
+        const config: Record<string, { label: string; cls: string }> = {
+          active: { label: 'Actif', cls: 'bg-emerald-50 text-emerald-600' },
+          onboarding: { label: 'Onboarding', cls: 'bg-blue-50 text-blue-600' },
+          paused: { label: 'En pause', cls: 'bg-gray-100 text-gray-500' },
+        }
+        const s = config[row.original.status]
+        return <span className={cn('text-xs font-medium px-2.5 py-1 rounded inline-block', s.cls)}>{s.label}</span>
+      },
+    },
+    {
+      accessorKey: 'postCount',
+      header: ({ column }) => (
+        <button
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-blanc-muted hover:text-blanc cursor-pointer"
+        >
+          Posts <ArrowUpDown className="w-3 h-3" />
+        </button>
+      ),
+      cell: ({ row }) => <span className="text-sm text-blanc font-medium">{row.original.postCount}</span>,
+    },
+    {
+      accessorKey: 'avgEngagement',
+      header: ({ column }) => (
+        <button
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-blanc-muted hover:text-blanc cursor-pointer"
+        >
+          Engagement <ArrowUpDown className="w-3 h-3" />
+        </button>
+      ),
+      cell: ({ row }) => (
+        <span className="text-sm text-gold font-medium">
+          {row.original.avgEngagement !== null ? `${row.original.avgEngagement.toFixed(1)}%` : '—'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'lastPostDate',
+      header: ({ column }) => (
+        <button
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-blanc-muted hover:text-blanc cursor-pointer"
+        >
+          Dernier post <ArrowUpDown className="w-3 h-3" />
+        </button>
+      ),
+      cell: ({ row }) => (
+        <span className="text-sm text-blanc-muted">
+          {row.original.lastPostDate ? formatRelative(row.original.lastPostDate) : '—'}
+        </span>
+      ),
+    },
+  ], [])
 
   return (
     <div>
@@ -44,7 +159,7 @@ export default function ClientsPage() {
       <div className="flex items-center justify-between mb-10">
         <div>
           <h1 className="text-2xl font-semibold text-blanc">Clients</h1>
-          <p className="text-sm text-blanc-muted mt-1">{filtered.length} clients</p>
+          <p className="text-sm text-blanc-muted mt-1">{rows.length} clients</p>
         </div>
         <Link href="/onboarding">
           <PulseButton>+ Nouveau client</PulseButton>
@@ -75,57 +190,13 @@ export default function ClientsPage() {
         />
       </div>
 
-      {/* Table */}
-      <div className="bg-noir-card border border-border rounded-lg overflow-hidden">
-        {/* Header row */}
-        <div className="grid grid-cols-[2fr_1.5fr_100px_100px_100px_100px] gap-4 px-5 py-3 border-b border-border bg-noir-light">
-          <span className="text-xs font-medium text-blanc-muted uppercase tracking-wider">Client</span>
-          <span className="text-xs font-medium text-blanc-muted uppercase tracking-wider">Entreprise</span>
-          <span className="text-xs font-medium text-blanc-muted uppercase tracking-wider">Statut</span>
-          <span className="text-xs font-medium text-blanc-muted uppercase tracking-wider">Posts</span>
-          <span className="text-xs font-medium text-blanc-muted uppercase tracking-wider">Engagement</span>
-          <span className="text-xs font-medium text-blanc-muted uppercase tracking-wider">Dernier post</span>
-        </div>
-
-        {/* Rows */}
-        {filtered.map(client => {
-          const clientPosts = posts.filter(p => p.clientId === client.id && p.status === 'published')
-          const clientMetrics = clientPosts.map(p => metrics.find(m => m.postId === p.id)).filter(Boolean)
-          const avgEngagement = clientMetrics.length > 0
-            ? (clientMetrics.reduce((s, m) => s + m!.engagementRate, 0) / clientMetrics.length).toFixed(1)
-            : '—'
-          const lastPost = [...clientPosts].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))[0]
-
-          const statusConfig: Record<string, { label: string; cls: string }> = {
-            active: { label: 'Actif', cls: 'bg-emerald-50 text-emerald-600' },
-            onboarding: { label: 'Onboarding', cls: 'bg-blue-50 text-blue-600' },
-            paused: { label: 'En pause', cls: 'bg-gray-100 text-gray-500' },
-          }
-          const status = statusConfig[client.status]
-
-          return (
-            <Link
-              key={client.id}
-              href={`/clients/${client.id}`}
-              className="grid grid-cols-[2fr_1.5fr_100px_100px_100px_100px] gap-4 px-5 py-3.5 border-b border-border last:border-b-0 hover:bg-gold-muted transition-colors duration-150 items-center"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-full bg-gold-muted text-gold text-xs font-medium flex items-center justify-center shrink-0">
-                  {client.avatar}
-                </div>
-                <span className="text-sm font-medium text-blanc truncate">{client.name}</span>
-              </div>
-              <span className="text-sm text-blanc-muted truncate">{client.company}</span>
-              <span className={cn('text-xs font-medium px-2 py-1 rounded inline-block w-fit', status.cls)}>
-                {status.label}
-              </span>
-              <span className="text-sm text-blanc">{clientPosts.length}</span>
-              <span className="text-sm text-gold font-medium">{avgEngagement !== '—' ? `${avgEngagement}%` : '—'}</span>
-              <span className="text-sm text-blanc-muted">{lastPost ? formatRelative(lastPost.publishedAt) : '—'}</span>
-            </Link>
-          )
-        })}
-      </div>
+      {/* DataTable shadcn */}
+      <DataTable
+        columns={columns}
+        data={rows}
+        globalFilter={search}
+        onRowClick={(row) => router.push(`/clients/${row.id}`)}
+      />
     </div>
   )
 }
