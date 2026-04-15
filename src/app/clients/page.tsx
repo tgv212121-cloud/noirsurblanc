@@ -6,6 +6,7 @@ import { formatRelative, cn } from '@/lib/utils'
 import Link from 'next/link'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
 import PulseButton from '@/components/ui/PulseButton'
+import { GooeyInput } from '@/components/ui/GooeyInput'
 import type { Client, Post, PostMetrics, ClientStatus } from '@/types'
 
 const STATUSES: { value: ClientStatus | 'all'; label: string }[] = [
@@ -52,12 +53,14 @@ export default function ClientsPage() {
 
       {/* Toolbar */}
       <div className="flex items-center gap-5 mb-6">
-        <input
-          type="text"
+        <GooeyInput
+          buttonLabel="Rechercher"
+          placeholder="Nom du client..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Rechercher un client..."
-          className="bg-noir-card border border-border rounded-lg px-4 py-2.5 text-sm text-blanc placeholder:text-blanc-muted/50 focus:border-gold focus:ring-1 focus:ring-gold/20 transition-all duration-200 w-72 outline-none"
+          onValueChange={setSearch}
+          collapsedWidth={140}
+          expandedWidth={260}
+          expandedOffset={40}
         />
         <GooeyNav
           items={STATUSES.map(s => ({ label: s.label }))}
