@@ -23,7 +23,8 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   // Hide dock on public client-facing pages
-  if (pathname.startsWith('/portal') || pathname.startsWith('/onboarding') || pathname.startsWith('/login')) return null
+  const publicPaths = ['/portal', '/onboarding', '/login', '/forgot-password', '/reset-password']
+  if (publicPaths.some(p => pathname.startsWith(p))) return null
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
