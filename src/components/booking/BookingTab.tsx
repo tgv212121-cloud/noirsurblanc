@@ -9,6 +9,7 @@ import {
   cancelAppointment,
 } from '@/lib/queries'
 import type { AvailabilityRule, Appointment } from '@/types'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 type Props = { clientId: string; clientName: string }
 
@@ -57,6 +58,8 @@ export default function BookingTab({ clientId, clientName }: Props) {
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [toCancel, setToCancel] = useState<Appointment | null>(null)
+  const [cancelling, setCancelling] = useState(false)
 
   useEffect(() => { load() }, [clientId])
 
@@ -113,11 +116,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
     await load()
   }
 
-  const handleCancel = async (id: string) => {
-    if (!confirm('Annuler ce rendez-vous ?')) return
-    const ok = await cancelAppointment(id)
-    if (ok) await load()
-  }
+  const handleCancelClick = (a: Appointment) => setToCancel(a)
 
   if (loading) return <p className="text-sm text-blanc-muted text-center py-12">Chargement des créneaux...</p>
 
@@ -176,7 +175,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
                       Rejoindre
                     </a>
                   )}
-                  <button onClick={() => handleCancel(a.id)} className="text-[11px] text-red-400/70 hover:text-red-400 tracking-widest uppercase cursor-pointer" style={{ padding: '8px 12px' }}>
+                  <button onClick={() => handleCancelClick(a)} className="text-[11px] text-red-400/70 hover:text-red-400 tracking-widest uppercase cursor-pointer" style={{ padding: '8px 12px' }}>
                     Annuler
                   </button>
                 </div>
@@ -270,6 +269,28 @@ export default function BookingTab({ clientId, clientName }: Props) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        open={!!toCancel}
+        danger
+        title="Annuler ce rendez-vous ?"
+        message={
+          toCancel
+            ? `Le rendez-vous du ${DAYS_SHORT[new Date(toCancel.scheduledAt).getDay()]} ${new Date(toCancel.scheduledAt).getDate()} ${MONTHS_FR[new Date(toCancel.scheduledAt).getMonth()].toLowerCase()} à ${pad(new Date(toCancel.scheduledAt).getHours())}h${pad(new Date(toCancel.scheduledAt).getMinutes())} sera annulé. Tu pourras en reprendre un autre si tu veux.`
+            : ''
+        }
+        confirmLabel={cancelling ? 'Annulation…' : 'Annuler le RDV'}
+        cancelLabel="Retour"
+        onCancel={() => { if (!cancelling) setToCancel(null) }}
+        onConfirm={async () => {
+          if (!toCancel || cancelling) return
+          setCancelling(true)
+          const ok = await cancelAppointment(toCancel.id)
+          setCancelling(false)
+          if (ok) await load()
+          setToCancel(null)
+        }}
+      />
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { getMyProfile, listProfiles, signUp, signOut, type Profile } from '@/lib
 import { fetchClients, exportAllData, fetchAvailabilityRules, upsertAvailabilityRule, deleteAvailabilityRule, fetchAppointments, cancelAppointment } from '@/lib/queries'
 import type { Client, AvailabilityRule, Appointment } from '@/types'
 import { motion } from 'framer-motion'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -443,11 +444,8 @@ function UpcomingAppointmentsCard({
   const DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
   const pad = (n: number) => n.toString().padStart(2, '0')
 
-  const handleCancel = async (id: string) => {
-    if (!confirm('Annuler ce rendez-vous ? Le client ne sera pas notifié automatiquement.')) return
-    const ok = await cancelAppointment(id)
-    if (ok) onChange()
-  }
+  const [toCancel, setToCancel] = useState<Appointment | null>(null)
+  const [cancelling, setCancelling] = useState(false)
 
   return (
     <div className="relative rounded-2xl overflow-hidden" style={{ ...cardStyle, marginBottom: '24px' }}>
@@ -490,7 +488,7 @@ function UpcomingAppointmentsCard({
                     Rejoindre
                   </a>
                 )}
-                <button onClick={() => handleCancel(a.id)}
+                <button onClick={() => setToCancel(a)}
                   className="text-[11px] text-red-400/70 hover:text-red-400 tracking-widest uppercase cursor-pointer"
                   style={{ padding: '8px 12px' }}>
                   Annuler
@@ -500,6 +498,28 @@ function UpcomingAppointmentsCard({
           )
         })}
       </div>
+
+      <ConfirmModal
+        open={!!toCancel}
+        danger
+        title="Annuler ce rendez-vous ?"
+        message={
+          toCancel
+            ? `Le rendez-vous avec ${clientsById[toCancel.clientId]?.name || 'ce client'} le ${DAYS[new Date(toCancel.scheduledAt).getDay()]} ${new Date(toCancel.scheduledAt).getDate()} ${MONTHS[new Date(toCancel.scheduledAt).getMonth()]} à ${pad(new Date(toCancel.scheduledAt).getHours())}h${pad(new Date(toCancel.scheduledAt).getMinutes())} sera annulé. Le client n'est pas notifié automatiquement, préviens-le si besoin.`
+            : ''
+        }
+        confirmLabel={cancelling ? 'Annulation…' : 'Annuler le RDV'}
+        cancelLabel="Retour"
+        onCancel={() => { if (!cancelling) setToCancel(null) }}
+        onConfirm={async () => {
+          if (!toCancel || cancelling) return
+          setCancelling(true)
+          const ok = await cancelAppointment(toCancel.id)
+          setCancelling(false)
+          if (ok) onChange()
+          setToCancel(null)
+        }}
+      />
     </div>
   )
 }
