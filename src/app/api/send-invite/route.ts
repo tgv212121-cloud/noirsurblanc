@@ -2,14 +2,54 @@ import { NextResponse } from 'next/server'
 
 const FROM = process.env.RESEND_FROM || 'Noirsurblanc <noreply@digitaltimes.fr>'
 
-function capitalize(raw: string): string {
-  const s = raw.replace(/[<>]/g, '').trim()
-  if (!s) return ''
-  return s.charAt(0).toLocaleUpperCase('fr-FR') + s.slice(1)
+// Dictionnaire de prénoms français couramment oubliés (version sans accent → version correcte)
+const ACCENTED_NAMES: Record<string, string> = {
+  // é
+  lea: 'Léa', leon: 'Léon', leonie: 'Léonie', leopold: 'Léopold', leo: 'Léo',
+  chloe: 'Chloé', zoe: 'Zoé', noe: 'Noé', noemie: 'Noémie', salome: 'Salomé',
+  amelie: 'Amélie', emile: 'Émile', emilie: 'Émilie', elise: 'Élise', elodie: 'Élodie',
+  celine: 'Céline', cedric: 'Cédric', cecile: 'Cécile', celestine: 'Célestine',
+  gerald: 'Gérald', geraldine: 'Géraldine', gerard: 'Gérard', gerome: 'Gérôme',
+  valerie: 'Valérie', valery: 'Valéry', veronique: 'Véronique',
+  nicolas: 'Nicolas', stephanie: 'Stéphanie', stephane: 'Stéphane',
+  desire: 'Désiré', deborah: 'Déborah',
+  regis: 'Régis', regine: 'Régine', remi: 'Rémi', remy: 'Rémy',
+  sebastien: 'Sébastien', severine: 'Séverine',
+  edouard: 'Édouard', evariste: 'Évariste',
+  theo: 'Théo', theodore: 'Théodore', therese: 'Thérèse',
+  // è
+  helene: 'Hélène', irene: 'Irène', genevieve: 'Geneviève',
+  solene: 'Solène', mylene: 'Mylène', marlene: 'Marlène', yvette: 'Yvette',
+  // ê
+  jerome: 'Jérôme',
+  // à
+  francois: 'François', francoise: 'Françoise',
+  // ï ë
+  loic: 'Loïc', anais: 'Anaïs', heloise: 'Héloïse', adele: 'Adèle',
+  // ç
+  // ô
+  // combinaisons communes
+  andre: 'André', agathe: 'Agathe', nadege: 'Nadège', nadia: 'Nadia',
+  esteban: 'Esteban', eva: 'Eva',
+}
+
+function normalize(raw: string): string {
+  const cleaned = raw.replace(/[<>]/g, '').trim()
+  if (!cleaned) return ''
+
+  // Capitalize each word (separated by space, hyphen, or apostrophe)
+  return cleaned.split(/(\s+|-|')/).map((token) => {
+    if (!token || /^(\s+|-|')$/.test(token)) return token
+    const lower = token.toLocaleLowerCase('fr-FR')
+    // Try dictionary lookup (strip existing accents for the key)
+    const key = lower.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    if (ACCENTED_NAMES[key]) return ACCENTED_NAMES[key]
+    return lower.charAt(0).toLocaleUpperCase('fr-FR') + lower.slice(1)
+  }).join('')
 }
 
 function buildHtml(firstName: string, inviteUrl: string) {
-  const name = capitalize(firstName)
+  const name = normalize(firstName)
   return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#0a0a0a; padding:48px 20px; font-family: Helvetica, Arial, sans-serif;">
     <tr><td align="center">
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560" style="max-width:560px;">
@@ -72,7 +112,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         from: FROM,
         to: email,
-        subject: `Bienvenue sur Noirsurblanc, ${capitalize(firstName)}`,
+        subject: `Bienvenue sur Noirsurblanc, ${normalize(firstName)}`,
         html: buildHtml(firstName, inviteUrl),
       }),
     })
