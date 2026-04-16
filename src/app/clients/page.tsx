@@ -3,22 +3,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthGuard } from '@/lib/useAuthGuard'
-import { fetchClients, fetchPosts, fetchMetrics, deleteClient } from '@/lib/queries'
-import { formatRelative } from '@/lib/utils'
+import { fetchClients, deleteClient } from '@/lib/queries'
 import PulseButton from '@/components/ui/PulseButton'
 import { GooeyInput } from '@/components/ui/GooeyInput'
-import { DataTable } from '@/components/ui/DataTable'
 import ConfirmModal from '@/components/ui/ConfirmModal'
-import type { ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown } from 'lucide-react'
-import type { Client, Post, PostMetrics } from '@/types'
-
-// Enriched row type
-type ClientRow = Client & {
-  postCount: number
-  avgEngagement: number | null
-  lastPostDate: string | null
-}
+import type { Client } from '@/types'
+import { motion } from 'framer-motion'
 
 export default function ClientsPage() {
   const router = useRouter()
@@ -27,139 +17,29 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [toDelete, setToDelete] = useState<Client | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const [posts, setPosts] = useState<Post[]>([])
-  const [metrics, setMetrics] = useState<PostMetrics[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([fetchClients(), fetchPosts(), fetchMetrics()]).then(([c, p, m]) => {
-      setClients(c); setPosts(p); setMetrics(m); setLoading(false)
-    })
+    fetchClients().then(c => { setClients(c); setLoading(false) })
   }, [])
 
-  // Build enriched rows
-  const rows: ClientRow[] = useMemo(() => {
-    return clients
-      .map(client => {
-        const clientPosts = posts.filter(p => p.clientId === client.id && p.status === 'published')
-        const clientMetrics = clientPosts.map(p => metrics.find(m => m.postId === p.id)).filter(Boolean)
-        const avgEng = clientMetrics.length > 0
-          ? clientMetrics.reduce((s, m) => s + m!.engagementRate, 0) / clientMetrics.length
-          : null
-        const lastPost = [...clientPosts].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))[0]
-        return {
-          ...client,
-          postCount: clientPosts.length,
-          avgEngagement: avgEng,
-          lastPostDate: lastPost?.publishedAt || null,
-        }
-      })
-  }, [clients, posts, metrics])
-
-  const columns: ColumnDef<ClientRow>[] = useMemo(() => [
-    {
-      accessorKey: 'name',
-      header: ({ column }) => (
-        <button
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-blanc-muted hover:text-blanc cursor-pointer"
-        >
-          Client <ArrowUpDown className="w-3 h-3" />
-        </button>
-      ),
-      cell: ({ row }) => (
-        <span className="text-sm font-medium text-blanc">{row.original.name}</span>
-      ),
-    },
-    {
-      accessorKey: 'company',
-      header: ({ column }) => (
-        <button
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-blanc-muted hover:text-blanc cursor-pointer"
-        >
-          Entreprise <ArrowUpDown className="w-3 h-3" />
-        </button>
-      ),
-      cell: ({ row }) => <span className="text-sm text-blanc-muted">{row.original.company}</span>,
-    },
-    {
-      accessorKey: 'postCount',
-      header: ({ column }) => (
-        <button
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-blanc-muted hover:text-blanc cursor-pointer"
-        >
-          Posts <ArrowUpDown className="w-3 h-3" />
-        </button>
-      ),
-      cell: ({ row }) => <span className="text-sm text-blanc font-medium">{row.original.postCount}</span>,
-    },
-    {
-      accessorKey: 'avgEngagement',
-      header: ({ column }) => (
-        <button
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-blanc-muted hover:text-blanc cursor-pointer"
-        >
-          Engagement <ArrowUpDown className="w-3 h-3" />
-        </button>
-      ),
-      cell: ({ row }) => (
-        <span className="text-sm text-gold font-medium">
-          {row.original.avgEngagement !== null ? `${row.original.avgEngagement.toFixed(1)}%` : '—'}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'lastPostDate',
-      header: ({ column }) => (
-        <button
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-blanc-muted hover:text-blanc cursor-pointer"
-        >
-          Dernier post <ArrowUpDown className="w-3 h-3" />
-        </button>
-      ),
-      cell: ({ row }) => (
-        <span className="text-sm text-blanc-muted">
-          {row.original.lastPostDate ? formatRelative(row.original.lastPostDate) : '—'}
-        </span>
-      ),
-    },
-    {
-      id: 'actions',
-      header: () => null,
-      size: 48,
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setToDelete(row.original)
-            }}
-            title="Supprimer"
-            className="inline-flex items-center justify-center rounded-md text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-            style={{ width: '28px', height: '28px' }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-            </svg>
-          </button>
-        </div>
-      ),
-    },
-  ], [])
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return clients
+    return clients.filter(c =>
+      c.name.toLowerCase().includes(q) || (c.company || '').toLowerCase().includes(q)
+    )
+  }, [clients, search])
 
   if (checking) return <p className="text-sm text-blanc-muted text-center py-20">Chargement...</p>
 
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-10">
+      <div className="flex items-end justify-between" style={{ marginBottom: '36px' }}>
         <div>
-          <h1 className="text-2xl font-semibold text-blanc">Clients</h1>
-          <p className="text-sm text-blanc-muted mt-1">{rows.length} clients</p>
+          <h1 className="font-heading text-4xl font-medium text-blanc italic leading-none" style={{ marginBottom: '10px' }}>Clients</h1>
+          <p className="text-sm text-blanc-muted/70">{clients.length} client{clients.length > 1 ? 's' : ''}</p>
         </div>
         <PulseButton
           onClick={() => {
@@ -172,7 +52,7 @@ export default function ClientsPage() {
                 if (!c) { alert('Erreur création'); return }
                 const url = `${window.location.origin}/onboarding?client=${c.id}`
                 navigator.clipboard.writeText(url)
-                alert(`Lien d'onboarding copié :\n\n${url}\n\nEnvoie-le au client par WhatsApp / email.`)
+                alert(`Lien d'onboarding copié :\n\n${url}\n\nEnvoie-le au client.`)
                 window.location.reload()
               })
             )
@@ -182,8 +62,8 @@ export default function ClientsPage() {
         </PulseButton>
       </div>
 
-      {/* Toolbar */}
-      <div className="flex items-center gap-5 mb-6">
+      {/* Search */}
+      <div style={{ marginBottom: '28px' }}>
         <GooeyInput
           buttonLabel="Rechercher"
           placeholder="Nom du client..."
@@ -195,13 +75,102 @@ export default function ClientsPage() {
         />
       </div>
 
-      {/* DataTable shadcn */}
-      <DataTable
-        columns={columns}
-        data={rows}
-        globalFilter={search}
-        onRowClick={(row) => router.push(`/clients/${row.id}`)}
-      />
+      {/* Grid of client cards */}
+      {loading ? (
+        <p className="text-sm text-blanc-muted text-center py-20">Chargement...</p>
+      ) : filtered.length === 0 ? (
+        <div className="relative rounded-2xl overflow-hidden text-center"
+          style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.09)', padding: '60px 28px' }}>
+          <p className="text-sm text-blanc-muted">
+            {search ? `Aucun client ne correspond à "${search}".` : "Aucun client pour l'instant. Clique sur “Inviter un client”."}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filtered.map((c, i) => {
+            const initials = (c.avatar || c.name.split(/\s+/).map(w => w[0]).filter(Boolean).slice(0, 2).join('') || '?').toUpperCase()
+            return (
+              <motion.div
+                key={c.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: Math.min(i * 0.03, 0.3) }}
+              >
+                <button
+                  onClick={() => router.push(`/clients/${c.id}`)}
+                  className="group relative w-full text-left rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
+                  style={{
+                    background: 'rgba(255,255,255,0.025)',
+                    border: '1px solid rgba(255,255,255,0.09)',
+                    padding: '22px 22px 20px',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.045)'
+                    e.currentTarget.style.borderColor = 'rgba(202,138,4,0.25)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.025)'
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)'
+                  }}
+                >
+                  <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+
+                  {/* Delete button (top-right, appears on hover) */}
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setToDelete(c)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setToDelete(c)
+                      }
+                    }}
+                    title="Supprimer"
+                    className="absolute flex items-center justify-center rounded-md text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
+                    style={{ top: '12px', right: '12px', width: '28px', height: '28px' }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </span>
+
+                  {/* Avatar */}
+                  <div
+                    className="flex items-center justify-center font-heading italic group-hover:scale-105 transition-transform duration-200"
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '14px',
+                      background: 'rgba(202,138,4,0.12)',
+                      border: '1px solid rgba(202,138,4,0.3)',
+                      color: '#ca8a04',
+                      fontSize: '16px',
+                      marginBottom: '14px',
+                    }}
+                  >
+                    {initials}
+                  </div>
+
+                  {/* Name */}
+                  <p className="text-[15px] font-medium text-blanc truncate group-hover:text-gold transition-colors duration-200">
+                    {c.name}
+                  </p>
+                  {c.company && (
+                    <p className="text-xs text-blanc-muted/65 truncate" style={{ marginTop: '4px' }}>
+                      {c.company}
+                    </p>
+                  )}
+                </button>
+              </motion.div>
+            )
+          })}
+        </div>
+      )}
 
       <ConfirmModal
         open={!!toDelete}
@@ -221,7 +190,7 @@ export default function ClientsPage() {
           const done = await deleteClient(toDelete.id)
           setDeleting(false)
           if (!done) { alert("Erreur lors de la suppression."); return }
-          setClients(prev => prev.filter(c => c.id !== toDelete.id))
+          setClients(prev => prev.filter(x => x.id !== toDelete.id))
           setToDelete(null)
         }}
       />
