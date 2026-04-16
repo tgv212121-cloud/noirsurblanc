@@ -32,9 +32,18 @@ export function FloatingDock({
       onMouseMove={(e) => mouseX.set(e.pageX)}
       onMouseLeave={() => mouseX.set(Infinity)}
       className={cn(
-        'mx-auto flex items-end gap-6 rounded-2xl px-6 pb-3 pt-3',
+        'mx-auto flex items-end rounded-3xl',
         className
       )}
+      style={{
+        gap: '28px',
+        padding: '14px 28px',
+        background: 'rgba(20,20,20,0.8)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset',
+      }}
       style={{
         background: 'rgba(20,20,20,0.8)',
         backdropFilter: 'blur(20px) saturate(180%)',
