@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getMyProfile, listProfiles, signUp, signOut, type Profile } from '@/lib/auth'
-import { fetchClients } from '@/lib/queries'
+import { fetchClients, exportAllData } from '@/lib/queries'
 import type { Client } from '@/types'
 import { motion } from 'framer-motion'
 
@@ -20,6 +20,8 @@ export default function SettingsPage() {
   const [newClientId, setNewClientId] = useState('')
   const [creating, setCreating] = useState(false)
   const [feedback, setFeedback] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [lastExport, setLastExport] = useState<string | null>(null)
 
   useEffect(() => {
     (async () => {
@@ -29,8 +31,36 @@ export default function SettingsPage() {
       setMe(p)
       const [allP, allC] = await Promise.all([listProfiles(), fetchClients()])
       setProfiles(allP); setClients(allC); setLoading(false)
+      if (typeof window !== 'undefined') {
+        setLastExport(localStorage.getItem('noirsurblanc:lastExport'))
+      }
     })()
   }, [router])
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const data = await exportAllData()
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+      a.href = url
+      a.download = `noirsurblanc-backup-${ts}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      const now = new Date().toISOString()
+      localStorage.setItem('noirsurblanc:lastExport', now)
+      setLastExport(now)
+    } catch (e) {
+      console.error(e)
+      alert("Erreur pendant l'export. Réessaye.")
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -93,6 +123,45 @@ export default function SettingsPage() {
         <StatMini label="Mon rôle" value={me.role.toUpperCase()} accent sub={me.email || '—'} />
         <StatMini label="Administrateurs" value={adminCount.toString()} />
         <StatMini label="Comptes clients" value={clientCount.toString()} />
+      </div>
+
+      {/* Backup card */}
+      <div className="relative rounded-2xl overflow-hidden" style={{ ...cardStyle, marginBottom: '24px' }}>
+        <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+        <div className="flex items-center gap-3" style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
+          <h2 className="font-heading text-lg text-blanc italic">Sauvegarde des données</h2>
+        </div>
+        <div className="flex items-start justify-between gap-6 flex-wrap" style={{ padding: '24px' }}>
+          <div className="flex-1" style={{ minWidth: '280px' }}>
+            <p className="text-sm text-blanc/90 leading-relaxed" style={{ marginBottom: '8px' }}>
+              Exporte tout ton compte Noirsurblanc en un clic : clients, posts, messages, réponses d&apos;onboarding, stats.
+            </p>
+            <p className="text-xs text-blanc-muted/70 leading-relaxed">
+              Garde ce fichier en lieu sûr (Drive, Dropbox, disque externe). Fais-le une fois par semaine pour être serein.
+            </p>
+            {lastExport && (
+              <p className="text-xs text-gold/80" style={{ marginTop: '12px' }}>
+                Dernière sauvegarde : {new Date(lastExport).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="group relative flex items-center justify-center gap-3 cursor-pointer disabled:opacity-40 shrink-0"
+            style={{ padding: '14px 28px' }}
+          >
+            <div className="absolute inset-0 rounded-xl bg-gold/25 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-gold-dark via-gold to-gold-light border border-gold/30" />
+            <svg className="relative z-10 text-noir" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>
+            </svg>
+            <span className="relative z-10 text-noir font-semibold tracking-[0.12em] uppercase" style={{ fontSize: '12px' }}>
+              {exporting ? 'Export…' : 'Télécharger la sauvegarde'}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Two columns : create form + list */}

@@ -26,6 +26,37 @@ export async function fetchClient(id: string): Promise<Client | null> {
   return data ? mapClient(data) : null
 }
 
+export async function exportAllData(): Promise<{
+  exportedAt: string
+  clients: unknown[]
+  posts: unknown[]
+  metrics: unknown[]
+  reminders: unknown[]
+  messages: unknown[]
+  onboarding_answers: unknown[]
+  profiles: unknown[]
+}> {
+  const [clients, posts, metrics, reminders, messages, onboarding, profiles] = await Promise.all([
+    supabase.from('clients').select('*'),
+    supabase.from('posts').select('*'),
+    supabase.from('metrics').select('*'),
+    supabase.from('reminders').select('*'),
+    supabase.from('messages').select('*'),
+    supabase.from('onboarding_answers').select('*'),
+    supabase.from('profiles').select('*'),
+  ])
+  return {
+    exportedAt: new Date().toISOString(),
+    clients: clients.data || [],
+    posts: posts.data || [],
+    metrics: metrics.data || [],
+    reminders: reminders.data || [],
+    messages: messages.data || [],
+    onboarding_answers: onboarding.data || [],
+    profiles: profiles.data || [],
+  }
+}
+
 export async function deleteClient(id: string): Promise<boolean> {
   const { error } = await supabase.from('clients').delete().eq('id', id)
   if (error) { console.error('deleteClient', error); return false }
