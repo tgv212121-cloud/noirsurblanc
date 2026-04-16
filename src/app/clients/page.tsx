@@ -7,6 +7,7 @@ import { fetchClients, deleteClient } from '@/lib/queries'
 import PulseButton from '@/components/ui/PulseButton'
 import { GooeyInput } from '@/components/ui/GooeyInput'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import InviteClientModal from '@/components/ui/InviteClientModal'
 import type { Client } from '@/types'
 import { motion } from 'framer-motion'
 
@@ -17,6 +18,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [toDelete, setToDelete] = useState<Client | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -41,23 +43,7 @@ export default function ClientsPage() {
           <h1 className="font-heading text-4xl font-medium text-blanc italic leading-none" style={{ marginBottom: '10px' }}>Clients</h1>
           <p className="text-sm text-blanc-muted/70">{clients.length} client{clients.length > 1 ? 's' : ''}</p>
         </div>
-        <PulseButton
-          onClick={() => {
-            const name = prompt('Nom complet du client ?')
-            if (!name) return
-            const company = prompt('Entreprise ?') || ''
-            const email = prompt('Email ?') || ''
-            import('@/lib/queries').then(({ createClient }) =>
-              createClient({ name, company, email }).then(c => {
-                if (!c) { alert('Erreur création'); return }
-                const url = `${window.location.origin}/onboarding?client=${c.id}`
-                navigator.clipboard.writeText(url)
-                alert(`Lien d'onboarding copié :\n\n${url}\n\nEnvoie-le au client.`)
-                window.location.reload()
-              })
-            )
-          }}
-        >
+        <PulseButton onClick={() => setInviteOpen(true)}>
           + Inviter un client
         </PulseButton>
       </div>
@@ -151,6 +137,12 @@ export default function ClientsPage() {
           ))}
         </div>
       )}
+
+      <InviteClientModal
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        onCreated={(c) => { setClients(prev => [c, ...prev]) }}
+      />
 
       <ConfirmModal
         open={!!toDelete}
