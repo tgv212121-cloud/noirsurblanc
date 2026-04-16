@@ -105,17 +105,9 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
     <div>
       {/* Header */}
       <header className="flex items-start justify-between mb-12">
-        <div className="flex items-center gap-4">
-          <div
-            className="flex items-center justify-center text-white text-lg font-semibold rounded-xl"
-            style={{ width: '48px', height: '48px', backgroundColor: '#8b5cf6' }}
-          >
-            {client.avatar}
-          </div>
-          <div>
-            <p className="text-blanc-muted text-xs uppercase tracking-wider mb-1">Espace client</p>
-            <h1 className="text-2xl font-bold text-blanc">{client.name}</h1>
-          </div>
+        <div>
+          <p className="text-blanc-muted text-xs uppercase tracking-wider mb-1">Espace client</p>
+          <h1 className="text-2xl font-bold text-blanc">{client.name}</h1>
         </div>
         <button
           onClick={async () => { await signOut(); router.push('/login') }}

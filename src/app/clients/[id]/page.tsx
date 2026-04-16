@@ -127,16 +127,11 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       {/* Client header */}
       <div className="mb-8">
         <div className="flex items-start justify-between gap-6 flex-wrap">
-          <div className="flex items-center gap-5">
-            <div className="flex items-center justify-center text-xl font-semibold rounded-xl" style={{ width: '64px', height: '64px', backgroundColor: '#8b5cf620', color: '#8b5cf6' }}>
-              {client.avatar}
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-2xl font-bold text-blanc">{client.name}</h1>
             </div>
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-bold text-blanc">{client.name}</h1>
-              </div>
-              <p className="text-base text-blanc-muted">{client.company}</p>
-            </div>
+            {client.company && <p className="text-base text-blanc-muted">{client.company}</p>}
           </div>
         </div>
 
