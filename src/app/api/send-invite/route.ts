@@ -2,7 +2,14 @@ import { NextResponse } from 'next/server'
 
 const FROM = process.env.RESEND_FROM || 'Noirsurblanc <noreply@digitaltimes.fr>'
 
+function capitalize(raw: string): string {
+  const s = raw.replace(/[<>]/g, '').trim()
+  if (!s) return ''
+  return s.charAt(0).toLocaleUpperCase('fr-FR') + s.slice(1)
+}
+
 function buildHtml(firstName: string, inviteUrl: string) {
+  const name = capitalize(firstName)
   return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#0a0a0a; padding:48px 20px; font-family: Helvetica, Arial, sans-serif;">
     <tr><td align="center">
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560" style="max-width:560px;">
@@ -18,29 +25,25 @@ function buildHtml(firstName: string, inviteUrl: string) {
         </td></tr>
         <tr><td style="background:#141414; border:1px solid rgba(255,255,255,0.08); border-radius:18px; padding:40px 36px;">
           <p style="color:#fafaf9; font-size:17px; line-height:1.6; margin:0 0 18px;">
-            Salut ${firstName.replace(/[<>]/g, '')},
+            Salut ${name},
           </p>
           <p style="color:rgba(255,255,255,0.78); font-size:15px; line-height:1.7; margin:0 0 24px;">
             Bienvenue chez Noirsurblanc. Pour qu'on puisse commencer à travailler ensemble et créer du contenu LinkedIn qui te ressemble, il me faut quelques infos sur toi.
           </p>
           <p style="color:rgba(255,255,255,0.78); font-size:15px; line-height:1.7; margin:0 0 28px;">
-            Clique sur le bouton ci-dessous pour remplir ton questionnaire d'onboarding (~10 minutes) et créer ton espace personnel.
+            Clique sur le bouton ci-dessous pour remplir ton questionnaire d'onboarding (environ 10 minutes) et créer ton espace personnel.
           </p>
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-            <tr><td align="center" style="padding:6px 0 20px;">
+            <tr><td align="center" style="padding:8px 0 6px;">
               <a href="${inviteUrl}" style="display:inline-block; background:#ca8a04; color:#0a0a0a !important; text-decoration:none; padding:18px 44px; border-radius:12px; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; font-family: Helvetica, Arial, sans-serif;">
                 Démarrer l'onboarding
               </a>
             </td></tr>
           </table>
-          <p style="color:rgba(255,255,255,0.45); font-size:13px; line-height:1.6; margin:8px 0 0;">
-            Si le bouton ne fonctionne pas, copie-colle ce lien dans ton navigateur&nbsp;:<br>
-            <a href="${inviteUrl}" style="color:#ca8a04; word-break:break-all;">${inviteUrl}</a>
-          </p>
         </td></tr>
         <tr><td align="center" style="padding-top:36px;">
           <div style="color:rgba(255,255,255,0.3); font-size:11px; letter-spacing:2px; text-transform:uppercase;">
-            Noirsurblanc — Le contenu qui travaille pour toi
+            Noirsurblanc, le contenu qui travaille pour toi
           </div>
         </td></tr>
       </table>
@@ -69,7 +72,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         from: FROM,
         to: email,
-        subject: `Bienvenue sur Noirsurblanc, ${firstName}`,
+        subject: `Bienvenue sur Noirsurblanc, ${capitalize(firstName)}`,
         html: buildHtml(firstName, inviteUrl),
       }),
     })
