@@ -32,7 +32,7 @@ export function FloatingDock({
       onMouseMove={(e) => mouseX.set(e.pageX)}
       onMouseLeave={() => mouseX.set(Infinity)}
       className={cn(
-        'mx-auto flex items-end gap-3 rounded-2xl px-4 pb-3 pt-3',
+        'mx-auto flex items-end gap-6 rounded-2xl px-6 pb-3 pt-3',
         className
       )}
       style={{
@@ -88,16 +88,8 @@ function IconContainer({
         style={{ width, height }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className="relative flex aspect-square items-center justify-center rounded-xl transition-colors duration-300"
-        whileHover={{ backgroundColor: 'rgba(202,138,4,0.12)' }}
+        className="relative flex aspect-square items-center justify-center"
       >
-        <div
-          className="absolute inset-0 rounded-xl"
-          style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.06)',
-          }}
-        />
         <AnimatePresence>
           {hovered && (
             <motion.div
@@ -118,8 +110,8 @@ function IconContainer({
           )}
         </AnimatePresence>
         <motion.div
-          style={{ width: widthIcon, height: heightIcon, color: hovered ? activeColor : 'rgba(255,255,255,0.65)' }}
-          className="relative z-10 flex items-center justify-center transition-colors"
+          style={{ width, height }}
+          className="relative z-10 flex items-center justify-center"
         >
           {icon}
         </motion.div>
