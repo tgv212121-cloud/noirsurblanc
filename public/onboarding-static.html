@@ -468,6 +468,12 @@ function renderAccount(){
       </div>
 
       <p id="acc-err" style="color:#f87171;font-size:12px;margin-top:16px;display:none"></p>
+
+      <label style="display:flex;align-items:flex-start;gap:10px;margin-top:18px;cursor:pointer;font-size:12px;color:rgba(255,255,255,0.6);line-height:1.55">
+        <input type="checkbox" id="acc-consent" style="margin-top:3px;accent-color:#ca8a04;width:14px;height:14px;flex-shrink:0">
+        <span>J'accepte les <a href="/cgu" target="_blank" style="color:#ca8a04;text-decoration:underline;text-underline-offset:3px">Conditions générales d'utilisation</a> et la <a href="/confidentialite" target="_blank" style="color:#ca8a04;text-decoration:underline;text-underline-offset:3px">Politique de confidentialité</a> de Noirsurblanc.</span>
+      </label>
+
       <div class="btn-wrap">
         <button class="btn-next" id="createAcc">Créer mon espace ${ico.arrow}</button>
       </div>
@@ -500,6 +506,8 @@ function renderAccount(){
     err.style.display='none';
     if(!email || !/^\S+@\S+\.\S+$/.test(email)){ err.textContent='Email invalide.'; err.style.display='block'; return; }
     if(!pass || pass.length<6){ err.textContent='Mot de passe trop court (6 caractères minimum).'; err.style.display='block'; return; }
+    const consent = document.getElementById('acc-consent');
+    if(!consent || !consent.checked){ err.textContent='Merci d\'accepter les CGU et la Politique de confidentialité pour continuer.'; err.style.display='block'; return; }
     btn.disabled=true; btn.textContent='Création...';
     // Ensure client record first
     const cid=await ensureClient();

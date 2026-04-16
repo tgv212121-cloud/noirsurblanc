@@ -176,6 +176,15 @@ export default function LoginPage() {
               Voici ton lien d&apos;onboarding
             </Link>
           </p>
+
+          {/* Legal footer */}
+          <div className="flex items-center justify-center gap-4 flex-wrap" style={{ marginTop: '40px' }}>
+            <Link href="/mentions-legales" className="text-[11px] text-blanc-muted/40 hover:text-blanc-muted tracking-[0.1em] uppercase transition-colors">Mentions légales</Link>
+            <span className="text-blanc-muted/20">·</span>
+            <Link href="/confidentialite" className="text-[11px] text-blanc-muted/40 hover:text-blanc-muted tracking-[0.1em] uppercase transition-colors">Confidentialité</Link>
+            <span className="text-blanc-muted/20">·</span>
+            <Link href="/cgu" className="text-[11px] text-blanc-muted/40 hover:text-blanc-muted tracking-[0.1em] uppercase transition-colors">CGU</Link>
+          </div>
         </motion.div>
       </div>
     </div>
