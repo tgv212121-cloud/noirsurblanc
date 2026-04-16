@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getMyProfile, listProfiles, signUp, signOut, type Profile } from '@/lib/auth'
-import { fetchClients, exportAllData, fetchAvailabilityRules, upsertAvailabilityRule, deleteAvailabilityRule } from '@/lib/queries'
-import type { Client, AvailabilityRule } from '@/types'
+import { fetchClients, exportAllData, fetchAvailabilityRules, upsertAvailabilityRule, deleteAvailabilityRule, fetchAppointments, cancelAppointment } from '@/lib/queries'
+import type { Client, AvailabilityRule, Appointment } from '@/types'
 import { motion } from 'framer-motion'
 
 export default function SettingsPage() {
@@ -23,6 +23,7 @@ export default function SettingsPage() {
   const [exporting, setExporting] = useState(false)
   const [lastExport, setLastExport] = useState<string | null>(null)
   const [rules, setRules] = useState<AvailabilityRule[]>([])
+  const [upcomingAppts, setUpcomingAppts] = useState<Appointment[]>([])
 
   useEffect(() => {
     (async () => {
@@ -30,8 +31,11 @@ export default function SettingsPage() {
       if (!p) { router.push('/login'); return }
       if (p.role !== 'admin') { router.push('/'); return }
       setMe(p)
-      const [allP, allC, allR] = await Promise.all([listProfiles(), fetchClients(), fetchAvailabilityRules()])
-      setProfiles(allP); setClients(allC); setRules(allR); setLoading(false)
+      const [allP, allC, allR, appts] = await Promise.all([
+        listProfiles(), fetchClients(), fetchAvailabilityRules(),
+        fetchAppointments({ fromIso: new Date().toISOString() }),
+      ])
+      setProfiles(allP); setClients(allC); setRules(allR); setUpcomingAppts(appts); setLoading(false)
       if (typeof window !== 'undefined') {
         setLastExport(localStorage.getItem('noirsurblanc:lastExport'))
       }
@@ -167,6 +171,13 @@ export default function SettingsPage() {
 
       {/* Availability (calendar slots for client bookings) */}
       <AvailabilityCard rules={rules} onChange={async () => { setRules(await fetchAvailabilityRules()) }} />
+
+      {/* Upcoming appointments (admin view) */}
+      <UpcomingAppointmentsCard
+        appointments={upcomingAppts}
+        clients={clients}
+        onChange={async () => { setUpcomingAppts(await fetchAppointments({ fromIso: new Date().toISOString() })) }}
+      />
 
       {/* Two columns : create form + list */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-6">
@@ -414,6 +425,80 @@ function AvailabilityCard({ rules, onChange }: { rules: AvailabilityRule[]; onCh
             {saving ? '...' : '+ Ajouter'}
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function UpcomingAppointmentsCard({
+  appointments, clients, onChange,
+}: {
+  appointments: Appointment[]
+  clients: Client[]
+  onChange: () => void
+}) {
+  const clientsById = Object.fromEntries(clients.map(c => [c.id, c]))
+  const cardStyle = { background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.09)' } as const
+  const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+  const DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
+  const pad = (n: number) => n.toString().padStart(2, '0')
+
+  const handleCancel = async (id: string) => {
+    if (!confirm('Annuler ce rendez-vous ? Le client ne sera pas notifié automatiquement.')) return
+    const ok = await cancelAppointment(id)
+    if (ok) onChange()
+  }
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden" style={{ ...cardStyle, marginBottom: '24px' }}>
+      <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+      <div className="flex items-center gap-3" style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
+        <h2 className="font-heading text-lg text-blanc italic">Prochains rendez-vous</h2>
+        <span className="ml-auto text-xs text-blanc-muted/60">{appointments.length} à venir</span>
+      </div>
+
+      <div>
+        {appointments.length === 0 ? (
+          <p className="text-sm text-blanc-muted/60 text-center" style={{ padding: '32px 24px' }}>
+            Aucun rendez-vous prévu. Tu en seras notifié par email dès qu&apos;un client réserve.
+          </p>
+        ) : appointments.map(a => {
+          const d = new Date(a.scheduledAt)
+          const c = clientsById[a.clientId]
+          return (
+            <div key={a.id} className="flex items-center gap-5 flex-wrap" style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <div style={{ minWidth: '160px' }}>
+                <p className="text-[10px] text-blanc-muted/60 uppercase tracking-[0.14em]" style={{ marginBottom: '4px' }}>
+                  {DAYS[d.getDay()]} {d.getDate()} {MONTHS[d.getMonth()]}
+                </p>
+                <p className="font-heading italic text-blanc" style={{ fontSize: '22px', lineHeight: 1 }}>
+                  {pad(d.getHours())}h{pad(d.getMinutes())}
+                </p>
+                <p className="text-[11px] text-blanc-muted/60" style={{ marginTop: '3px' }}>{a.durationMin} min</p>
+              </div>
+              <div className="flex-1" style={{ minWidth: '200px' }}>
+                <p className="text-sm text-blanc font-medium">{c ? c.name : 'Client inconnu'}</p>
+                {a.topic && <p className="text-xs text-gold" style={{ marginTop: '4px' }}>{a.topic}</p>}
+                {a.notes && <p className="text-xs text-blanc-muted/70 whitespace-pre-line" style={{ marginTop: '6px', maxWidth: '420px' }}>{a.notes}</p>}
+              </div>
+              <div className="flex items-center gap-2">
+                {a.meetingUrl && (
+                  <a href={a.meetingUrl} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-gold hover:text-gold-light tracking-widest uppercase cursor-pointer"
+                    style={{ padding: '8px 14px', border: '1px solid rgba(202,138,4,0.3)', borderRadius: '8px' }}>
+                    Rejoindre
+                  </a>
+                )}
+                <button onClick={() => handleCancel(a.id)}
+                  className="text-[11px] text-red-400/70 hover:text-red-400 tracking-widest uppercase cursor-pointer"
+                  style={{ padding: '8px 12px' }}>
+                  Annuler
+                </button>
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

@@ -69,6 +69,7 @@ export async function POST(req: Request) {
     const date = new Date(apt.scheduled_at)
     const meetingUrl = apt.meeting_url || ''
 
+    // 1. Email confirmation au client
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
@@ -81,9 +82,73 @@ export async function POST(req: Request) {
     })
     const data = await r.json()
     if (!r.ok) return NextResponse.json({ error: data?.message || 'Resend error' }, { status: r.status })
+
+    // 2. Email de notification à tous les admins
+    try {
+      const { data: admins } = await supabase.from('profiles').select('email').eq('role', 'admin')
+      const adminEmails = (admins || []).map(a => a.email).filter(Boolean) as string[]
+      if (adminEmails.length > 0) {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+          body: JSON.stringify({
+            from: FROM,
+            to: adminEmails,
+            subject: `Nouveau rendez-vous : ${client?.name || firstName}`,
+            html: buildAdminHtml(client?.name || firstName, date, apt.duration_min, apt.topic, apt.notes, meetingUrl),
+          }),
+        })
+      }
+    } catch (e) { console.error('admin notify', e) }
+
     return NextResponse.json({ ok: true, id: data.id })
   } catch (e) {
     console.error('send-booking-confirmation', e)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
+}
+
+function buildAdminHtml(clientName: string, date: Date, durationMin: number, topic: string | null, notes: string | null, meetingUrl: string) {
+  const dateStr = `${DAYS_FR[date.getDay()]} ${date.getDate()} ${MONTHS_FR[date.getMonth()]}`
+  const timeStr = `${pad(date.getHours())}h${pad(date.getMinutes())}`
+  const safe = (s: string) => s.replace(/[<>]/g, '')
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#0a0a0a; padding:48px 20px; font-family: Helvetica, Arial, sans-serif;">
+    <tr><td align="center">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560" style="max-width:560px;">
+        <tr><td align="center" style="padding-bottom:12px;">
+          <div style="font-family: Georgia, 'Times New Roman', serif; font-size:44px; color:#fafaf9; font-weight:normal; line-height:1;">
+            Noir<span style="color:#ca8a04; font-style:italic;">sur</span>blanc
+          </div>
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:44px;">
+          <div style="color:rgba(255,255,255,0.55); font-size:11px; letter-spacing:3px; text-transform:uppercase;">Nouveau rendez-vous</div>
+        </td></tr>
+        <tr><td style="background:#141414; border:1px solid rgba(255,255,255,0.08); border-radius:18px; padding:36px 32px;">
+          <p style="color:rgba(255,255,255,0.78); font-size:15px; line-height:1.7; margin:0 0 22px;">
+            <strong style="color:#fafaf9;">${safe(clientName)}</strong> vient de réserver un rendez-vous.
+          </p>
+          <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:20px; margin-bottom:18px;">
+            <p style="color:rgba(255,255,255,0.55); font-size:11px; letter-spacing:2px; text-transform:uppercase; margin:0 0 6px;">${dateStr}</p>
+            <p style="color:#fafaf9; font-family: Georgia, serif; font-style:italic; font-size:28px; margin:0 0 6px;">${timeStr}</p>
+            <p style="color:rgba(255,255,255,0.65); font-size:13px; margin:0;">${durationMin} minutes</p>
+          </div>
+          ${topic ? `<div style="background:rgba(255,255,255,0.03); border-radius:10px; padding:14px 16px; margin-bottom:10px;">
+            <p style="color:rgba(255,255,255,0.5); font-size:10px; text-transform:uppercase; letter-spacing:1.5px; margin:0 0 4px;">Sujet</p>
+            <p style="color:#fafaf9; font-size:14px; margin:0;">${safe(topic)}</p>
+          </div>` : ''}
+          ${notes ? `<div style="background:rgba(255,255,255,0.03); border-radius:10px; padding:14px 16px; margin-bottom:18px;">
+            <p style="color:rgba(255,255,255,0.5); font-size:10px; text-transform:uppercase; letter-spacing:1.5px; margin:0 0 4px;">Notes</p>
+            <p style="color:rgba(255,255,255,0.85); font-size:13px; margin:0; line-height:1.6; white-space:pre-line;">${safe(notes)}</p>
+          </div>` : ''}
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr><td align="center" style="padding-top:14px;">
+              <a href="${meetingUrl}" style="display:inline-block; background:#ca8a04; color:#0a0a0a !important; text-decoration:none; padding:14px 32px; border-radius:12px; font-weight:700; font-size:12px; letter-spacing:2px; text-transform:uppercase;">
+                Voir les détails
+              </a>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>`
 }
