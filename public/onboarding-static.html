@@ -625,9 +625,16 @@ function renderAccount(){
       }
     }catch(e){ console.error('auth signup',e); }
 
-    // Direct access to portal (or fall back to login)
-    if(autoSessionOk && cid){
-      window.location.href = '/portal/' + cid;
+    // Direct access to portal if we have a session, else fallback to login with email prefilled
+    if(cid){
+      btn.textContent = 'Redirection...';
+      // Let localStorage propagate before the new page reads it
+      await new Promise(r=>setTimeout(r,250));
+      if(autoSessionOk){
+        window.location.href = '/portal/' + cid;
+      } else {
+        window.location.href = '/login';
+      }
     } else {
       renderDone();
     }
