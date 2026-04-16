@@ -28,7 +28,7 @@
       --ease: cubic-bezier(0.22,1,0.36,1);
     }
 
-    html, body { height: 100%; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--fg); overflow: hidden; }
+    html, body { min-height: 100%; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--fg); }
 
     /* NOISE */
     .noise { position: fixed; inset: 0; z-index: 2; pointer-events: none; width: 100%; height: 100%; opacity: .038; }
@@ -55,7 +55,7 @@
     .step-counter { font-size: 11px; font-weight: 500; letter-spacing: 0.2em; color: var(--fg-muted); opacity: 0; transition: opacity 0.4s; }
 
     /* SHELL */
-    .app { position: relative; z-index: 10; height: 100vh; display: flex; align-items: center; justify-content: center; padding: 88px 20px 20px; }
+    .app { position: relative; z-index: 10; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 88px 20px 40px; }
 
     /* WELCOME */
     .welcome { width: 100%; max-width: 660px; text-align: center; }
