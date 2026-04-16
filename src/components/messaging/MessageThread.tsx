@@ -26,38 +26,47 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Load messages on mount
+  // Load + subscribe + polling fallback
   useEffect(() => {
-    fetchMessages(clientId).then(setMessages)
-  }, [clientId])
+    let mounted = true
+    const load = async () => {
+      const msgs = await fetchMessages(clientId)
+      if (mounted) setMessages(msgs)
+    }
+    load()
 
-  // Subscribe to realtime updates
-  useEffect(() => {
     const channel = supabase
       .channel(`messages:${clientId}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `client_id=eq.${clientId}` },
         (payload) => {
-          const newMsg = payload.new as any
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: newMsg.id,
-              clientId: newMsg.client_id,
-              sender: newMsg.sender,
-              text: newMsg.text,
-              fileUrl: newMsg.file_url,
-              voiceUrl: newMsg.voice_url,
-              createdAt: newMsg.created_at,
-            },
-          ])
+          const newMsg = payload.new as {
+            id: string; client_id: string; sender: 'admin' | 'client';
+            text?: string; file_url?: string; voice_url?: string; created_at: string;
+          }
+          setMessages((prev) => {
+            if (prev.some(m => m.id === newMsg.id)) return prev
+            return [
+              ...prev,
+              {
+                id: newMsg.id, clientId: newMsg.client_id, sender: newMsg.sender,
+                text: newMsg.text, fileUrl: newMsg.file_url, voiceUrl: newMsg.voice_url,
+                createdAt: newMsg.created_at,
+              },
+            ]
+          })
         }
       )
       .subscribe()
 
+    // Polling fallback every 4s (in case Realtime isn't enabled or disconnects)
+    const interval = setInterval(load, 4000)
+
     return () => {
+      mounted = false
       supabase.removeChannel(channel)
+      clearInterval(interval)
     }
   }, [clientId])
 
@@ -70,7 +79,10 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
     if (!text.trim() || sending) return
     setSending(true)
     const success = await sendMessage({ clientId, sender: currentUser, text: text.trim() })
-    if (success) setText('')
+    if (success) {
+      setText('')
+      fetchMessages(clientId).then(setMessages)
+    }
     setSending(false)
   }
 
@@ -81,6 +93,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
     const url = await uploadMessageFile(file)
     if (url) {
       await sendMessage({ clientId, sender: currentUser, fileUrl: url, text: file.name })
+      fetchMessages(clientId).then(setMessages)
     }
     setSending(false)
     if (fileInputRef.current) fileInputRef.current.value = ''
@@ -103,6 +116,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
         const url = await uploadMessageFile(file)
         if (url) {
           await sendMessage({ clientId, sender: currentUser, voiceUrl: url })
+          fetchMessages(clientId).then(setMessages)
         }
         setSending(false)
         stream.getTracks().forEach((track) => track.stop())
