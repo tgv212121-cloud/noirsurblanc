@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { fetchMessages, sendMessage, uploadMessageFile, type Message } from '@/lib/queries'
+import { fetchMessages, sendMessage, uploadMessageFile, updateMessage, deleteMessage, type Message } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
-import { formatRelative, cn } from '@/lib/utils'
+import { formatMessageTime, cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import AudioPlayer from './AudioPlayer'
 
 type Props = {
   clientId: string
@@ -18,6 +19,8 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editText, setEditText] = useState('')
   const [recording, setRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -160,19 +163,56 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
         ) : (
           messages.map((msg) => {
             const isMe = msg.sender === currentUser
+            const isEditing = editingId === msg.id
+            const canEdit = isMe && !!msg.text && !msg.voiceUrl && !msg.fileUrl
             return (
-              <div key={msg.id} className={cn('w-fit max-w-[65%]', isMe ? 'ml-auto' : 'mr-auto')}>
+              <div key={msg.id} className={cn('group relative w-fit max-w-[65%]', isMe ? 'ml-auto' : 'mr-auto')}>
+                {/* Hover action bar (own messages only) */}
+                {isMe && (
+                  <div
+                    className="absolute flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ top: '-12px', right: '8px', zIndex: 5 }}
+                  >
+                    {canEdit && (
+                      <button
+                        onClick={() => { setEditingId(msg.id); setEditText(msg.text || '') }}
+                        title="Modifier"
+                        className="flex items-center justify-center rounded-md cursor-pointer"
+                        style={{ width: '26px', height: '26px', background: 'rgba(20,20,20,0.95)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                        </svg>
+                      </button>
+                    )}
+                    <button
+                      onClick={async () => {
+                        if (!confirm('Supprimer ce message ?')) return
+                        const ok = await deleteMessage(msg.id)
+                        if (ok) setMessages(prev => prev.filter(m => m.id !== msg.id))
+                      }}
+                      title="Supprimer"
+                      className="flex items-center justify-center rounded-md cursor-pointer"
+                      style={{ width: '26px', height: '26px', background: 'rgba(20,20,20,0.95)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      </svg>
+                    </button>
+                  </div>
+                )}
+
                 <div
                   className="rounded-2xl"
                   style={{
-                    padding: msg.text || msg.voiceUrl ? '16px 20px' : '8px',
+                    padding: msg.voiceUrl ? '10px 14px' : (msg.text ? '14px 18px' : '8px'),
                     backgroundColor: isMe ? accentColor : 'var(--noir-elevated)',
                     color: isMe ? 'white' : 'var(--blanc)',
                   }}
                 >
                   {/* Voice */}
                   {msg.voiceUrl && (
-                    <audio controls src={msg.voiceUrl} className="w-full" style={{ minWidth: '240px' }} />
+                    <AudioPlayer src={msg.voiceUrl} accentColor={accentColor} isMe={isMe} />
                   )}
 
                   {/* File */}
@@ -190,13 +230,45 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                     </a>
                   )}
 
-                  {/* Text */}
-                  {msg.text && !msg.fileUrl && (
-                    <p className="text-sm leading-relaxed whitespace-pre-line">{msg.text}</p>
+                  {/* Text (or edit mode) */}
+                  {msg.text && !msg.fileUrl && !msg.voiceUrl && (
+                    isEditing ? (
+                      <div>
+                        <textarea
+                          value={editText}
+                          onChange={e => setEditText(e.target.value)}
+                          autoFocus
+                          rows={Math.max(1, editText.split('\n').length)}
+                          className="w-full bg-transparent outline-none text-sm leading-relaxed resize-none"
+                          style={{ color: isMe ? 'white' : 'var(--blanc)', minWidth: '220px' }}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Escape') { setEditingId(null); setEditText(''); return }
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault()
+                              const trimmed = editText.trim()
+                              if (!trimmed || trimmed === msg.text) { setEditingId(null); return }
+                              const ok = await updateMessage(msg.id, trimmed)
+                              if (ok) {
+                                setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, text: trimmed, editedAt: new Date().toISOString() } : m))
+                              }
+                              setEditingId(null); setEditText('')
+                            }
+                          }}
+                        />
+                        <div className="flex items-center gap-3 mt-2 text-[11px]" style={{ color: isMe ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.5)' }}>
+                          <span>Entrée pour valider</span>
+                          <span>·</span>
+                          <span>Echap pour annuler</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm leading-relaxed whitespace-pre-line">{msg.text}</p>
+                    )
                   )}
                 </div>
                 <p className={cn('text-xs text-blanc-muted', isMe ? 'text-right' : 'text-left')} style={{ marginTop: '8px' }}>
-                  {isMe ? 'Vous' : otherUserName} · {formatRelative(msg.createdAt)}
+                  {isMe ? 'Vous' : otherUserName} · {formatMessageTime(msg.createdAt)}
+                  {msg.editedAt && <span className="italic"> · modifié</span>}
                 </p>
               </div>
             )
@@ -220,8 +292,8 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
               </div>
               <button
                 onClick={stopRecording}
-                className="px-5 py-2 text-sm font-medium text-white rounded-lg cursor-pointer"
-                style={{ backgroundColor: accentColor }}
+                className="text-sm font-medium text-white rounded-xl cursor-pointer transition-transform active:scale-95"
+                style={{ backgroundColor: accentColor, padding: '14px 28px', letterSpacing: '0.02em' }}
               >
                 Arrêter et envoyer
               </button>

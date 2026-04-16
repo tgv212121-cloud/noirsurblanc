@@ -34,3 +34,20 @@ export function cn(...classes: (string | undefined | false | null)[]): string {
 }
 
 export const DAYS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+
+export function formatMessageTime(date: string): string {
+  const now = new Date()
+  const d = new Date(date)
+  const sameDay = d.toDateString() === now.toDateString()
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  const isYesterday = d.toDateString() === yesterday.toDateString()
+  const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  if (sameDay) return `Aujourd'hui à ${time}`
+  if (isYesterday) return `Hier à ${time}`
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
+  if (diffDays < 7) {
+    return `${DAYS_FR[d.getDay()]} à ${time}`
+  }
+  return `${d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} à ${time}`
+}

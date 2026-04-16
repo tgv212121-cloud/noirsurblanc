@@ -242,6 +242,7 @@ export type Message = {
   fileUrl: string | null
   voiceUrl: string | null
   createdAt: string
+  editedAt?: string | null
 }
 
 export async function fetchMessages(clientId: string): Promise<Message[]> {
@@ -260,7 +261,23 @@ export async function fetchMessages(clientId: string): Promise<Message[]> {
     fileUrl: row.file_url,
     voiceUrl: row.voice_url,
     createdAt: row.created_at,
+    editedAt: row.edited_at || null,
   }))
+}
+
+export async function updateMessage(id: string, newText: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('messages')
+    .update({ text: newText, edited_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) { console.error('updateMessage', error); return false }
+  return true
+}
+
+export async function deleteMessage(id: string): Promise<boolean> {
+  const { error } = await supabase.from('messages').delete().eq('id', id)
+  if (error) { console.error('deleteMessage', error); return false }
+  return true
 }
 
 export async function sendMessage(message: {
