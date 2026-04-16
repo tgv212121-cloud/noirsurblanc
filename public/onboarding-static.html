@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -355,6 +356,10 @@ function renderQuestion(idx,forward=true){
 const SUPABASE_URL='https://oqwkqmxecyrvlhibmdxl.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xd2txbXhlY3lydmxoaWJtZHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNzYyNzksImV4cCI6MjA5MTc1MjI3OX0.SMfw8amMFUbGapsXzecUVuBDyMsfdKKqA4-TwCCGUDo';
 const SB_HEADERS={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=representation'};
+// Supabase JS client (handles session persistence the exact same way as the rest of the site)
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: true, storageKey: 'sb-oqwkqmxecyrvlhibmdxl-auth-token', autoRefreshToken: true, detectSessionInUrl: false }
+}) : null;
 
 let CLIENT_ID = new URLSearchParams(window.location.search).get('client');
 let CLIENT_EMAIL = '';
@@ -538,99 +543,60 @@ function renderAccount(){
       });
     }catch(e){}
     await saveAnswersToSupabase();
-    // Create auth user
-    let autoSessionOk = false;
-    try{
-      const r=await fetch(`${SUPABASE_URL}/auth/v1/signup`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},
-        body:JSON.stringify({email,password:pass})
-      });
-      const d=await r.json();
-      if(d.user && d.user.id){
-        const token = d.access_token || (d.session && d.session.access_token);
-        const authHeaders = token
-          ? {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+token,'Prefer':'return=representation'}
-          : SB_HEADERS;
-        const pr = await fetch(`${SUPABASE_URL}/rest/v1/profiles`,{
-          method:'POST', headers:authHeaders,
-          body:JSON.stringify({id:d.user.id, email, role:'client', client_id:cid})
-        });
-        if(!pr.ok) console.error('profile insert failed', await pr.text());
-        await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${cid}`,{
-          method:'PATCH', headers:SB_HEADERS, body:JSON.stringify({auth_user_id:d.user.id})
-        });
 
-        // Explicitly sign in to get a real session (works even if "Confirm email" is on , fallback if it fails)
-        try{
-          const sr = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{
-            method:'POST',
-            headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},
-            body:JSON.stringify({email, password:pass})
-          });
-          const sd = await sr.json();
-          if(sd.access_token && sd.refresh_token){
-            const session = {
-              access_token: sd.access_token,
-              refresh_token: sd.refresh_token,
-              expires_in: sd.expires_in || 3600,
-              expires_at: sd.expires_at || Math.floor(Date.now()/1000)+3600,
-              token_type: sd.token_type || 'bearer',
-              user: sd.user || d.user,
-            };
-            const ref = SUPABASE_URL.match(/https:\/\/([^.]+)/)[1];
-            localStorage.setItem('sb-'+ref+'-auth-token', JSON.stringify(session));
-            autoSessionOk = true;
-          } else {
-            console.warn('auto-login failed', sd);
-          }
-        }catch(e){ console.error('auto-login error',e); }
-      } else if(d.msg || d.error_description || d.error || d.code){
-        const raw = (d.msg||d.error_description||d.error||d.code||'').toString();
-        const alreadyRegistered = /already.?registered|already.?been.?registered|user.?already|user_already_exists/i.test(raw);
-        if(alreadyRegistered){
-          // Try to sign them in with the password they entered
-          try{
-            const sr = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{
-              method:'POST',
-              headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},
-              body:JSON.stringify({email, password:pass})
-            });
-            const sd = await sr.json();
-            if(sd.access_token && sd.refresh_token){
-              const session = {
-                access_token: sd.access_token, refresh_token: sd.refresh_token,
-                expires_in: sd.expires_in||3600, expires_at: sd.expires_at||Math.floor(Date.now()/1000)+3600,
-                token_type: sd.token_type||'bearer', user: sd.user
-              };
-              const ref = SUPABASE_URL.match(/https:\/\/([^.]+)/)[1];
-              localStorage.setItem('sb-'+ref+'-auth-token', JSON.stringify(session));
-              // Link the existing auth user to the client record
-              await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${cid}`,{
-                method:'PATCH', headers:SB_HEADERS, body:JSON.stringify({auth_user_id: sd.user.id})
-              });
-              autoSessionOk = true;
-            } else {
-              err.innerHTML = 'Cet email a déjà un compte. <a href="/login" style="color:#ca8a04;text-decoration:underline;font-weight:600">Se connecter →</a>';
-              err.style.display='block'; btn.disabled=false; btn.textContent='Créer mon espace'; return;
-            }
-          } catch(e){
-            err.innerHTML = 'Cet email a déjà un compte. <a href="/login" style="color:#ca8a04;text-decoration:underline;font-weight:600">Se connecter →</a>';
-            err.style.display='block'; btn.disabled=false; btn.textContent='Créer mon espace'; return;
-          }
-        } else {
-          err.textContent='Erreur : '+raw;
+    if(!sb){
+      err.textContent="Erreur : lib d'authentification non chargée. Recharge la page.";
+      err.style.display='block'; btn.disabled=false; btn.textContent='Créer mon espace'; return;
+    }
+
+    let userId = null;
+    let sessionOk = false;
+
+    // Try sign up first. If user already exists, fall back to sign in.
+    const up = await sb.auth.signUp({ email, password: pass });
+    if(up.data && up.data.user){
+      userId = up.data.user.id;
+      if(up.data.session){ sessionOk = true; }
+    }
+    if(up.error){
+      const msg = (up.error.message||'').toString();
+      const alreadyRegistered = /already.?registered|user.?already|already.?been|exists/i.test(msg);
+      if(alreadyRegistered){
+        // Try sign in with the password provided
+        const inRes = await sb.auth.signInWithPassword({ email, password: pass });
+        if(inRes.error){
+          err.innerHTML = 'Cet email a déjà un compte avec un mot de passe différent. <a href="/login" style="color:#ca8a04;text-decoration:underline;font-weight:600">Se connecter →</a>';
           err.style.display='block'; btn.disabled=false; btn.textContent='Créer mon espace'; return;
         }
+        userId = inRes.data.user.id;
+        sessionOk = true;
+      } else {
+        err.textContent='Erreur : '+msg;
+        err.style.display='block'; btn.disabled=false; btn.textContent='Créer mon espace'; return;
       }
-    }catch(e){ console.error('auth signup',e); }
+    }
 
-    // Direct access to portal if we have a session, else fallback to login with email prefilled
+    // If we have a user but no session yet (e.g. email confirmation ON), try sign in
+    if(userId && !sessionOk){
+      const inRes = await sb.auth.signInWithPassword({ email, password: pass });
+      if(inRes.data && inRes.data.session) sessionOk = true;
+    }
+
+    // Upsert profile + link client to auth user
+    if(userId){
+      try{
+        await sb.from('profiles').upsert({ id: userId, email, role:'client', client_id: cid }, { onConflict: 'id' });
+      } catch(e){ console.error('profile upsert', e); }
+      try{
+        await sb.from('clients').update({ auth_user_id: userId }).eq('id', cid);
+      } catch(e){ console.error('client link', e); }
+    }
+
+    // Redirect
     if(cid){
       btn.textContent = 'Redirection...';
-      // Let localStorage propagate before the new page reads it
-      await new Promise(r=>setTimeout(r,250));
-      if(autoSessionOk){
+      await new Promise(r=>setTimeout(r,200));
+      if(sessionOk){
         window.location.href = '/portal/' + cid;
       } else {
         window.location.href = '/login';
