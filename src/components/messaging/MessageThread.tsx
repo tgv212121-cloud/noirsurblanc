@@ -50,10 +50,14 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
             return [
               ...prev,
               {
-                id: newMsg.id, clientId: newMsg.client_id, sender: newMsg.sender,
-                text: newMsg.text, fileUrl: newMsg.file_url, voiceUrl: newMsg.voice_url,
+                id: newMsg.id,
+                clientId: newMsg.client_id,
+                sender: newMsg.sender,
+                text: newMsg.text ?? null,
+                fileUrl: newMsg.file_url ?? null,
+                voiceUrl: newMsg.voice_url ?? null,
                 createdAt: newMsg.created_at,
-              },
+              } as Message,
             ]
           })
         }
