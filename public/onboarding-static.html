@@ -81,7 +81,7 @@
 
     /* INPUTS */
     textarea, input[type="text"], input[type="url"] { width: 100%; background: var(--input-bg); border: 1px solid var(--input-b); border-radius: 12px; color: var(--fg); font-family: 'Plus Jakarta Sans',sans-serif; font-size: 14px; font-weight: 300; padding: 14px 18px; outline: none; resize: none; transition: border-color 0.25s, box-shadow 0.25s, background 0.25s; line-height: 1.65; -webkit-appearance: none; }
-    textarea { min-height: 128px; }
+    textarea { min-height: 128px; overflow: hidden; resize: none; }
     textarea:focus, input:focus { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); box-shadow: 0 0 0 3px rgba(255,255,255,0.05); }
     textarea::placeholder, input::placeholder { color: rgba(255,255,255,0.18); }
     textarea::-webkit-scrollbar { width: 3px; }
@@ -280,6 +280,15 @@ function renderQuestion(idx,forward=true){
   gsap.fromTo('#scr .q-text',{opacity:0,y:12},{opacity:1,y:0,duration:0.5,ease:'power3.out',delay:0.15});
   gsap.fromTo('#scr #ans, #scr .field-group, #scr .triple-group',{opacity:0,y:10},{opacity:1,y:0,duration:0.45,ease:'power3.out',delay:0.22});
   gsap.fromTo('#scr .btn-wrap',{opacity:0,y:8},{opacity:1,y:0,duration:0.4,ease:'power3.out',delay:0.30});
+
+  // Auto-resize textareas based on content
+  el.querySelectorAll('textarea').forEach(ta=>{
+    const autoSize=()=>{ ta.style.height='auto'; ta.style.height=Math.max(ta.scrollHeight,128)+'px'; };
+    ta.addEventListener('input',autoSize);
+    // Initial sizing (after DOM paint)
+    requestAnimationFrame(autoSize);
+    setTimeout(autoSize,50);
+  });
 
   setTimeout(()=>{const f=el.querySelector('textarea,input');if(f)f.focus({preventScroll:true});},380);
 
