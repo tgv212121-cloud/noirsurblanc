@@ -19,10 +19,11 @@ export default function InviteClientModal({ open, onClose, onCreated }: Props) {
   const [err, setErr] = useState<string | null>(null)
   const [createdLink, setCreatedLink] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [emailStatus, setEmailStatus] = useState<'pending' | 'sent' | 'failed'>('pending')
 
   useEffect(() => {
     if (!open) return
-    setFirstName(''); setLastName(''); setEmail(''); setErr(null); setCreatedLink(null); setCopied(false)
+    setFirstName(''); setLastName(''); setEmail(''); setErr(null); setCreatedLink(null); setCopied(false); setEmailStatus('pending')
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !submitting) onClose()
     }
@@ -45,6 +46,24 @@ export default function InviteClientModal({ open, onClose, onCreated }: Props) {
     const link = `${window.location.origin}/onboarding?client=${c.id}`
     setCreatedLink(link)
     onCreated(c, link)
+
+    // Fire email send (non-blocking for UX — user still sees the link to copy as fallback)
+    try {
+      const r = await fetch('/api/send-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), firstName: firstName.trim(), inviteUrl: link }),
+      })
+      if (r.ok) setEmailStatus('sent')
+      else {
+        const d = await r.json().catch(() => null)
+        console.error('send-invite', d)
+        setEmailStatus('failed')
+      }
+    } catch (e) {
+      console.error(e)
+      setEmailStatus('failed')
+    }
   }
 
   const handleCopy = async () => {
@@ -212,9 +231,23 @@ export default function InviteClientModal({ open, onClose, onCreated }: Props) {
                   <h2 className="font-heading text-blanc italic text-center" style={{ fontSize: '26px', marginBottom: '10px' }}>
                     Compte créé
                   </h2>
-                  <p className="text-blanc-muted/65 text-sm text-center leading-relaxed" style={{ marginBottom: '24px', padding: '0 4px' }}>
-                    Voici le lien à envoyer à {firstName} par WhatsApp, email ou Slack :
-                  </p>
+
+                  {emailStatus === 'pending' ? (
+                    <p className="text-blanc-muted/65 text-sm text-center leading-relaxed flex items-center justify-center gap-2" style={{ marginBottom: '24px' }}>
+                      <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                      Envoi de l&apos;email à {firstName}…
+                    </p>
+                  ) : emailStatus === 'sent' ? (
+                    <p className="text-center text-sm leading-relaxed flex items-center justify-center gap-2" style={{ marginBottom: '24px', color: '#ca8a04' }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      Email envoyé à {email}
+                    </p>
+                  ) : (
+                    <p className="text-center text-sm leading-relaxed text-red-400/90 flex items-center justify-center gap-2" style={{ marginBottom: '24px' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                      L&apos;email n&apos;a pas pu partir. Copie le lien ci-dessous.
+                    </p>
+                  )}
 
                   <div
                     className="rounded-xl text-xs text-blanc font-mono break-all"
