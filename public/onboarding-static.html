@@ -227,7 +227,6 @@ function renderWelcome(){
   setBar(0);setCounter(null);
   document.getElementById('app').innerHTML=`
     <div class="welcome" id="scr">
-      <div class="badge"><div class="badge-dot"></div>Questionnaire LinkedIn</div>
       <h1 class="w-title">Bienvenue sur<br>ton <em>onboarding</em></h1>
       <p class="w-sub">Ce questionnaire nous permet d'être parfaitement alignés pour créer le contenu LinkedIn le plus percutant possible.</p>
       <div class="meta-row">
@@ -242,7 +241,7 @@ function renderWelcome(){
 
   const tl=gsap.timeline({defaults:{ease:'power3.out'}});
   tl.from('.logo-name',{opacity:0,y:-16,duration:0.6},0)
-    .from('.badge',{opacity:0,y:20,duration:0.6},0.06)
+    // badge retiré
     .from('.w-title',{opacity:0,y:30,duration:0.7},0.18)
     .from('.w-sub',{opacity:0,y:20,duration:0.6},0.32)
     .from('.meta-row',{opacity:0,y:14,duration:0.5},0.44)
