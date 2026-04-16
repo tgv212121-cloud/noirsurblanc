@@ -6,7 +6,7 @@ import { FloatingDock } from '@/components/ui/FloatingDock'
 export default function Sidebar() {
   const pathname = usePathname()
 
-  const publicPaths = ['/portal', '/onboarding', '/login', '/forgot-password', '/reset-password', '/mentions-legales', '/confidentialite', '/cgu']
+  const publicPaths = ['/portal', '/onboarding', '/login', '/forgot-password', '/reset-password', '/mentions-legales', '/confidentialite', '/cgu', '/rdv']
   if (publicPaths.some(p => pathname.startsWith(p))) return null
 
   const items = [

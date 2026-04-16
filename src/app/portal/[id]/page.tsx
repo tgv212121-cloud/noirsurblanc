@@ -10,8 +10,9 @@ import type { Client, Post, PostMetrics, Reminder } from '@/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
 import MessageThread from '@/components/messaging/MessageThread'
+import BookingTab from '@/components/booking/BookingTab'
 
-type Tab = 'calendar' | 'messages' | 'stats' | 'history'
+type Tab = 'calendar' | 'messages' | 'stats' | 'history' | 'booking'
 
 export default function ClientPortalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -70,6 +71,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
 
   const TABS: { id: Tab; label: string }[] = [
     { id: 'calendar', label: 'Calendrier' },
+    { id: 'booking', label: 'Rendez-vous' },
     { id: 'messages', label: 'Messages' },
     { id: 'stats', label: 'Stats' },
     { id: 'history', label: 'Historique' },
@@ -367,6 +369,13 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                   )
                 })}
             </div>
+          </motion.div>
+        )}
+
+        {/* Booking tab */}
+        {activeTab === 'booking' && (
+          <motion.div key="booking" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+            <BookingTab clientId={client.id} clientName={client.name} />
           </motion.div>
         )}
 

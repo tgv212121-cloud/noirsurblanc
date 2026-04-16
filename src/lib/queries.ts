@@ -347,3 +347,70 @@ export async function uploadMessageFile(file: File): Promise<string | null> {
   const { data } = supabase.storage.from('message-files').getPublicUrl(fileName)
   return data.publicUrl
 }
+
+// ============================================================
+// APPOINTMENTS
+// ============================================================
+
+export async function fetchAvailabilityRules(): Promise<import('@/types').AvailabilityRule[]> {
+  const { data, error } = await supabase.from('availability_rules').select('*').order('day_of_week').order('start_time')
+  if (error) { console.error('fetchAvailabilityRules', error); return [] }
+  return (data || []).map((r: { id: string; day_of_week: number; start_time: string; end_time: string; slot_duration_min: number; enabled: boolean }) => ({
+    id: r.id, dayOfWeek: r.day_of_week, startTime: r.start_time, endTime: r.end_time,
+    slotDurationMin: r.slot_duration_min, enabled: r.enabled,
+  }))
+}
+
+export async function upsertAvailabilityRule(rule: {
+  id?: string; dayOfWeek: number; startTime: string; endTime: string; slotDurationMin: number; enabled: boolean
+}): Promise<boolean> {
+  const payload: Record<string, unknown> = {
+    day_of_week: rule.dayOfWeek, start_time: rule.startTime, end_time: rule.endTime,
+    slot_duration_min: rule.slotDurationMin, enabled: rule.enabled,
+  }
+  if (rule.id) payload.id = rule.id
+  const { error } = await supabase.from('availability_rules').upsert(payload).select().single()
+  if (error) { console.error('upsertAvailabilityRule', error); return false }
+  return true
+}
+
+export async function deleteAvailabilityRule(id: string): Promise<boolean> {
+  const { error } = await supabase.from('availability_rules').delete().eq('id', id)
+  if (error) { console.error('deleteAvailabilityRule', error); return false }
+  return true
+}
+
+export async function fetchAppointments(params?: { clientId?: string; fromIso?: string }): Promise<import('@/types').Appointment[]> {
+  let q = supabase.from('appointments').select('*').eq('status', 'confirmed').order('scheduled_at')
+  if (params?.clientId) q = q.eq('client_id', params.clientId)
+  if (params?.fromIso) q = q.gte('scheduled_at', params.fromIso)
+  const { data, error } = await q
+  if (error) { console.error('fetchAppointments', error); return [] }
+  return (data || []).map(mapAppointment)
+}
+
+function mapAppointment(r: { id: string; client_id: string; scheduled_at: string; duration_min: number; status: 'confirmed'|'cancelled'; topic?: string; notes?: string; meeting_url?: string; created_at: string }): import('@/types').Appointment {
+  return {
+    id: r.id, clientId: r.client_id, scheduledAt: r.scheduled_at, durationMin: r.duration_min,
+    status: r.status, topic: r.topic, notes: r.notes, meetingUrl: r.meeting_url, createdAt: r.created_at,
+  }
+}
+
+export async function createAppointment(input: {
+  clientId: string; scheduledAt: string; durationMin: number; topic?: string; notes?: string
+}): Promise<import('@/types').Appointment | null> {
+  const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'a_' + Date.now()
+  const meetingUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/rdv/${id}`
+  const { data, error } = await supabase.from('appointments').insert({
+    id, client_id: input.clientId, scheduled_at: input.scheduledAt, duration_min: input.durationMin,
+    status: 'confirmed', topic: input.topic || null, notes: input.notes || null, meeting_url: meetingUrl,
+  }).select().single()
+  if (error) { console.error('createAppointment', error); return null }
+  return data ? mapAppointment(data) : null
+}
+
+export async function cancelAppointment(id: string): Promise<boolean> {
+  const { error } = await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', id)
+  if (error) { console.error('cancelAppointment', error); return false }
+  return true
+}

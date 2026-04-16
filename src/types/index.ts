@@ -51,3 +51,24 @@ export type Reminder = {
   lastResponseAt?: string
   response?: string
 }
+
+export type AvailabilityRule = {
+  id: string
+  dayOfWeek: number
+  startTime: string
+  endTime: string
+  slotDurationMin: number
+  enabled: boolean
+}
+
+export type Appointment = {
+  id: string
+  clientId: string
+  scheduledAt: string
+  durationMin: number
+  status: 'confirmed' | 'cancelled'
+  topic?: string
+  notes?: string
+  meetingUrl?: string
+  createdAt: string
+}
