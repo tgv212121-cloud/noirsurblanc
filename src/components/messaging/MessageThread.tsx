@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { formatMessageTime, cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import AudioPlayer from './AudioPlayer'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 type Props = {
   clientId: string
@@ -21,6 +22,8 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
   const [sending, setSending] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
+  const [toDelete, setToDelete] = useState<Message | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [recording, setRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -34,7 +37,15 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
     let mounted = true
     const load = async () => {
       const msgs = await fetchMessages(clientId)
-      if (mounted) setMessages(msgs)
+      if (!mounted) return
+      setMessages(prev => {
+        // Avoid re-render if nothing changed (length + last id + edit timestamps)
+        if (
+          prev.length === msgs.length &&
+          prev.every((m, i) => m.id === msgs[i].id && m.editedAt === msgs[i].editedAt)
+        ) return prev
+        return msgs
+      })
     }
     load()
 
@@ -77,10 +88,14 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
     }
   }, [clientId])
 
-  // Auto-scroll to bottom on new message
+  // Auto-scroll only when the count of messages actually grows (new arrival)
+  const prevCountRef = useRef(0)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    if (messages.length > prevCountRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+    prevCountRef.current = messages.length
+  }, [messages.length])
 
   const handleSendText = async () => {
     if (!text.trim() || sending) return
@@ -166,7 +181,8 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
             const isEditing = editingId === msg.id
             const canEdit = isMe && !!msg.text && !msg.voiceUrl && !msg.fileUrl
             return (
-              <div key={msg.id} className={cn('group relative w-fit max-w-[65%]', isMe ? 'ml-auto' : 'mr-auto')}>
+              <div key={msg.id} className={cn('flex', isMe ? 'justify-end' : 'justify-start')}>
+              <div className="group relative w-fit max-w-[65%]">
                 {/* Hover action bar (own messages only) */}
                 {isMe && (
                   <div
@@ -186,11 +202,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                       </button>
                     )}
                     <button
-                      onClick={async () => {
-                        if (!confirm('Supprimer ce message ?')) return
-                        const ok = await deleteMessage(msg.id)
-                        if (ok) setMessages(prev => prev.filter(m => m.id !== msg.id))
-                      }}
+                      onClick={() => setToDelete(msg)}
                       title="Supprimer"
                       className="flex items-center justify-center rounded-md cursor-pointer"
                       style={{ width: '26px', height: '26px', background: 'rgba(20,20,20,0.95)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}
@@ -270,6 +282,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                   {isMe ? 'Vous' : otherUserName} · {formatMessageTime(msg.createdAt)}
                   {msg.editedAt && <span className="italic"> · modifié</span>}
                 </p>
+              </div>
               </div>
             )
           })
@@ -368,6 +381,24 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
           <p className="text-xs text-blanc-muted mt-3">Notification WhatsApp · {whatsappPhone}</p>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!toDelete}
+        danger
+        title="Supprimer ce message ?"
+        message="Cette action est définitive. Le message disparaîtra pour toi et pour ton interlocuteur."
+        confirmLabel={deleting ? 'Suppression…' : 'Supprimer'}
+        cancelLabel="Annuler"
+        onCancel={() => { if (!deleting) setToDelete(null) }}
+        onConfirm={async () => {
+          if (!toDelete || deleting) return
+          setDeleting(true)
+          const ok = await deleteMessage(toDelete.id)
+          setDeleting(false)
+          if (ok) setMessages(prev => prev.filter(m => m.id !== toDelete.id))
+          setToDelete(null)
+        }}
+      />
     </div>
   )
 }
