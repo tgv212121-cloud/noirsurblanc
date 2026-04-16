@@ -540,11 +540,19 @@ async function renderAccount(){
     if(!pass || pass.length<6){ err.textContent='Mot de passe trop court (6 caractères minimum).'; err.style.display='block'; return; }
     const consent = document.getElementById('acc-consent');
     if(!consent || !consent.checked){ err.textContent='Merci d\'accepter les CGU et la Politique de confidentialité pour continuer.'; err.style.display='block'; return; }
-    btn.disabled=true; btn.textContent='Création...';
-    // Ensure client record first
+    btn.disabled=true;
+
+    // Show a progressive loading overlay so user sees what's happening
+    const setStatus = (text)=>{ btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:10px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 0.8s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>'+text+'</span>'; };
+    if(!document.getElementById('onb-spin-style')){
+      const s=document.createElement('style'); s.id='onb-spin-style'; s.textContent='@keyframes spin{to{transform:rotate(360deg)}}'; document.head.appendChild(s);
+    }
+
+    setStatus('Préparation...');
     const cid=await ensureClient();
-    if(!cid){ err.textContent="Erreur lors de la création du compte client."; err.style.display='block'; btn.disabled=false; return; }
-    // Save answers + update client email + Linkedin
+    if(!cid){ err.textContent="Erreur lors de la création du compte client."; err.style.display='block'; btn.disabled=false; btn.textContent='Créer mon espace'; return; }
+
+    setStatus('Enregistrement de tes réponses...');
     try{
       await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${cid}`,{
         method:'PATCH', headers:SB_HEADERS, body:JSON.stringify({email})
@@ -557,10 +565,11 @@ async function renderAccount(){
       err.style.display='block'; btn.disabled=false; btn.textContent='Créer mon espace'; return;
     }
 
+    setStatus('Création de ton compte...');
+
     let userId = null;
     let sessionOk = false;
 
-    // Try sign up first. If user already exists, fall back to sign in.
     const up = await sb.auth.signUp({ email, password: pass });
     if(up.data && up.data.user){
       userId = up.data.user.id;
@@ -570,7 +579,7 @@ async function renderAccount(){
       const msg = (up.error.message||'').toString();
       const alreadyRegistered = /already.?registered|user.?already|already.?been|exists/i.test(msg);
       if(alreadyRegistered){
-        // Try sign in with the password provided
+        setStatus('Connexion...');
         const inRes = await sb.auth.signInWithPassword({ email, password: pass });
         if(inRes.error){
           err.innerHTML = 'Cet email a déjà un compte avec un mot de passe différent. <a href="/login" style="color:#ca8a04;text-decoration:underline;font-weight:600">Se connecter →</a>';
@@ -584,31 +593,37 @@ async function renderAccount(){
       }
     }
 
-    // If we have a user but no session yet (e.g. email confirmation ON), try sign in
     if(userId && !sessionOk){
+      setStatus('Connexion...');
       const inRes = await sb.auth.signInWithPassword({ email, password: pass });
       if(inRes.data && inRes.data.session) sessionOk = true;
     }
 
-    // Upsert profile + link client to auth user
+    // Link profile + client to auth user WITHOUT demoting an existing admin
     if(userId){
+      setStatus('Liaison avec ton espace...');
       try{
-        await sb.from('profiles').upsert({ id: userId, email, role:'client', client_id: cid }, { onConflict: 'id' });
-      } catch(e){ console.error('profile upsert', e); }
+        const { data: existing } = await sb.from('profiles').select('id,role,client_id').eq('id', userId).maybeSingle();
+        if(!existing){
+          await sb.from('profiles').insert({ id: userId, email, role: 'client', client_id: cid });
+        } else if(existing.role === 'client' && !existing.client_id){
+          await sb.from('profiles').update({ client_id: cid }).eq('id', userId);
+        }
+        // If admin or already linked to another client: don't touch
+      } catch(e){ console.error('profile link', e); }
       try{
         await sb.from('clients').update({ auth_user_id: userId }).eq('id', cid);
       } catch(e){ console.error('client link', e); }
     }
 
-    // Redirect
-    if(cid){
-      btn.textContent = 'Redirection...';
-      await new Promise(r=>setTimeout(r,200));
-      if(sessionOk){
-        window.location.href = '/portal/' + cid;
-      } else {
-        window.location.href = '/login';
-      }
+    setStatus('Redirection vers ton espace...');
+    // Let Supabase JS fully flush the session to localStorage before navigating
+    await new Promise(r=>setTimeout(r,700));
+
+    if(cid && sessionOk){
+      window.location.href = '/portal/' + cid;
+    } else if(cid){
+      window.location.href = '/login';
     } else {
       renderDone();
     }
