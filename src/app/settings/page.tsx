@@ -120,7 +120,7 @@ export default function SettingsPage() {
 
       {/* Overview stats */}
       <div className="grid grid-cols-3 gap-5" style={{ marginBottom: '40px' }}>
-        <StatMini label="Mon rôle" value={me.role.toUpperCase()} accent sub={me.email || '—'} />
+        <StatMini label="Mon rôle" value={me.role.toUpperCase()} accent sub={me.email || '-'} />
         <StatMini label="Administrateurs" value={adminCount.toString()} />
         <StatMini label="Comptes clients" value={clientCount.toString()} />
       </div>
@@ -186,7 +186,7 @@ export default function SettingsPage() {
             ) : profiles.map(p => (
               <div key={p.id} className="grid grid-cols-[1fr_100px_1fr] items-center gap-2"
                 style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                <span className="text-sm text-blanc truncate">{p.email || '—'}</span>
+                <span className="text-sm text-blanc truncate">{p.email || '-'}</span>
                 <span>
                   {p.role === 'admin' ? (
                     <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.12em] font-semibold text-gold"
@@ -203,7 +203,7 @@ export default function SettingsPage() {
                   )}
                 </span>
                 <span className="text-sm text-blanc-muted/70 truncate">
-                  {p.clientId ? (clientsById[p.clientId]?.name || p.clientId) : '—'}
+                  {p.clientId ? (clientsById[p.clientId]?.name || p.clientId) : '-'}
                 </span>
               </div>
             ))}
@@ -254,10 +254,10 @@ export default function SettingsPage() {
               <div style={{ marginBottom: '18px' }}>
                 <label className="text-[10px] text-blanc-muted/60 uppercase tracking-[0.14em] block" style={{ marginBottom: '10px' }}>Lier au client</label>
                 <select value={newClientId} onChange={e => setNewClientId(e.target.value)} style={inputStyle}>
-                  <option value="" style={{ background: '#141414', color: '#fafaf9' }}>— Sélectionner —</option>
+                  <option value="" style={{ background: '#141414', color: '#fafaf9' }}>Sélectionner...</option>
                   {clients.map(c => (
                     <option key={c.id} value={c.id} style={{ background: '#141414', color: '#fafaf9' }}>
-                      {c.name}{c.company ? ' — ' + c.company : ''}
+                      {c.name}{c.company ? ' · ' + c.company : ''}
                     </option>
                   ))}
                 </select>

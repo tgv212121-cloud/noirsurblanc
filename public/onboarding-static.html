@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Onboarding — Enzo Chabbi</title>
+  <title>Onboarding Noirsurblanc</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -97,7 +97,7 @@
     .bullet-n { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.35); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #ffffff; }
     .bullet-row input { flex: 1; padding: 11px 15px; font-size: 13px; }
 
-    /* BUTTON — gold conservé */
+    /* BUTTON , gold conservé */
     .btn-wrap { margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
     .btn-next { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 18px 32px; background: linear-gradient(135deg,var(--gold-dark),var(--gold) 48%,var(--gold-light) 72%,var(--gold)); background-size: 250% 250%; animation: gShift 5s ease infinite; border: none; border-radius: 13px; color: #0a0a0a; font-family: 'Plus Jakarta Sans',sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; position: relative; overflow: hidden; will-change: transform; box-shadow: 0 5px 0 var(--gold-dark), 0 12px 32px rgba(201,168,76,0.28); -webkit-tap-highlight-color: transparent; min-height: 56px; }
     @keyframes gShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
@@ -166,9 +166,9 @@ const Q = [
   {id:4,text:"Les 3 gros sujets que tu voudrais aborder ?",type:"triple",fields:["Sujet principal 1","Sujet principal 2","Sujet principal 3"]},
   {id:5,text:"Des informations utiles sur toi et ton business ?",type:"textarea",placeholder:"Secteur, offres, valeur ajoutée, positionnement…"},
   {id:6,text:"Raconte-moi ton parcours entrepreneurial",type:"textarea",placeholder:"Tes débuts, les étapes clés, les pivots, les réussites…"},
-  {id:7,text:"Un accès à tes formations ou coachings ?",sub:"Si tu en as — lien vers la page de présentation",type:"url",placeholder:"https://ta-formation.com"},
+  {id:7,text:"Un accès à tes formations ou coachings ?",sub:"Si tu en as, lien vers la page de présentation",type:"url",placeholder:"https://ta-formation.com"},
   {id:8,text:"Ressources utiles à partager",sub:"YouTube · Blog · Newsletter · Webinaire · Formation",type:"multi-url",fields:[{label:"YouTube",ph:"https://youtube.com/@toi"},{label:"Blog",ph:"https://tonblog.com"},{label:"Newsletter",ph:"https://ta-newsletter.com"},{label:"Webinaire",ph:"https://…"},{label:"Formation",ph:"https://…"}]},
-  {id:9,text:"Si tu pouvais échanger ton audience avec quelqu'un, ce serait qui ?",sub:"Peu importe le réseau — Twitter, Insta, YouTube, FR ou US",type:"text",placeholder:"ex : Alex Hormozi, Oussama Ammar…"},
+  {id:9,text:"Si tu pouvais échanger ton audience avec quelqu'un, ce serait qui ?",sub:"Peu importe le réseau : Twitter, Insta, YouTube, FR ou US",type:"text",placeholder:"ex : Alex Hormozi, Oussama Ammar…"},
   {id:10,text:"Quel compte poste déjà comme tu voudrais le faire ?",sub:"FR ou US",type:"text",placeholder:"ex : @NomDuCompte"},
   {id:11,text:"Tu te focalises sur quoi quand tu montes une audience ?",type:"textarea",placeholder:"Engagement, valeur, niche, consistance, viralité…"},
   {id:12,text:"Quel genre de personnes aimerais-tu avoir dans tes DMs ?",type:"textarea",placeholder:"Profil type, secteur, problèmes, aspirations…"},
@@ -177,7 +177,7 @@ const Q = [
   {id:15,text:"Sur quel lien envoyer les prospects ?",sub:"Si tu veux que je gère ta messagerie",type:"url",placeholder:"https://calendly.com/toi"},
   {id:16,text:"Pourquoi c'est important pour toi de monter une audience ?",type:"textarea",placeholder:"Ta motivation profonde, ce que ça représente pour toi…"},
   {id:17,text:"Si ton audience avait un ou plusieurs ennemis communs, ce serait qui ?",type:"textarea",placeholder:"Une croyance limitante, un système, un type de personne…"},
-  {id:18,text:"L'URL de ton profil LinkedIn",sub:"Obligatoire — pour qu'on puisse accéder directement à ton profil depuis ton espace",type:"url",placeholder:"https://linkedin.com/in/ton-profil"},
+  {id:18,text:"L'URL de ton profil LinkedIn",sub:"Obligatoire. Pour qu'on puisse accéder directement à ton profil depuis ton espace",type:"url",placeholder:"https://linkedin.com/in/ton-profil"},
   {id:19,text:"Comment tu t'appelles ?",sub:"Pour qu'on puisse personnaliser ton espace",type:"multi",fields:[{label:"Prénom",ph:"Ex : Léa"},{label:"Nom",ph:"Ex : Fournier"}]}
 ];
 
@@ -561,7 +561,7 @@ function renderAccount(){
           method:'PATCH', headers:SB_HEADERS, body:JSON.stringify({auth_user_id:d.user.id})
         });
 
-        // Explicitly sign in to get a real session (works even if "Confirm email" is on — fallback if it fails)
+        // Explicitly sign in to get a real session (works even if "Confirm email" is on , fallback if it fails)
         try{
           const sr = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{
             method:'POST',

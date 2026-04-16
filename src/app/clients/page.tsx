@@ -150,7 +150,7 @@ export default function ClientsPage() {
         title="Supprimer ce client ?"
         message={
           toDelete
-            ? `${toDelete.name}${toDelete.company ? ' — ' + toDelete.company : ''} sera supprimé définitivement. Tous ses posts, messages, réponses d'onboarding et métriques le seront aussi. Cette action est irréversible.`
+            ? `${toDelete.name}${toDelete.company ? ' · ' + toDelete.company : ''} sera supprimé définitivement. Tous ses posts, messages, réponses d'onboarding et métriques le seront aussi. Cette action est irréversible.`
             : ''
         }
         confirmLabel={deleting ? 'Suppression…' : 'Supprimer'}

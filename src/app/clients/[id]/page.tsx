@@ -212,7 +212,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                   <button onClick={() => { setEditingDate(null); setSelectedDate(null) }} className="text-xs text-blanc-muted hover:text-blanc cursor-pointer">Fermer</button>
                 </div>
 
-                {/* If post exists for this date — show it */}
+                {/* If post exists for this date , show it */}
                 {postsByDate[editingDate] ? (
                   postsByDate[editingDate].map(post => {
                     const m = metrics.find(mt => mt.postId === post.id)
@@ -257,7 +257,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                     )
                   })
                 ) : (
-                  /* No post for this date — show editor */
+                  /* No post for this date , show editor */
                   <div className="bg-noir-elevated rounded-xl" style={{ padding: '28px' }}>
                     <h3 className="text-base font-semibold text-blanc mb-2">Rédiger un post</h3>
                     <p className="text-xs text-blanc-muted mb-5">
@@ -491,7 +491,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
             </div>
           </motion.div>
         )}
-        {/* Onboarding tab — questionnaire answers */}
+        {/* Onboarding tab , questionnaire answers */}
         {activeTab === 'onboarding' && (
           <motion.div key="onboarding" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
             <div className="mb-8">

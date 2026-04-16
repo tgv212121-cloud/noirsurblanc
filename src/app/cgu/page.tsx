@@ -1,6 +1,6 @@
 import LegalLayout from '@/components/legal/LegalLayout'
 
-export const metadata = { title: "Conditions générales d'utilisation — Noirsurblanc" }
+export const metadata = { title: "Conditions générales d'utilisation · Noirsurblanc" }
 
 export default function CGUPage() {
   return (

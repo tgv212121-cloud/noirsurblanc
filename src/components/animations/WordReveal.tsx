@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import { ReactNode } from 'react'
 
-// Word-by-word clip-path reveal — Locomotive / Resn style
+// Word-by-word clip-path reveal , Locomotive / Resn style
 // Each word slides up from behind a mask
 type Props = {
   children: string
@@ -40,7 +40,7 @@ export default function WordReveal({ children, className = '', delay = 0, as: Ta
   )
 }
 
-// Staggered children reveal — IntersectionObserver style but with Framer Motion
+// Staggered children reveal , IntersectionObserver style but with Framer Motion
 export function StaggerReveal({
   children,
   className = '',

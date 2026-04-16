@@ -1,6 +1,6 @@
 import LegalLayout from '@/components/legal/LegalLayout'
 
-export const metadata = { title: 'Mentions légales — Noirsurblanc' }
+export const metadata = { title: 'Mentions légales · Noirsurblanc' }
 
 export default function MentionsLegalesPage() {
   return (
@@ -10,7 +10,7 @@ export default function MentionsLegalesPage() {
         Le site <strong>Noirsurblanc</strong> (ci-après « le Site ») est édité par&nbsp;:
       </p>
       <ul>
-        <li><strong>Nom / raison sociale</strong> : [À COMPLÉTER — ex. Enzo Chabbi, entrepreneur individuel]</li>
+        <li><strong>Nom / raison sociale</strong> : [À COMPLÉTER, ex. Enzo Chabbi, entrepreneur individuel]</li>
         <li><strong>Adresse</strong> : [À COMPLÉTER]</li>
         <li><strong>Email</strong> : [À COMPLÉTER]</li>
         <li><strong>Téléphone</strong> : [À COMPLÉTER]</li>
@@ -27,7 +27,7 @@ export default function MentionsLegalesPage() {
         <li>Site web&nbsp;: <a href="https://vercel.com" target="_blank" rel="noreferrer">vercel.com</a></li>
       </ul>
       <p>
-        La base de données et les services d&apos;authentification sont fournis par <strong>Supabase Inc.</strong> —
+        La base de données et les services d&apos;authentification sont fournis par <strong>Supabase Inc.</strong>,
         970 Toa Payoh North, #07-04, Singapore 318992.
       </p>
       <p>

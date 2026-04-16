@@ -1,6 +1,6 @@
 import LegalLayout from '@/components/legal/LegalLayout'
 
-export const metadata = { title: 'Politique de confidentialité — Noirsurblanc' }
+export const metadata = { title: 'Politique de confidentialité · Noirsurblanc' }
 
 export default function ConfidentialitePage() {
   return (
@@ -18,7 +18,7 @@ export default function ConfidentialitePage() {
         Le responsable du traitement des données est&nbsp;:
       </p>
       <ul>
-        <li><strong>[Nom / raison sociale]</strong> — [À COMPLÉTER]</li>
+        <li><strong>[Nom / raison sociale]</strong> :[À COMPLÉTER]</li>
         <li>Adresse : [À COMPLÉTER]</li>
         <li>Email : <strong>[email contact]</strong></li>
         <li>SIRET : [À COMPLÉTER]</li>
@@ -101,9 +101,9 @@ export default function ConfidentialitePage() {
       </p>
       <p>Nos sous-traitants actuels sont&nbsp;:</p>
       <ul>
-        <li><strong>Vercel Inc.</strong> (États-Unis) — hébergement du Site. Transfert encadré par les Clauses Contractuelles Types (CCT) de la Commission européenne.</li>
-        <li><strong>Supabase Inc.</strong> (Singapour, infrastructure UE disponible) — base de données, authentification, stockage de fichiers. Transfert encadré par les CCT.</li>
-        <li><strong>Resend, Inc.</strong> (États-Unis) — envoi des emails transactionnels (confirmation, réinitialisation de mot de passe). Transfert encadré par les CCT.</li>
+        <li><strong>Vercel Inc.</strong> (États-Unis) :hébergement du Site. Transfert encadré par les Clauses Contractuelles Types (CCT) de la Commission européenne.</li>
+        <li><strong>Supabase Inc.</strong> (Singapour, infrastructure UE disponible) :base de données, authentification, stockage de fichiers. Transfert encadré par les CCT.</li>
+        <li><strong>Resend, Inc.</strong> (États-Unis) :envoi des emails transactionnels (confirmation, réinitialisation de mot de passe). Transfert encadré par les CCT.</li>
       </ul>
       <p>
         Chacun de ces sous-traitants s&apos;est engagé contractuellement à respecter le RGPD et à mettre en œuvre les

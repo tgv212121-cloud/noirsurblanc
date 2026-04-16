@@ -200,12 +200,12 @@ export default function RemindersPage() {
               <div>
                 <p className="text-sm text-blanc/80 font-medium">{r.client?.name}</p>
                 <p className="text-xs text-blanc-muted mt-0.5">
-                  {r.frequency === 'weekly' ? 'Hebdo' : 'Bi-hebdo'} — {DAYS_FR[r.dayOfWeek]} {r.time}
+                  {r.frequency === 'weekly' ? 'Hebdo' : 'Bi-hebdo'} · {DAYS_FR[r.dayOfWeek]} {r.time}
                 </p>
                 {r.lastSentAt && (
                   <p className="text-[10px] text-blanc-muted mt-0.5">
                     Envoyé {formatRelative(r.lastSentAt)}
-                    {r.lastResponseAt && ` — Réponse ${formatRelative(r.lastResponseAt)}`}
+                    {r.lastResponseAt && ` · Réponse ${formatRelative(r.lastResponseAt)}`}
                   </p>
                 )}
               </div>

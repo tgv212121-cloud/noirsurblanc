@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Noirsurblanc — Espace Client",
+  title: "Noirsurblanc · Espace Client",
   description: "Votre espace de gestion de contenu LinkedIn",
 };
 

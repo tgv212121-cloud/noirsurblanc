@@ -5,7 +5,7 @@ import { ReactNode } from 'react'
 
 const EASE_SPRING: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
-// Clip-path reveal from bottom — not a fade
+// Clip-path reveal from bottom , not a fade
 export function ClipReveal({
   children,
   className = '',
@@ -39,7 +39,7 @@ export function ClipReveal({
   )
 }
 
-// Stagger items with translateY reveal — IntersectionObserver style
+// Stagger items with translateY reveal , IntersectionObserver style
 export function StaggerItems({
   children,
   className = '',

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 
-// Counter animation — Linear / Vercel style
+// Counter animation , Linear / Vercel style
 // Numbers count up to target with easeOutCubic
 type Props = {
   target: number

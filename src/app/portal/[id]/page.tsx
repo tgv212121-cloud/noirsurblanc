@@ -370,7 +370,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
           </motion.div>
         )}
 
-        {/* History tab — Programmés + Publiés */}
+        {/* History tab , Programmés + Publiés */}
         {activeTab === 'history' && (
           <motion.div
             key="history"
@@ -527,7 +527,7 @@ function PostCopyCard({ content, files }: { content: string; files?: { name: str
 
   return (
     <div className="bg-noir-elevated rounded-xl" style={{ padding: '28px' }}>
-      {/* Post text — preserves line breaks exactly as written */}
+      {/* Post text , preserves line breaks exactly as written */}
       <div
         className="text-[15px] text-blanc leading-[1.9] whitespace-pre-line mb-8"
         style={{ maxWidth: 'none' }}
@@ -586,7 +586,7 @@ function PostCopyCard({ content, files }: { content: string; files?: { name: str
 
         {copied && (
           <span className="text-xs text-blanc-muted animate-pulse">
-            Collez directement sur LinkedIn — la mise en forme est conservée.
+            Collez directement sur LinkedIn, la mise en forme est conservée.
           </span>
         )}
       </div>

@@ -47,7 +47,7 @@ export default function InviteClientModal({ open, onClose, onCreated }: Props) {
     setCreatedLink(link)
     onCreated(c, link)
 
-    // Fire email send (non-blocking for UX — user still sees the link to copy as fallback)
+    // Fire email send (non-blocking for UX , user still sees the link to copy as fallback)
     try {
       const r = await fetch('/api/send-invite', {
         method: 'POST',
