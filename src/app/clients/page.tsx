@@ -87,9 +87,7 @@ export default function ClientsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filtered.map((c, i) => {
-            const initials = (c.avatar || c.name.split(/\s+/).map(w => w[0]).filter(Boolean).slice(0, 2).join('') || '?').toUpperCase()
-            return (
+          {filtered.map((c, i) => (
               <motion.div
                 key={c.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -102,7 +100,7 @@ export default function ClientsPage() {
                   style={{
                     background: 'rgba(255,255,255,0.025)',
                     border: '1px solid rgba(255,255,255,0.09)',
-                    padding: '22px 22px 20px',
+                    padding: '22px 26px',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'rgba(255,255,255,0.045)'
@@ -139,23 +137,6 @@ export default function ClientsPage() {
                     </svg>
                   </span>
 
-                  {/* Avatar */}
-                  <div
-                    className="flex items-center justify-center font-heading italic group-hover:scale-105 transition-transform duration-200"
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '14px',
-                      background: 'rgba(202,138,4,0.12)',
-                      border: '1px solid rgba(202,138,4,0.3)',
-                      color: '#ca8a04',
-                      fontSize: '16px',
-                      marginBottom: '14px',
-                    }}
-                  >
-                    {initials}
-                  </div>
-
                   {/* Name */}
                   <p className="text-[15px] font-medium text-blanc truncate group-hover:text-gold transition-colors duration-200">
                     {c.name}
@@ -167,8 +148,7 @@ export default function ClientsPage() {
                   )}
                 </button>
               </motion.div>
-            )
-          })}
+          ))}
         </div>
       )}
 
