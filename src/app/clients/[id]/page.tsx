@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import PulseButton from '@/components/ui/PulseButton'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
 import MessageThread from '@/components/messaging/MessageThread'
+import NotificationPrompt from '@/components/ui/NotificationPrompt'
 import type { Client, Post, PostMetrics, Reminder, PostStatus } from '@/types'
 import { questions } from '@/components/onboarding/questions'
 
@@ -125,6 +126,8 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       <div className="mb-6">
         <Link href="/clients" className="text-sm text-blanc-muted hover:text-gold transition-colors duration-200">← Clients</Link>
       </div>
+
+      <NotificationPrompt />
 
       {/* Client header */}
       <div className="mb-8">
