@@ -563,6 +563,8 @@ function NotificationEmailsCard({ emails, onChange }: { emails: NotificationEmai
   const [newEmail, setNewEmail] = useState('')
   const [newLabel, setNewLabel] = useState('')
   const [saving, setSaving] = useState(false)
+  const [toRemove, setToRemove] = useState<NotificationEmail | null>(null)
+  const [removing, setRemoving] = useState(false)
   const cardStyle = { background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.09)' } as const
 
   const add = async (e: React.FormEvent) => {
@@ -576,11 +578,7 @@ function NotificationEmailsCard({ emails, onChange }: { emails: NotificationEmai
     onChange()
   }
 
-  const remove = async (id: string) => {
-    if (!confirm('Retirer cet email des notifications ?')) return
-    await deleteNotificationEmail(id)
-    onChange()
-  }
+  const remove = (e: NotificationEmail) => { setToRemove(e) }
 
   return (
     <div className="relative rounded-2xl overflow-hidden" style={{ ...cardStyle, marginBottom: '24px' }}>
@@ -610,7 +608,7 @@ function NotificationEmailsCard({ emails, onChange }: { emails: NotificationEmai
                   <p className="text-sm text-blanc truncate">{e.email}</p>
                   {e.label && <p className="text-[11px] text-blanc-muted/60 truncate" style={{ marginTop: '2px' }}>{e.label}</p>}
                 </div>
-                <button onClick={() => remove(e.id)}
+                <button onClick={() => remove(e)}
                   className="flex items-center justify-center rounded-md text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
                   style={{ width: '30px', height: '30px' }}
                   title="Retirer">
@@ -643,6 +641,24 @@ function NotificationEmailsCard({ emails, onChange }: { emails: NotificationEmai
           </button>
         </form>
       </div>
+
+      <ConfirmModal
+        open={!!toRemove}
+        danger
+        title="Retirer cet email ?"
+        message={toRemove ? `${toRemove.email}${toRemove.label ? ` (${toRemove.label})` : ''} ne recevra plus les notifications de nouveaux rendez-vous.` : ''}
+        confirmLabel={removing ? 'Suppression…' : 'Retirer'}
+        cancelLabel="Annuler"
+        onCancel={() => { if (!removing) setToRemove(null) }}
+        onConfirm={async () => {
+          if (!toRemove || removing) return
+          setRemoving(true)
+          await deleteNotificationEmail(toRemove.id)
+          setRemoving(false)
+          setToRemove(null)
+          onChange()
+        }}
+      />
     </div>
   )
 }
