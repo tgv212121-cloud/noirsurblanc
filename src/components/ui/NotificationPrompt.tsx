@@ -1,0 +1,116 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { ensureServiceWorker, getSupportState, isSubscribed, subscribeToPush, unsubscribeFromPush } from '@/lib/push-client'
+import { useToast } from './Toast'
+
+function isIOS() {
+  if (typeof navigator === 'undefined') return false
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream
+}
+
+function isStandalone() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true
+}
+
+export default function NotificationPrompt() {
+  const [state, setState] = useState<'unsupported' | 'default' | 'denied' | 'granted' | 'loading'>('loading')
+  const [subscribed, setSubscribed] = useState(false)
+  const [showIosHint, setShowIosHint] = useState(false)
+  const toast = useToast()
+
+  useEffect(() => {
+    (async () => {
+      await ensureServiceWorker()
+      const s = getSupportState()
+      setState(s)
+      setSubscribed(await isSubscribed())
+      if (isIOS() && !isStandalone() && s !== 'unsupported') {
+        setShowIosHint(true)
+      }
+    })()
+  }, [])
+
+  const handleEnable = async () => {
+    if (isIOS() && !isStandalone()) {
+      toast.warning("Sur iPhone, ajoute d'abord le site à ton écran d'accueil (partage → Sur l'écran d'accueil).")
+      return
+    }
+    setState('loading')
+    const ok = await subscribeToPush()
+    const perm = getSupportState()
+    setState(perm)
+    setSubscribed(ok)
+    if (ok) toast.success('Notifications activées.')
+    else if (perm === 'denied') toast.error('Notifications refusées. Active-les dans les paramètres du navigateur.')
+    else toast.error("Impossible d'activer les notifications.")
+  }
+
+  const handleDisable = async () => {
+    await unsubscribeFromPush()
+    setSubscribed(false)
+    toast.info('Notifications désactivées.')
+  }
+
+  if (state === 'loading' || state === 'unsupported') return null
+
+  // Already enabled: show compact status + disable link
+  if (subscribed && state === 'granted') {
+    return (
+      <div className="flex items-center gap-2 text-xs text-blanc-muted/70" style={{ padding: '8px 0' }}>
+        <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#22c55e' }} />
+        Notifications activées
+        <button onClick={handleDisable} className="text-blanc-muted/50 hover:text-blanc underline underline-offset-2 cursor-pointer">
+          désactiver
+        </button>
+      </div>
+    )
+  }
+
+  // Show enable prompt
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        className="rounded-xl flex items-center gap-4 flex-wrap"
+        style={{
+          padding: '14px 18px',
+          background: 'rgba(202,138,4,0.08)',
+          border: '1px solid rgba(202,138,4,0.25)',
+          marginBottom: '20px',
+        }}
+      >
+        <div className="flex items-center justify-center shrink-0" style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(202,138,4,0.15)', color: '#ca8a04' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+          </svg>
+        </div>
+        <div className="flex-1" style={{ minWidth: '200px' }}>
+          <p className="text-sm text-blanc" style={{ marginBottom: '2px' }}>Active les notifications</p>
+          <p className="text-xs text-blanc-muted/70">
+            {showIosHint
+              ? "Sur iPhone : Partage → « Sur l'écran d'accueil », puis ouvre l'app pour activer."
+              : 'Reçois une alerte instantanée quand tu as un nouveau message ou un nouveau post, même si le site est fermé.'}
+          </p>
+        </div>
+        {state !== 'denied' && (
+          <button onClick={handleEnable}
+            className="relative inline-flex items-center justify-center gap-2 cursor-pointer group"
+            style={{ padding: '10px 20px' }}>
+            <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(135deg,#a16207,#ca8a04,#eab308)', border: '1px solid rgba(202,138,4,0.4)' }} />
+            <span className="relative z-10 text-noir font-semibold uppercase tracking-[0.12em]" style={{ fontSize: '11px' }}>
+              Activer
+            </span>
+          </button>
+        )}
+        {state === 'denied' && (
+          <span className="text-xs text-red-400/80">Bloqué dans le navigateur</span>
+        )}
+      </motion.div>
+    </AnimatePresence>
+  )
+}

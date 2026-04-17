@@ -24,6 +24,17 @@ const bodoni = Bodoni_Moda({
 export const metadata: Metadata = {
   title: "Noirsurblanc",
   description: "Plateforme de gestion de contenu LinkedIn",
+  manifest: "/manifest.json",
+  themeColor: "#0a0a0a",
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Noirsurblanc" },
+  icons: {
+    icon: [
+      { url: "/icon-96.png", sizes: "96x96", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/icon-192.png",
+  },
 };
 
 export default function RootLayout({

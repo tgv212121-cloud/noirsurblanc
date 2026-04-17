@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import PulseButton from '@/components/ui/PulseButton'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
 import MessageThread from '@/components/messaging/MessageThread'
+import NotificationPrompt from '@/components/ui/NotificationPrompt'
 import type { Client, Post, PostMetrics, Reminder, PostStatus } from '@/types'
 import { questions } from '@/components/onboarding/questions'
 
@@ -125,6 +126,8 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       <div className="mb-6">
         <Link href="/clients" className="text-sm text-blanc-muted hover:text-gold transition-colors duration-200">← Clients</Link>
       </div>
+
+      <NotificationPrompt />
 
       {/* Client header */}
       <div className="mb-8">
@@ -419,6 +422,19 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                           const refreshed = await fetchClientPosts(id)
                           setInitialPosts(refreshed)
                           setEditingDate(null); setSelectedDate(null); setNewPost(''); setPostImages([]); setPostFiles([])
+                          // Push notification au client
+                          try {
+                            const { supabase: sb } = await import('@/lib/supabase')
+                            const { data: sess } = await sb.auth.getSession()
+                            const tok = sess.session?.access_token
+                            if (tok) {
+                              await fetch('/api/push/notify', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
+                                body: JSON.stringify({ kind: 'post', clientId: id, excerpt: newPost.slice(0, 80) }),
+                              })
+                            }
+                          } catch (e) { console.error('push post', e) }
                         }}
                       >
                         {savingPost ? 'Enregistrement...' : 'Enregistrer'}

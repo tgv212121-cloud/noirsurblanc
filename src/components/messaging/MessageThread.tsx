@@ -99,13 +99,28 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
     prevCountRef.current = messages.length
   }, [messages.length])
 
+  const notifyCounterparty = async (excerpt: string) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) return
+      await fetch('/api/push/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ kind: 'message', clientId, excerpt, from: currentUser }),
+      })
+    } catch (e) { console.error('notify', e) }
+  }
+
   const handleSendText = async () => {
     if (!text.trim() || sending) return
     setSending(true)
-    const success = await sendMessage({ clientId, sender: currentUser, text: text.trim() })
+    const payload = text.trim()
+    const success = await sendMessage({ clientId, sender: currentUser, text: payload })
     if (success) {
       setText('')
       fetchMessages(clientId).then(setMessages)
+      notifyCounterparty(payload)
     }
     setSending(false)
   }
@@ -118,6 +133,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
     if (url) {
       await sendMessage({ clientId, sender: currentUser, fileUrl: url, text: file.name })
       fetchMessages(clientId).then(setMessages)
+      notifyCounterparty('Nouveau fichier : ' + file.name)
     }
     setSending(false)
     if (fileInputRef.current) fileInputRef.current.value = ''
@@ -141,6 +157,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
         if (url) {
           await sendMessage({ clientId, sender: currentUser, voiceUrl: url })
           fetchMessages(clientId).then(setMessages)
+          notifyCounterparty('Message vocal')
         }
         setSending(false)
         stream.getTracks().forEach((track) => track.stop())
