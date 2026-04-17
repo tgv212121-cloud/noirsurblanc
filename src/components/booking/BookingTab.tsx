@@ -237,7 +237,17 @@ export default function BookingTab({ clientId, clientName }: Props) {
             <p className="text-sm text-blanc" style={{ marginBottom: '2px' }}>Connecte ton agenda Google</p>
             <p className="text-xs text-blanc-muted/70">Les créneaux déjà pris dans ton agenda seront masqués automatiquement. Zéro conflit possible.</p>
           </div>
-          <button onClick={() => (window.location.href = `/portal/${clientId}?tab=account`)}
+          <button onClick={async () => {
+              const { data: sess } = await supabase.auth.getSession()
+              const tok = sess.session?.access_token
+              if (!tok) { toast.error('Session invalide.'); return }
+              const r = await fetch(`/api/google/auth-url?returnTo=${encodeURIComponent(`/portal/${clientId}`)}`, {
+                headers: { Authorization: `Bearer ${tok}` },
+              })
+              const d = await r.json()
+              if (d.url) window.location.href = d.url
+              else toast.error("Impossible d'initier la connexion Google.")
+            }}
             className="relative inline-flex items-center gap-2 cursor-pointer" style={{ padding: '10px 18px' }}>
             <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(135deg,#a16207,#ca8a04,#eab308)', border: '1px solid rgba(202,138,4,0.4)' }} />
             <span className="relative z-10 text-noir font-semibold uppercase tracking-[0.12em]" style={{ fontSize: '11px' }}>Connecter</span>
