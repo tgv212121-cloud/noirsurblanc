@@ -61,21 +61,34 @@ export async function POST(req: Request) {
     const { data: apt } = await supabase.from('appointments').select('*').eq('id', appointmentId).maybeSingle()
     if (!apt) return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
 
-    const { data: client } = await supabase.from('clients').select('email,name').eq('id', apt.client_id).maybeSingle()
-    const email = client?.email
-    if (!email) return NextResponse.json({ error: 'No email for client' }, { status: 400 })
+    // Either a client booking (apt.client_id set) or a prospect booking (apt.prospect_*)
+    let recipientEmail: string | null = null
+    let recipientName: string | null = null
+    let isProspect = false
 
-    const firstName = (clientName || client?.name || '').split(' ')[0] || 'Bonjour'
+    if (apt.client_id) {
+      const { data: client } = await supabase.from('clients').select('email,name').eq('id', apt.client_id).maybeSingle()
+      recipientEmail = client?.email || null
+      recipientName = client?.name || null
+    } else if (apt.prospect_email) {
+      recipientEmail = apt.prospect_email
+      recipientName = apt.prospect_name
+      isProspect = true
+    }
+
+    if (!recipientEmail) return NextResponse.json({ error: 'No recipient email' }, { status: 400 })
+
+    const firstName = (clientName || recipientName || '').split(' ')[0] || 'Bonjour'
     const date = new Date(apt.scheduled_at)
     const meetingUrl = apt.meeting_url || ''
 
-    // 1. Email confirmation au client
+    // 1. Email confirmation au client ou prospect
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         from: FROM,
-        to: email,
+        to: recipientEmail,
         subject: `Rendez-vous confirmé, ${firstName}`,
         html: buildHtml(firstName, date, apt.duration_min, apt.topic, meetingUrl),
       }),
@@ -94,8 +107,14 @@ export async function POST(req: Request) {
           body: JSON.stringify({
             from: FROM,
             to: adminEmails,
-            subject: `Nouveau rendez-vous : ${client?.name || firstName}`,
-            html: buildAdminHtml(client?.name || firstName, date, apt.duration_min, apt.topic, apt.notes, meetingUrl),
+            subject: `Nouveau rendez-vous : ${recipientName || firstName}${isProspect ? ' (prospect)' : ''}`,
+            html: buildAdminHtml(
+              (recipientName || firstName) + (isProspect ? ' — PROSPECT' : ''),
+              date, apt.duration_min,
+              isProspect && apt.prospect_company ? `${apt.topic || 'Prospection'} · ${apt.prospect_company}` : apt.topic,
+              isProspect ? `Email : ${apt.prospect_email}${apt.notes ? '\n' + apt.notes : ''}` : apt.notes,
+              meetingUrl,
+            ),
           }),
         })
       }

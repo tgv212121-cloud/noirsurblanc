@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 
 export default function MainWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const publicPaths = ['/portal', '/onboarding', '/login', '/forgot-password', '/reset-password', '/mentions-legales', '/confidentialite', '/cgu', '/rdv']
+  const publicPaths = ['/portal', '/onboarding', '/login', '/forgot-password', '/reset-password', '/mentions-legales', '/confidentialite', '/cgu', '/rdv', '/book']
   const fullBleed = publicPaths.some(p => pathname.startsWith(p))
 
   if (fullBleed) {

@@ -63,7 +63,7 @@ export type AvailabilityRule = {
 
 export type Appointment = {
   id: string
-  clientId: string
+  clientId: string | null
   scheduledAt: string
   durationMin: number
   status: 'confirmed' | 'cancelled'
@@ -71,4 +71,7 @@ export type Appointment = {
   notes?: string
   meetingUrl?: string
   createdAt: string
+  prospectName?: string | null
+  prospectEmail?: string | null
+  prospectCompany?: string | null
 }

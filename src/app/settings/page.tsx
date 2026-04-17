@@ -463,7 +463,7 @@ function UpcomingAppointmentsCard({
           </p>
         ) : appointments.map(a => {
           const d = new Date(a.scheduledAt)
-          const c = clientsById[a.clientId]
+          const c = a.clientId ? clientsById[a.clientId] : undefined
           return (
             <div key={a.id} className="flex items-center gap-5 flex-wrap" style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
               <div style={{ minWidth: '160px' }}>
@@ -476,7 +476,22 @@ function UpcomingAppointmentsCard({
                 <p className="text-[11px] text-blanc-muted/60" style={{ marginTop: '3px' }}>{a.durationMin} min</p>
               </div>
               <div className="flex-1" style={{ minWidth: '200px' }}>
-                <p className="text-sm text-blanc font-medium">{c ? c.name : 'Client inconnu'}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm text-blanc font-medium">
+                    {c ? c.name : (a.prospectName || 'Inconnu')}
+                  </p>
+                  {!a.clientId && a.prospectEmail && (
+                    <span className="text-[9px] uppercase tracking-[0.14em] font-semibold"
+                      style={{ padding: '2px 8px', borderRadius: '999px', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)', color: '#60a5fa' }}>
+                      Prospect
+                    </span>
+                  )}
+                </div>
+                {!a.clientId && a.prospectEmail && (
+                  <p className="text-[11px] text-blanc-muted/60" style={{ marginTop: '3px' }}>
+                    {a.prospectEmail}{a.prospectCompany ? ' · ' + a.prospectCompany : ''}
+                  </p>
+                )}
                 {a.topic && <p className="text-xs text-gold" style={{ marginTop: '4px' }}>{a.topic}</p>}
                 {a.notes && <p className="text-xs text-blanc-muted/70 whitespace-pre-line" style={{ marginTop: '6px', maxWidth: '420px' }}>{a.notes}</p>}
               </div>
@@ -505,7 +520,7 @@ function UpcomingAppointmentsCard({
         title="Annuler ce rendez-vous ?"
         message={
           toCancel
-            ? `Le rendez-vous avec ${clientsById[toCancel.clientId]?.name || 'ce client'} le ${DAYS[new Date(toCancel.scheduledAt).getDay()]} ${new Date(toCancel.scheduledAt).getDate()} ${MONTHS[new Date(toCancel.scheduledAt).getMonth()]} à ${pad(new Date(toCancel.scheduledAt).getHours())}h${pad(new Date(toCancel.scheduledAt).getMinutes())} sera annulé. Le client n'est pas notifié automatiquement, préviens-le si besoin.`
+            ? `Le rendez-vous avec ${(toCancel.clientId ? clientsById[toCancel.clientId]?.name : toCancel.prospectName) || 'ce contact'} le ${DAYS[new Date(toCancel.scheduledAt).getDay()]} ${new Date(toCancel.scheduledAt).getDate()} ${MONTHS[new Date(toCancel.scheduledAt).getMonth()]} à ${pad(new Date(toCancel.scheduledAt).getHours())}h${pad(new Date(toCancel.scheduledAt).getMinutes())} sera annulé. Le contact n'est pas notifié automatiquement, préviens-le si besoin.`
             : ''
         }
         confirmLabel={cancelling ? 'Annulation…' : 'Annuler le RDV'}

@@ -406,22 +406,47 @@ export async function fetchAppointments(params?: { clientId?: string; fromIso?: 
   return (data || []).map(mapAppointment)
 }
 
-function mapAppointment(r: { id: string; client_id: string; scheduled_at: string; duration_min: number; status: 'confirmed'|'cancelled'; topic?: string; notes?: string; meeting_url?: string; created_at: string }): import('@/types').Appointment {
+function mapAppointment(r: {
+  id: string; client_id: string | null; scheduled_at: string; duration_min: number;
+  status: 'confirmed'|'cancelled'; topic?: string; notes?: string; meeting_url?: string;
+  created_at: string; prospect_name?: string | null; prospect_email?: string | null; prospect_company?: string | null;
+}): import('@/types').Appointment {
   return {
     id: r.id, clientId: r.client_id, scheduledAt: r.scheduled_at, durationMin: r.duration_min,
     status: r.status, topic: r.topic, notes: r.notes, meetingUrl: r.meeting_url, createdAt: r.created_at,
+    prospectName: r.prospect_name || null,
+    prospectEmail: r.prospect_email || null,
+    prospectCompany: r.prospect_company || null,
   }
 }
 
 export async function createAppointment(input: {
-  clientId: string; scheduledAt: string; durationMin: number; topic?: string; notes?: string
+  clientId?: string | null
+  scheduledAt: string
+  durationMin: number
+  topic?: string
+  notes?: string
+  prospectName?: string
+  prospectEmail?: string
+  prospectCompany?: string
 }): Promise<import('@/types').Appointment | null> {
   const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'a_' + Date.now()
   const meetingUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/rdv/${id}`
-  const { data, error } = await supabase.from('appointments').insert({
-    id, client_id: input.clientId, scheduled_at: input.scheduledAt, duration_min: input.durationMin,
-    status: 'confirmed', topic: input.topic || null, notes: input.notes || null, meeting_url: meetingUrl,
-  }).select().single()
+  const payload: Record<string, unknown> = {
+    id,
+    client_id: input.clientId || null,
+    scheduled_at: input.scheduledAt,
+    duration_min: input.durationMin,
+    status: 'confirmed',
+    topic: input.topic || null,
+    notes: input.notes || null,
+    meeting_url: meetingUrl,
+  }
+  if (input.prospectName) payload.prospect_name = input.prospectName
+  if (input.prospectEmail) payload.prospect_email = input.prospectEmail
+  if (input.prospectCompany) payload.prospect_company = input.prospectCompany
+
+  const { data, error } = await supabase.from('appointments').insert(payload).select().single()
   if (error) { console.error('createAppointment', error); return null }
   return data ? mapAppointment(data) : null
 }

@@ -9,12 +9,15 @@ const MEETING_URL = process.env.NEXT_PUBLIC_MEETING_URL || ''
 
 type Appointment = {
   id: string
-  client_id: string
+  client_id: string | null
   scheduled_at: string
   duration_min: number
   status: string
   topic: string | null
   notes: string | null
+  prospect_name?: string | null
+  prospect_email?: string | null
+  prospect_company?: string | null
 }
 
 type Client = { name: string; company: string | null }
@@ -34,8 +37,12 @@ export default function MeetingPage({ params }: { params: Promise<{ id: string }
       const { data: a } = await supabase.from('appointments').select('*').eq('id', id).maybeSingle()
       if (!a) { setLoading(false); return }
       setApt(a as Appointment)
-      const { data: c } = await supabase.from('clients').select('name, company').eq('id', a.client_id).maybeSingle()
-      setClient(c as Client | null)
+      if (a.client_id) {
+        const { data: c } = await supabase.from('clients').select('name, company').eq('id', a.client_id).maybeSingle()
+        setClient(c as Client | null)
+      } else if (a.prospect_name) {
+        setClient({ name: a.prospect_name, company: a.prospect_company || null })
+      }
       setLoading(false)
     })()
   }, [id])
