@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { buildAuthUrl } from '@/lib/google'
+import { getBusySlotsForUser } from '@/lib/google'
 
 async function getAuthUserId(req: Request): Promise<string | null> {
   const auth = req.headers.get('authorization') || ''
@@ -13,17 +13,16 @@ async function getAuthUserId(req: Request): Promise<string | null> {
   } catch { return null }
 }
 
-export async function GET(req: Request) {
+export async function POST(req: Request) {
   try {
-    const origin = new URL(req.url).origin
-    const { searchParams } = new URL(req.url)
-    const returnTo = searchParams.get('returnTo') || '/settings'
     const userId = await getAuthUserId(req)
-    const state = Buffer.from(JSON.stringify({ userId, returnTo })).toString('base64url')
-    const url = buildAuthUrl(origin, state)
-    return NextResponse.json({ url })
+    if (!userId) return NextResponse.json({ busy: [] })
+    const { timeMin, timeMax } = await req.json()
+    if (!timeMin || !timeMax) return NextResponse.json({ busy: [] })
+    const busy = await getBusySlotsForUser(userId, timeMin, timeMax)
+    return NextResponse.json({ busy })
   } catch (e) {
-    console.error('auth-url', e)
-    return NextResponse.json({ error: 'server' }, { status: 500 })
+    console.error('my-freebusy', e)
+    return NextResponse.json({ busy: [] })
   }
 }

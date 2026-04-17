@@ -78,18 +78,15 @@ type TokenRow = {
   refresh_token: string
   expires_at: string
   calendar_id: string
+  is_primary: boolean
+  user_id: string | null
 }
 
-// Returns the stored primary Google token, refreshed if needed. null if nobody connected.
-export async function getPrimaryToken(): Promise<TokenRow | null> {
+async function refreshRowIfNeeded(row: TokenRow): Promise<TokenRow | null> {
   const sb = getAdminSupabase()
-  const { data } = await sb.from('google_tokens').select('*').eq('is_primary', true).maybeSingle()
-  if (!data) return null
-  const row = data as TokenRow
   const now = Date.now()
   const exp = new Date(row.expires_at).getTime()
-  if (exp - now > 60_000) return row // still valid for >1min
-  // Refresh
+  if (exp - now > 60_000) return row
   try {
     const refreshed = await refreshAccessToken(row.refresh_token)
     const newExp = new Date(Date.now() + refreshed.expires_in * 1000).toISOString()
@@ -105,30 +102,47 @@ export async function getPrimaryToken(): Promise<TokenRow | null> {
   }
 }
 
-// Query Google Calendar for busy intervals in [timeMin, timeMax] (ISO strings).
+// Primary admin token
+export async function getPrimaryToken(): Promise<TokenRow | null> {
+  const sb = getAdminSupabase()
+  const { data } = await sb.from('google_tokens').select('*').eq('is_primary', true).maybeSingle()
+  if (!data) return null
+  return refreshRowIfNeeded(data as TokenRow)
+}
+
+// Token of a given user (client OR admin)
+export async function getTokenForUser(userId: string): Promise<TokenRow | null> {
+  if (!userId) return null
+  const sb = getAdminSupabase()
+  const { data } = await sb.from('google_tokens').select('*').eq('user_id', userId).maybeSingle()
+  if (!data) return null
+  return refreshRowIfNeeded(data as TokenRow)
+}
+
+async function fetchBusyWithToken(token: TokenRow, timeMin: string, timeMax: string): Promise<{ start: string; end: string }[]> {
+  const calId = token.calendar_id || 'primary'
+  const res = await fetch(`${CAL_API}/freeBusy`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token.access_token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ timeMin, timeMax, timeZone: 'Europe/Paris', items: [{ id: calId }] }),
+  })
+  if (!res.ok) { console.error('freeBusy error', await res.text()); return [] }
+  const data = await res.json()
+  return data.calendars?.[calId]?.busy || []
+}
+
+// Busy intervals from PRIMARY admin calendar
 export async function getBusySlots(timeMin: string, timeMax: string): Promise<{ start: string; end: string }[]> {
   const token = await getPrimaryToken()
   if (!token) return []
-  const res = await fetch(`${CAL_API}/freeBusy`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token.access_token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      timeMin,
-      timeMax,
-      timeZone: 'Europe/Paris',
-      items: [{ id: token.calendar_id || 'primary' }],
-    }),
-  })
-  if (!res.ok) {
-    console.error('freeBusy error', await res.text())
-    return []
-  }
-  const data = await res.json()
-  const cal = data.calendars?.[token.calendar_id || 'primary']
-  return cal?.busy || []
+  return fetchBusyWithToken(token, timeMin, timeMax)
+}
+
+// Busy intervals from a specific user's calendar
+export async function getBusySlotsForUser(userId: string, timeMin: string, timeMax: string): Promise<{ start: string; end: string }[]> {
+  const token = await getTokenForUser(userId)
+  if (!token) return []
+  return fetchBusyWithToken(token, timeMin, timeMax)
 }
 
 // Create a Google Calendar event for a booking. Returns eventId + hangoutLink.

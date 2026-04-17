@@ -11,6 +11,7 @@ import {
 import type { AvailabilityRule, Appointment } from '@/types'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import { useToast } from '@/components/ui/Toast'
+import { supabase } from '@/lib/supabase'
 
 type Props = { clientId: string; clientName: string }
 
@@ -58,6 +59,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [myAppointments, setMyAppointments] = useState<Appointment[]>([])
   const [busy, setBusy] = useState<{ start: string; end: string }[]>([])
+  const [googleConnected, setGoogleConnected] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedSlot, setSelectedSlot] = useState<{ date: Date; iso: string } | null>(null)
   const [topic, setTopic] = useState('')
@@ -81,13 +83,36 @@ export default function BookingTab({ clientId, clientName }: Props) {
     ])
     setRules(r); setAppointments(all); setMyAppointments(mine); setLoading(false)
     try {
+      // 1. Busy admin (la agence) - public endpoint
       const br = await fetch('/api/google/freebusy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ timeMin: nowIso, timeMax: in21 }),
       })
       const bd = await br.json()
-      setBusy(bd.busy || [])
+      const adminBusy: { start: string; end: string }[] = bd.busy || []
+
+      // 2. Busy client (moi) - authenticated endpoint
+      let myBusy: { start: string; end: string }[] = []
+      let isConnected = false
+      const { data: sess } = await supabase.auth.getSession()
+      const token = sess.session?.access_token
+      if (token) {
+        const sr = await fetch('/api/google/my-status', { headers: { Authorization: `Bearer ${token}` } })
+        const sd = await sr.json()
+        isConnected = !!sd.connected
+        if (isConnected) {
+          const mr = await fetch('/api/google/my-freebusy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ timeMin: nowIso, timeMax: in21 }),
+          })
+          const md = await mr.json()
+          myBusy = md.busy || []
+        }
+      }
+      setGoogleConnected(isConnected)
+      setBusy([...adminBusy, ...myBusy])
     } catch (e) { console.error('busy', e) }
   }
 
@@ -199,6 +224,24 @@ export default function BookingTab({ clientId, clientName }: Props) {
               )
             })}
           </div>
+        </div>
+      )}
+
+      {/* Google prompt si pas connecte */}
+      {googleConnected === false && (
+        <div className="rounded-xl flex items-center gap-4 flex-wrap" style={{ padding: '14px 18px', background: 'rgba(202,138,4,0.08)', border: '1px solid rgba(202,138,4,0.25)', marginBottom: '20px' }}>
+          <div className="flex items-center justify-center shrink-0" style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(202,138,4,0.15)', color: '#ca8a04' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+          </div>
+          <div className="flex-1" style={{ minWidth: '220px' }}>
+            <p className="text-sm text-blanc" style={{ marginBottom: '2px' }}>Connecte ton agenda Google</p>
+            <p className="text-xs text-blanc-muted/70">Les créneaux déjà pris dans ton agenda seront masqués automatiquement. Zéro conflit possible.</p>
+          </div>
+          <button onClick={() => (window.location.href = `/portal/${clientId}?tab=account`)}
+            className="relative inline-flex items-center gap-2 cursor-pointer" style={{ padding: '10px 18px' }}>
+            <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(135deg,#a16207,#ca8a04,#eab308)', border: '1px solid rgba(202,138,4,0.4)' }} />
+            <span className="relative z-10 text-noir font-semibold uppercase tracking-[0.12em]" style={{ fontSize: '11px' }}>Connecter</span>
+          </button>
         </div>
       )}
 

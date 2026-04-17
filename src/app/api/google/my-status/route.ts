@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { buildAuthUrl } from '@/lib/google'
+import { getAdminSupabase } from '@/lib/supabase-admin'
 
 async function getAuthUserId(req: Request): Promise<string | null> {
   const auth = req.headers.get('authorization') || ''
@@ -15,15 +15,14 @@ async function getAuthUserId(req: Request): Promise<string | null> {
 
 export async function GET(req: Request) {
   try {
-    const origin = new URL(req.url).origin
-    const { searchParams } = new URL(req.url)
-    const returnTo = searchParams.get('returnTo') || '/settings'
     const userId = await getAuthUserId(req)
-    const state = Buffer.from(JSON.stringify({ userId, returnTo })).toString('base64url')
-    const url = buildAuthUrl(origin, state)
-    return NextResponse.json({ url })
+    if (!userId) return NextResponse.json({ connected: false })
+    const sb = getAdminSupabase()
+    const { data } = await sb.from('google_tokens').select('email').eq('user_id', userId).maybeSingle()
+    if (!data) return NextResponse.json({ connected: false })
+    return NextResponse.json({ connected: true, email: (data as { email: string }).email })
   } catch (e) {
-    console.error('auth-url', e)
-    return NextResponse.json({ error: 'server' }, { status: 500 })
+    console.error('my-status', e)
+    return NextResponse.json({ connected: false })
   }
 }

@@ -12,6 +12,7 @@ import GooeyNav from '@/components/ui/GooeyNavComponent'
 import MessageThread from '@/components/messaging/MessageThread'
 import NotificationPrompt from '@/components/ui/NotificationPrompt'
 import ChangePasswordCard from '@/components/ui/ChangePasswordCard'
+import GoogleCalendarCard from '@/components/ui/GoogleCalendarCard'
 import BookingTab from '@/components/booking/BookingTab'
 
 type Tab = 'calendar' | 'messages' | 'stats' | 'history' | 'booking' | 'account'
@@ -384,9 +385,10 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
           </motion.div>
         )}
 
-        {/* Account tab : change password */}
+        {/* Account tab : Google Calendar + mot de passe */}
         {activeTab === 'account' && (
           <motion.div key="account" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+            <GoogleCalendarCard audience="client" returnTo={`/portal/${client.id}`} />
             <ChangePasswordCard />
           </motion.div>
         )}
