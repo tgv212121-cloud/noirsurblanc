@@ -456,3 +456,29 @@ export async function cancelAppointment(id: string): Promise<boolean> {
   if (error) { console.error('cancelAppointment', error); return false }
   return true
 }
+
+// ============================================================
+// NOTIFICATION EMAILS (pour les notifs de RDV, invitations, etc.)
+// ============================================================
+
+export type NotificationEmail = { id: string; email: string; label: string | null; createdAt: string }
+
+export async function fetchNotificationEmails(): Promise<NotificationEmail[]> {
+  const { data, error } = await supabase.from('notification_emails').select('*').order('created_at', { ascending: true })
+  if (error) { console.error('fetchNotificationEmails', error); return [] }
+  return (data || []).map((r: { id: string; email: string; label: string | null; created_at: string }) => ({
+    id: r.id, email: r.email, label: r.label, createdAt: r.created_at,
+  }))
+}
+
+export async function addNotificationEmail(email: string, label?: string): Promise<boolean> {
+  const { error } = await supabase.from('notification_emails').insert({ email: email.trim(), label: label?.trim() || null })
+  if (error) { console.error('addNotificationEmail', error); return false }
+  return true
+}
+
+export async function deleteNotificationEmail(id: string): Promise<boolean> {
+  const { error } = await supabase.from('notification_emails').delete().eq('id', id)
+  if (error) { console.error('deleteNotificationEmail', error); return false }
+  return true
+}

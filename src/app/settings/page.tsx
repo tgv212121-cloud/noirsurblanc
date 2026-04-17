@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getMyProfile, listProfiles, signUp, signOut, type Profile } from '@/lib/auth'
-import { fetchClients, exportAllData, fetchAvailabilityRules, upsertAvailabilityRule, deleteAvailabilityRule, fetchAppointments, cancelAppointment } from '@/lib/queries'
+import { fetchClients, exportAllData, fetchAvailabilityRules, upsertAvailabilityRule, deleteAvailabilityRule, fetchAppointments, cancelAppointment, fetchNotificationEmails, addNotificationEmail, deleteNotificationEmail, type NotificationEmail } from '@/lib/queries'
 import type { Client, AvailabilityRule, Appointment } from '@/types'
 import { motion } from 'framer-motion'
 import ConfirmModal from '@/components/ui/ConfirmModal'
@@ -25,6 +25,7 @@ export default function SettingsPage() {
   const [lastExport, setLastExport] = useState<string | null>(null)
   const [rules, setRules] = useState<AvailabilityRule[]>([])
   const [upcomingAppts, setUpcomingAppts] = useState<Appointment[]>([])
+  const [notifEmails, setNotifEmails] = useState<NotificationEmail[]>([])
 
   useEffect(() => {
     (async () => {
@@ -32,11 +33,12 @@ export default function SettingsPage() {
       if (!p) { router.push('/login'); return }
       if (p.role !== 'admin') { router.push('/'); return }
       setMe(p)
-      const [allP, allC, allR, appts] = await Promise.all([
+      const [allP, allC, allR, appts, notifs] = await Promise.all([
         listProfiles(), fetchClients(), fetchAvailabilityRules(),
         fetchAppointments({ fromIso: new Date().toISOString() }),
+        fetchNotificationEmails(),
       ])
-      setProfiles(allP); setClients(allC); setRules(allR); setUpcomingAppts(appts); setLoading(false)
+      setProfiles(allP); setClients(allC); setRules(allR); setUpcomingAppts(appts); setNotifEmails(notifs); setLoading(false)
       if (typeof window !== 'undefined') {
         setLastExport(localStorage.getItem('noirsurblanc:lastExport'))
       }
@@ -172,6 +174,12 @@ export default function SettingsPage() {
 
       {/* Availability (calendar slots for client bookings) */}
       <AvailabilityCard rules={rules} onChange={async () => { setRules(await fetchAvailabilityRules()) }} />
+
+      {/* Notifications emails */}
+      <NotificationEmailsCard
+        emails={notifEmails}
+        onChange={async () => { setNotifEmails(await fetchNotificationEmails()) }}
+      />
 
       {/* Upcoming appointments (admin view) */}
       <UpcomingAppointmentsCard
@@ -535,6 +543,94 @@ function UpcomingAppointmentsCard({
           setToCancel(null)
         }}
       />
+    </div>
+  )
+}
+
+function NotificationEmailsCard({ emails, onChange }: { emails: NotificationEmail[]; onChange: () => void }) {
+  const [newEmail, setNewEmail] = useState('')
+  const [newLabel, setNewLabel] = useState('')
+  const [saving, setSaving] = useState(false)
+  const cardStyle = { background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.09)' } as const
+
+  const add = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!/^\S+@\S+\.\S+$/.test(newEmail.trim())) { alert('Email invalide.'); return }
+    setSaving(true)
+    const ok = await addNotificationEmail(newEmail.trim(), newLabel.trim() || undefined)
+    setSaving(false)
+    if (!ok) { alert("Erreur. Cet email est peut-être déjà dans la liste."); return }
+    setNewEmail(''); setNewLabel('')
+    onChange()
+  }
+
+  const remove = async (id: string) => {
+    if (!confirm('Retirer cet email des notifications ?')) return
+    await deleteNotificationEmail(id)
+    onChange()
+  }
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden" style={{ ...cardStyle, marginBottom: '24px' }}>
+      <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+      <div className="flex items-center gap-3" style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
+        <h2 className="font-heading text-lg text-blanc italic">Notifications par email</h2>
+        <span className="ml-auto text-xs text-blanc-muted/60">{emails.length} destinataire{emails.length > 1 ? 's' : ''}</span>
+      </div>
+
+      <div style={{ padding: '24px' }}>
+        <p className="text-xs text-blanc-muted/70 leading-relaxed" style={{ marginBottom: '20px' }}>
+          Ces adresses reçoivent un mail à chaque nouveau rendez-vous. Ajoute autant d&apos;emails que tu veux (toi, ton associé, une adresse de test...).
+        </p>
+
+        {emails.length > 0 && (
+          <div className="space-y-2" style={{ marginBottom: '18px' }}>
+            {emails.map(e => (
+              <div key={e.id} className="flex items-center gap-3 rounded-xl"
+                style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="flex items-center justify-center shrink-0" style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(202,138,4,0.1)', border: '1px solid rgba(202,138,4,0.25)', color: '#ca8a04' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-blanc truncate">{e.email}</p>
+                  {e.label && <p className="text-[11px] text-blanc-muted/60 truncate" style={{ marginTop: '2px' }}>{e.label}</p>}
+                </div>
+                <button onClick={() => remove(e.id)}
+                  className="flex items-center justify-center rounded-md text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                  style={{ width: '30px', height: '30px' }}
+                  title="Retirer">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Add new */}
+        <form onSubmit={add} className="grid grid-cols-1 md:grid-cols-[1fr_180px_auto] gap-3 items-end rounded-xl"
+          style={{ padding: '16px', background: 'rgba(255,255,255,0.015)', border: '1px dashed rgba(255,255,255,0.1)' }}>
+          <div>
+            <label className="text-[10px] text-blanc-muted/60 uppercase tracking-wider block" style={{ marginBottom: '6px' }}>Email</label>
+            <input type="email" required value={newEmail} onChange={e => setNewEmail(e.target.value)}
+              placeholder="contact@exemple.com"
+              style={{ width: '100%', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fafaf9', fontSize: '13px', padding: '10px 12px', outline: 'none', fontFamily: 'inherit' }} />
+          </div>
+          <div>
+            <label className="text-[10px] text-blanc-muted/60 uppercase tracking-wider block" style={{ marginBottom: '6px' }}>Libellé (optionnel)</label>
+            <input type="text" value={newLabel} onChange={e => setNewLabel(e.target.value)}
+              placeholder="Enzo, test, équipe..."
+              style={{ width: '100%', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fafaf9', fontSize: '13px', padding: '10px 12px', outline: 'none', fontFamily: 'inherit' }} />
+          </div>
+          <button type="submit" disabled={saving}
+            className="rounded-xl text-noir font-semibold text-xs uppercase tracking-wider cursor-pointer disabled:opacity-40"
+            style={{ padding: '10px 18px', background: 'linear-gradient(135deg,#a16207,#ca8a04,#eab308)', border: '1px solid rgba(202,138,4,0.4)' }}>
+            {saving ? '...' : '+ Ajouter'}
+          </button>
+        </form>
+      </div>
     </div>
   )
 }

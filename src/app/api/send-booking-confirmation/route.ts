@@ -96,10 +96,15 @@ export async function POST(req: Request) {
     const data = await r.json()
     if (!r.ok) return NextResponse.json({ error: data?.message || 'Resend error' }, { status: r.status })
 
-    // 2. Email de notification à tous les admins
+    // 2. Email de notification aux destinataires configurés (table notification_emails)
+    // + fallback sur les profils admin si la table est vide
     try {
-      const { data: admins } = await supabase.from('profiles').select('email').eq('role', 'admin')
-      const adminEmails = (admins || []).map(a => a.email).filter(Boolean) as string[]
+      const { data: notifRows } = await supabase.from('notification_emails').select('email')
+      let adminEmails = (notifRows || []).map(r => r.email).filter(Boolean) as string[]
+      if (adminEmails.length === 0) {
+        const { data: admins } = await supabase.from('profiles').select('email').eq('role', 'admin')
+        adminEmails = (admins || []).map(a => a.email).filter(Boolean) as string[]
+      }
       if (adminEmails.length > 0) {
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
