@@ -14,6 +14,8 @@ import NotificationPrompt from '@/components/ui/NotificationPrompt'
 import ChangePasswordCard from '@/components/ui/ChangePasswordCard'
 import GoogleCalendarCard from '@/components/ui/GoogleCalendarCard'
 import BookingTab from '@/components/booking/BookingTab'
+import MagicCard from '@/components/ui/MagicCard'
+import NumberTicker from '@/components/ui/NumberTicker'
 
 type Tab = 'calendar' | 'messages' | 'stats' | 'history' | 'booking' | 'account'
 
@@ -145,28 +147,71 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
 
       <NotificationPrompt />
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-6 mb-12">
-        <div className="bg-noir-elevated rounded-xl" style={{ padding: '20px 24px' }}>
-          <p className="text-blanc-muted text-xs mb-2">Posts publiés</p>
-          <p className="text-2xl font-bold text-blanc">{publishedPosts.length}</p>
-        </div>
-        <div className="bg-noir-elevated rounded-xl" style={{ padding: '20px 24px' }}>
-          <p className="text-blanc-muted text-xs mb-2">En attente de validation</p>
-          <p className="text-2xl font-bold text-blanc">{pendingPosts.length}</p>
-        </div>
-        <div className="bg-noir-elevated rounded-xl" style={{ padding: '20px 24px' }}>
-          <p className="text-blanc-muted text-xs mb-2">Engagement moyen</p>
-          <p className="text-2xl font-bold" style={{ color: '#8b5cf6' }}>
-            {publishedPosts.length > 0
-              ? (publishedPosts.reduce((s, p) => {
-                  const m = metrics.find(mt => mt.postId === p.id)
-                  return s + (m?.engagementRate || 0)
-                }, 0) / publishedPosts.length).toFixed(2)
-              : '0'}%
-          </p>
-        </div>
-      </div>
+      {/* Stats — Bento grid */}
+      {(() => {
+        const avgEngagement = publishedPosts.length > 0
+          ? publishedPosts.reduce((s, p) => {
+              const m = metrics.find(mt => mt.postId === p.id)
+              return s + (m?.engagementRate || 0)
+            }, 0) / publishedPosts.length
+          : 0
+        const totalImpressions = metrics.reduce((s, m) => s + (m.impressions || 0), 0)
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12" style={{ gridAutoRows: '1fr' }}>
+            {/* Grande carte : Posts publiés */}
+            <MagicCard className="md:row-span-2 md:col-span-1">
+              <div className="flex flex-col justify-between h-full" style={{ padding: '28px 30px', minHeight: '220px' }}>
+                <div>
+                  <div className="flex items-center gap-2" style={{ marginBottom: '14px' }}>
+                    <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-blanc-muted/70">Posts publiés</p>
+                  </div>
+                  <p className="font-heading italic text-6xl text-blanc leading-none" style={{ letterSpacing: '-0.02em' }}>
+                    <NumberTicker value={publishedPosts.length} />
+                  </p>
+                </div>
+                <div style={{ marginTop: '24px' }}>
+                  <p className="text-xs text-blanc-muted/60 leading-relaxed">
+                    {totalImpressions > 0
+                      ? <><NumberTicker value={totalImpressions} /> impressions cumulées</>
+                      : 'Tes posts apparaîtront ici dès qu\u2019ils seront publiés.'}
+                  </p>
+                </div>
+              </div>
+            </MagicCard>
+
+            {/* Petite carte top : En attente */}
+            <MagicCard>
+              <div style={{ padding: '22px 26px' }}>
+                <div className="flex items-center gap-2" style={{ marginBottom: '10px' }}>
+                  <span className="inline-block rounded-full" style={{ width: '5px', height: '5px', background: pendingPosts.length > 0 ? '#eab308' : 'rgba(255,255,255,0.3)' }} />
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-blanc-muted/70">En attente</p>
+                </div>
+                <p className="font-heading italic text-4xl text-blanc leading-none" style={{ letterSpacing: '-0.02em' }}>
+                  <NumberTicker value={pendingPosts.length} />
+                </p>
+                <p className="text-[11px] text-blanc-muted/60" style={{ marginTop: '8px' }}>
+                  {pendingPosts.length === 0 ? 'Rien à valider' : pendingPosts.length === 1 ? 'à valider' : 'à valider'}
+                </p>
+              </div>
+            </MagicCard>
+
+            {/* Petite carte bottom : Engagement */}
+            <MagicCard>
+              <div style={{ padding: '22px 26px' }}>
+                <div className="flex items-center gap-2" style={{ marginBottom: '10px' }}>
+                  <span className="inline-block rounded-full" style={{ width: '5px', height: '5px', background: '#8b5cf6', boxShadow: '0 0 8px rgba(139,92,246,0.5)' }} />
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-blanc-muted/70">Engagement</p>
+                </div>
+                <p className="font-heading italic text-4xl leading-none" style={{ color: '#8b5cf6', letterSpacing: '-0.02em' }}>
+                  <NumberTicker value={avgEngagement} decimalPlaces={2} suffix="%" />
+                </p>
+                <p className="text-[11px] text-blanc-muted/60" style={{ marginTop: '8px' }}>taux moyen</p>
+              </div>
+            </MagicCard>
+          </div>
+        )
+      })()}
 
       {/* Tabs */}
       <div className="mb-10">
