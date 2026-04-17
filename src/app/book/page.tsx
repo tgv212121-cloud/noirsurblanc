@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fetchAvailabilityRules, fetchAppointments, createAppointment } from '@/lib/queries'
+import { supabase } from '@/lib/supabase'
 import type { AvailabilityRule, Appointment } from '@/types'
 
 const DAYS_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
@@ -50,13 +51,35 @@ export default function BookPublicPage() {
   const [err, setErr] = useState<string | null>(null)
 
   useEffect(() => {
+    let mounted = true
+    const loadSlots = async () => {
+      const a = await fetchAppointments({ fromIso: new Date().toISOString() })
+      if (mounted) setAppointments(a)
+    }
     (async () => {
       const [r, a] = await Promise.all([
         fetchAvailabilityRules(),
         fetchAppointments({ fromIso: new Date().toISOString() }),
       ])
+      if (!mounted) return
       setRules(r); setAppointments(a); setLoading(false)
     })()
+
+    // Realtime : si un autre visiteur réserve, on refetch instantanément
+    const channel = supabase
+      .channel('book:appointments')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'appointments' }, loadSlots)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'appointments' }, loadSlots)
+      .subscribe()
+
+    // Polling fallback (30s) au cas où le Realtime n'est pas activé
+    const interval = setInterval(loadSlots, 30000)
+
+    return () => {
+      mounted = false
+      supabase.removeChannel(channel)
+      clearInterval(interval)
+    }
   }, [])
 
   const slots = useMemo(() => buildSlots(rules, appointments, 21), [rules, appointments])
