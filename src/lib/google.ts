@@ -171,7 +171,7 @@ export async function createCalendarEvent(params: {
     body.attendees = [{ email: params.attendeeEmail }]
   }
   const res = await fetch(
-    `${CAL_API}/calendars/${encodeURIComponent(token.calendar_id || 'primary')}/events?conferenceDataVersion=1&sendUpdates=none`,
+    `${CAL_API}/calendars/${encodeURIComponent(token.calendar_id || 'primary')}/events?conferenceDataVersion=1&sendUpdates=all`,
     {
       method: 'POST',
       headers: {
@@ -194,7 +194,7 @@ export async function deleteCalendarEvent(eventId: string): Promise<boolean> {
   const token = await getPrimaryToken()
   if (!token || !eventId) return false
   const res = await fetch(
-    `${CAL_API}/calendars/${encodeURIComponent(token.calendar_id || 'primary')}/events/${encodeURIComponent(eventId)}?sendUpdates=none`,
+    `${CAL_API}/calendars/${encodeURIComponent(token.calendar_id || 'primary')}/events/${encodeURIComponent(eventId)}?sendUpdates=all`,
     {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token.access_token}` },
