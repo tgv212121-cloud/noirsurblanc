@@ -302,7 +302,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
         onConfirm={async () => {
           if (!toCancel || cancelling) return
           setCancelling(true)
-          const ok = await cancelAppointment(toCancel.id)
+          const ok = await cancelAppointment(toCancel.id, { byAdmin: false })
           setCancelling(false)
           if (ok) await load()
           setToCancel(null)

@@ -11,9 +11,9 @@ export default function MentionsLegalesPage() {
       </p>
       <ul>
         <li><strong>Nom / raison sociale</strong> : Enzo Chabbi, entrepreneur individuel (micro-entreprise)</li>
-        <li><strong>Adresse</strong> : [ADRESSE À COMPLÉTER]</li>
+        <li><strong>Adresse</strong> : 411 Grande Rue, 78955 Carrières-sous-Poissy, France</li>
         <li><strong>Email</strong> : <a href="mailto:enzochab3@gmail.com">enzochab3@gmail.com</a></li>
-        <li><strong>Téléphone</strong> : [TÉLÉPHONE À COMPLÉTER]</li>
+        <li><strong>Téléphone</strong> : <a href="tel:+33651821755">+33 6 51 82 17 55</a></li>
         <li><strong>SIRET</strong> : 100 291 731 00014</li>
         <li><strong>Numéro TVA intracommunautaire</strong> : non applicable (franchise en base de TVA, article 293 B du CGI)</li>
         <li><strong>Directeur de la publication</strong> : Enzo Chabbi</li>

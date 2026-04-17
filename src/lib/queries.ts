@@ -451,15 +451,14 @@ export async function createAppointment(input: {
   return data ? mapAppointment(data) : null
 }
 
-export async function cancelAppointment(id: string): Promise<boolean> {
+export async function cancelAppointment(id: string, opts?: { byAdmin?: boolean }): Promise<boolean> {
   try {
     const res = await fetch('/api/appointments/cancel', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
+      body: JSON.stringify({ id, cancelledByAdmin: opts?.byAdmin !== false }),
     })
     if (!res.ok) {
-      // Fallback : DB direct si l'API plante (Google supp ratée mais au moins le slot libéré)
       const { error } = await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', id)
       if (error) { console.error('cancelAppointment fallback', error); return false }
     }

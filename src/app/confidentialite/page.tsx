@@ -19,7 +19,7 @@ export default function ConfidentialitePage() {
       </p>
       <ul>
         <li><strong>Enzo Chabbi</strong>, entrepreneur individuel (micro-entreprise)</li>
-        <li>Adresse : [ADRESSE À COMPLÉTER]</li>
+        <li>Adresse : 411 Grande Rue, 78955 Carrières-sous-Poissy, France</li>
         <li>Email : <strong><a href="mailto:enzochab3@gmail.com">enzochab3@gmail.com</a></strong></li>
         <li>SIRET : 100 291 731 00014</li>
       </ul>
