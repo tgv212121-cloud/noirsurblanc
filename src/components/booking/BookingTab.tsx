@@ -20,9 +20,10 @@ function pad(n: number) { return n.toString().padStart(2, '0') }
 function dateKey(d: Date) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` }
 
 // Build all available slots for the next 21 days based on rules + existing bookings
-function buildSlots(rules: AvailabilityRule[], appointments: Appointment[], daysAhead: number): { date: Date; iso: string }[] {
+function buildSlots(rules: AvailabilityRule[], appointments: Appointment[], busy: { start: string; end: string }[], daysAhead: number): { date: Date; iso: string }[] {
   const now = new Date()
   const takenIsos = new Set(appointments.map(a => a.scheduledAt))
+  const busyMs = busy.map(b => [new Date(b.start).getTime(), new Date(b.end).getTime()] as const)
   const out: { date: Date; iso: string }[] = []
 
   for (let d = 0; d < daysAhead; d++) {
@@ -41,6 +42,9 @@ function buildSlots(rules: AvailabilityRule[], appointments: Appointment[], days
         if (slotDate <= now) continue
         const iso = slotDate.toISOString()
         if (takenIsos.has(iso)) continue
+        const slotStart = slotDate.getTime()
+        const slotEnd = slotStart + rule.slotDurationMin * 60_000
+        if (busyMs.some(([bs, be]) => slotStart < be && slotEnd > bs)) continue
         out.push({ date: slotDate, iso })
       }
     }
@@ -52,6 +56,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
   const [rules, setRules] = useState<AvailabilityRule[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [myAppointments, setMyAppointments] = useState<Appointment[]>([])
+  const [busy, setBusy] = useState<{ start: string; end: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedSlot, setSelectedSlot] = useState<{ date: Date; iso: string } | null>(null)
   const [topic, setTopic] = useState('')
@@ -66,15 +71,25 @@ export default function BookingTab({ clientId, clientName }: Props) {
   const load = async () => {
     setLoading(true)
     const nowIso = new Date().toISOString()
+    const in21 = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString()
     const [r, all, mine] = await Promise.all([
       fetchAvailabilityRules(),
       fetchAppointments({ fromIso: nowIso }),
       fetchAppointments({ clientId, fromIso: nowIso }),
     ])
     setRules(r); setAppointments(all); setMyAppointments(mine); setLoading(false)
+    try {
+      const br = await fetch('/api/google/freebusy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeMin: nowIso, timeMax: in21 }),
+      })
+      const bd = await br.json()
+      setBusy(bd.busy || [])
+    } catch (e) { console.error('busy', e) }
   }
 
-  const slots = useMemo(() => buildSlots(rules, appointments, 21), [rules, appointments])
+  const slots = useMemo(() => buildSlots(rules, appointments, busy, 21), [rules, appointments, busy])
 
   // Group by date key
   const slotsByDay = useMemo(() => {

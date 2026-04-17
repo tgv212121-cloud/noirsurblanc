@@ -12,9 +12,15 @@ const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juill
 function pad(n: number) { return n.toString().padStart(2, '0') }
 function dateKey(d: Date) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` }
 
-function buildSlots(rules: AvailabilityRule[], appointments: Appointment[], daysAhead: number) {
+function buildSlots(
+  rules: AvailabilityRule[],
+  appointments: Appointment[],
+  busyIntervals: { start: string; end: string }[],
+  daysAhead: number,
+) {
   const now = new Date()
   const taken = new Set(appointments.map(a => a.scheduledAt))
+  const busyMs = busyIntervals.map(b => [new Date(b.start).getTime(), new Date(b.end).getTime()] as const)
   const out: { date: Date; iso: string }[] = []
   for (let d = 0; d < daysAhead; d++) {
     const base = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d)
@@ -29,6 +35,11 @@ function buildSlots(rules: AvailabilityRule[], appointments: Appointment[], days
         if (slot <= now) continue
         const iso = slot.toISOString()
         if (taken.has(iso)) continue
+        // Check against Google busy intervals (overlap check)
+        const slotStart = slot.getTime()
+        const slotEnd = slotStart + rule.slotDurationMin * 60_000
+        const overlap = busyMs.some(([bs, be]) => slotStart < be && slotEnd > bs)
+        if (overlap) continue
         out.push({ date: slot, iso })
       }
     }
@@ -39,6 +50,7 @@ function buildSlots(rules: AvailabilityRule[], appointments: Appointment[], days
 export default function BookPublicPage() {
   const [rules, setRules] = useState<AvailabilityRule[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [busy, setBusy] = useState<{ start: string; end: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedSlot, setSelectedSlot] = useState<{ date: Date; iso: string } | null>(null)
   const [firstName, setFirstName] = useState('')
@@ -52,9 +64,23 @@ export default function BookPublicPage() {
 
   useEffect(() => {
     let mounted = true
+    const fetchBusy = async () => {
+      try {
+        const now = new Date()
+        const in21 = new Date(now.getTime() + 21 * 24 * 60 * 60 * 1000)
+        const res = await fetch('/api/google/freebusy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ timeMin: now.toISOString(), timeMax: in21.toISOString() }),
+        })
+        const data = await res.json()
+        if (mounted) setBusy(data.busy || [])
+      } catch (e) { console.error('busy', e) }
+    }
     const loadSlots = async () => {
       const a = await fetchAppointments({ fromIso: new Date().toISOString() })
       if (mounted) setAppointments(a)
+      fetchBusy()
     }
     (async () => {
       const [r, a] = await Promise.all([
@@ -63,6 +89,7 @@ export default function BookPublicPage() {
       ])
       if (!mounted) return
       setRules(r); setAppointments(a); setLoading(false)
+      fetchBusy()
     })()
 
     // Realtime : si un autre visiteur réserve, on refetch instantanément
@@ -82,7 +109,7 @@ export default function BookPublicPage() {
     }
   }, [])
 
-  const slots = useMemo(() => buildSlots(rules, appointments, 21), [rules, appointments])
+  const slots = useMemo(() => buildSlots(rules, appointments, busy, 21), [rules, appointments, busy])
   const slotsByDay = useMemo(() => {
     const map: Record<string, { date: Date; iso: string }[]> = {}
     for (const s of slots) {

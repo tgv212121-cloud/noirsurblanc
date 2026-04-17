@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient as createSupabase } from '@supabase/supabase-js'
+import { createCalendarEvent } from '@/lib/google'
 
 const FROM = process.env.RESEND_FROM || 'Noirsurblanc <noreply@digitaltimes.fr>'
 
@@ -129,7 +130,31 @@ export async function POST(req: Request) {
 
     const firstName = (clientName || recipientName || '').split(' ')[0] || 'Bonjour'
     const date = new Date(apt.scheduled_at)
-    const meetingUrl = apt.meeting_url || ''
+    let meetingUrl = apt.meeting_url || ''
+
+    // 0. Create Google Calendar event + get Meet link (if admin connected Google)
+    try {
+      const endIso = new Date(date.getTime() + (apt.duration_min || 30) * 60_000).toISOString()
+      const title = `${recipientName || firstName}${isProspect ? ' (prospect)' : ''} - Noirsurblanc`
+      const description = [
+        apt.topic ? `Sujet : ${apt.topic}` : null,
+        apt.notes ? `Notes :\n${apt.notes}` : null,
+        isProspect && apt.prospect_email ? `Email : ${apt.prospect_email}` : null,
+        isProspect && apt.prospect_company ? `Entreprise : ${apt.prospect_company}` : null,
+      ].filter(Boolean).join('\n\n')
+      const evt = await createCalendarEvent({
+        title,
+        description,
+        startIso: apt.scheduled_at,
+        endIso,
+        attendeeEmail: recipientEmail || undefined,
+      })
+      if (evt?.hangoutLink) {
+        // Use the real Google Meet link as the meetingUrl
+        meetingUrl = evt.hangoutLink
+        await supabase.from('appointments').update({ meeting_url: evt.hangoutLink }).eq('id', apt.id)
+      }
+    } catch (e) { console.error('google event', e) }
 
     // 1. Email confirmation au client/prospect (si email dispo)
     if (recipientEmail) {

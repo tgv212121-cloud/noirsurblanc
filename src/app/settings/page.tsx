@@ -172,6 +172,9 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* Google Calendar integration */}
+      <GoogleCalendarCard />
+
       {/* Availability (calendar slots for client bookings) */}
       <AvailabilityCard rules={rules} onChange={async () => { setRules(await fetchAvailabilityRules()) }} />
 
@@ -630,6 +633,92 @@ function NotificationEmailsCard({ emails, onChange }: { emails: NotificationEmai
             {saving ? '...' : '+ Ajouter'}
           </button>
         </form>
+      </div>
+    </div>
+  )
+}
+
+function GoogleCalendarCard() {
+  const [status, setStatus] = useState<{ connected: boolean; email?: string } | null>(null)
+  const [loading, setLoading] = useState(false)
+  const cardStyle = { background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.09)' } as const
+
+  useEffect(() => {
+    (async () => {
+      const r = await fetch('/api/google/status')
+      const d = await r.json()
+      setStatus(d)
+    })()
+  }, [])
+
+  const connect = async () => {
+    setLoading(true)
+    const r = await fetch('/api/google/auth-url')
+    const d = await r.json()
+    if (d.url) window.location.href = d.url
+    else { setLoading(false); alert("Impossible de générer l'URL Google. Vérifie GOOGLE_CLIENT_ID sur Vercel.") }
+  }
+
+  const disconnect = async () => {
+    if (!confirm('Déconnecter ton agenda Google ? Les nouveaux rendez-vous ne seront plus synchronisés.')) return
+    setLoading(true)
+    await fetch('/api/google/disconnect', { method: 'POST' })
+    setStatus({ connected: false })
+    setLoading(false)
+  }
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden" style={{ ...cardStyle, marginBottom: '24px' }}>
+      <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+      <div className="flex items-center gap-3" style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
+        <h2 className="font-heading text-lg text-blanc italic">Google Calendar</h2>
+      </div>
+
+      <div className="flex items-center justify-between gap-6 flex-wrap" style={{ padding: '24px' }}>
+        <div className="flex-1" style={{ minWidth: '280px' }}>
+          {status?.connected ? (
+            <>
+              <div className="flex items-center gap-2" style={{ marginBottom: '6px' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <p className="text-sm text-blanc font-medium">Agenda connecté</p>
+              </div>
+              <p className="text-xs text-blanc-muted/70">{status.email}</p>
+              <p className="text-xs text-blanc-muted/60" style={{ marginTop: '10px', lineHeight: '1.6' }}>
+                Les nouveaux rendez-vous créent automatiquement un événement avec un lien Google Meet unique. Les créneaux déjà occupés dans ton agenda sont masqués pour les clients et prospects.
+              </p>
+            </>
+          ) : status ? (
+            <>
+              <p className="text-sm text-blanc/90 leading-relaxed" style={{ marginBottom: '8px' }}>
+                Connecte ton agenda Google pour synchroniser les rendez-vous automatiquement.
+              </p>
+              <p className="text-xs text-blanc-muted/70 leading-relaxed">
+                Chaque RDV crée un événement avec un lien Meet unique, et les créneaux déjà occupés dans ton agenda disparaissent du calendrier public.
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-blanc-muted">Chargement...</p>
+          )}
+        </div>
+
+        {status?.connected ? (
+          <button onClick={disconnect} disabled={loading}
+            className="text-sm text-blanc-muted hover:text-red-400 cursor-pointer transition-colors disabled:opacity-40"
+            style={{ padding: '12px 20px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            Déconnecter
+          </button>
+        ) : status ? (
+          <button onClick={connect} disabled={loading}
+            className="group relative inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+            style={{ padding: '14px 24px' }}>
+            <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(135deg,#a16207,#ca8a04,#eab308)', border: '1px solid rgba(202,138,4,0.4)' }} />
+            <svg className="relative z-10" width="16" height="16" viewBox="0 0 24 24" fill="#0a0a0a"><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm2 2v12h14V7H5zm2 2h4v4H7V9zm0 5h4v4H7v-4zm5-5h5v4h-5V9zm0 5h5v4h-5v-4z"/></svg>
+            <span className="relative z-10 text-noir font-semibold uppercase tracking-[0.12em]" style={{ fontSize: '12px' }}>
+              {loading ? 'Connexion…' : 'Connecter Google'}
+            </span>
+          </button>
+        ) : null}
       </div>
     </div>
   )
