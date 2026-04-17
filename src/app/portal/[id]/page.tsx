@@ -11,9 +11,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
 import MessageThread from '@/components/messaging/MessageThread'
 import NotificationPrompt from '@/components/ui/NotificationPrompt'
+import ChangePasswordCard from '@/components/ui/ChangePasswordCard'
 import BookingTab from '@/components/booking/BookingTab'
 
-type Tab = 'calendar' | 'messages' | 'stats' | 'history' | 'booking'
+type Tab = 'calendar' | 'messages' | 'stats' | 'history' | 'booking' | 'account'
 
 export default function ClientPortalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -76,6 +77,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
     { id: 'messages', label: 'Messages' },
     { id: 'stats', label: 'Stats' },
     { id: 'history', label: 'Historique' },
+    { id: 'account', label: 'Compte' },
   ]
 
   // Calendar data (state already declared at top)
@@ -379,6 +381,13 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
         {activeTab === 'booking' && (
           <motion.div key="booking" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
             <BookingTab clientId={client.id} clientName={client.name} />
+          </motion.div>
+        )}
+
+        {/* Account tab : change password */}
+        {activeTab === 'account' && (
+          <motion.div key="account" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+            <ChangePasswordCard />
           </motion.div>
         )}
 

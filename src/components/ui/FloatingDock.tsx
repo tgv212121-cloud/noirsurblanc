@@ -100,12 +100,17 @@ function IconContainer({
               animate={{ opacity: 1, y: 0, x: '-50%' }}
               exit={{ opacity: 0, y: 4, x: '-50%' }}
               transition={{ duration: 0.18 }}
-              className="absolute -top-10 left-1/2 w-fit rounded-md px-2.5 py-1 text-[11px] whitespace-pre uppercase tracking-[0.12em]"
+              className="absolute -top-12 left-1/2 w-fit rounded-lg whitespace-pre uppercase"
               style={{
+                padding: '8px 14px',
+                fontSize: '10.5px',
+                letterSpacing: '0.2em',
+                fontWeight: 500,
                 background: 'rgba(20,20,20,0.95)',
                 border: '1px solid rgba(255,255,255,0.08)',
                 color: activeColor,
-                fontWeight: 500,
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 6px 20px rgba(0,0,0,0.4)',
               }}
             >
               {title}

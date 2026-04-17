@@ -8,6 +8,7 @@ import type { Client, AvailabilityRule, Appointment } from '@/types'
 import { motion } from 'framer-motion'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import { useToast } from '@/components/ui/Toast'
+import ChangePasswordCard from '@/components/ui/ChangePasswordCard'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -173,6 +174,9 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
+
+      {/* Change password */}
+      <ChangePasswordCard />
 
       {/* Google Calendar integration */}
       <GoogleCalendarCard />
