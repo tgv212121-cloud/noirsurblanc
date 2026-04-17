@@ -4,9 +4,27 @@ import { createCalendarEvent } from '@/lib/google'
 
 const FROM = process.env.RESEND_FROM || 'Noirsurblanc <noreply@digitaltimes.fr>'
 
-const DAYS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
-const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
-const pad = (n: number) => n.toString().padStart(2, '0')
+// Formate une date ISO en date/heure fuseau Europe/Paris (gère DST automatiquement)
+function formatParisParts(iso: string) {
+  const d = new Date(iso)
+  const parts = new Intl.DateTimeFormat('fr-FR', {
+    timeZone: 'Europe/Paris',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(d)
+  const get = (t: string) => parts.find(p => p.type === t)?.value || ''
+  return {
+    weekday: get('weekday'),
+    day: get('day'),
+    month: get('month'),
+    hour: get('hour'),
+    minute: get('minute'),
+  }
+}
 
 // Shell HTML unifié : wrapper full-width + card centrée (compatible Gmail/Outlook/Apple Mail/Yopmail)
 function shell(title: string, innerHtml: string) {
@@ -31,9 +49,10 @@ function shell(title: string, innerHtml: string) {
 </html>`
 }
 
-function buildHtml(firstName: string, date: Date, durationMin: number, topic: string | null, meetingUrl: string) {
-  const dateStr = `${DAYS_FR[date.getDay()]} ${date.getDate()} ${MONTHS_FR[date.getMonth()]}`
-  const timeStr = `${pad(date.getHours())}h${pad(date.getMinutes())}`
+function buildHtml(firstName: string, iso: string, durationMin: number, topic: string | null, meetingUrl: string) {
+  const p = formatParisParts(iso)
+  const dateStr = `${p.weekday.charAt(0).toUpperCase() + p.weekday.slice(1)} ${p.day} ${p.month}`
+  const timeStr = `${p.hour}h${p.minute}`
   const inner = `
     <tr><td align="center" style="padding-bottom:12px;">
       <div style="font-family:Georgia,'Times New Roman',serif;font-size:44px;color:#fafaf9;font-weight:normal;line-height:1;">
@@ -63,9 +82,10 @@ function buildHtml(firstName: string, date: Date, durationMin: number, topic: st
   return shell('Rendez-vous confirmé', inner)
 }
 
-function buildAdminHtml(clientName: string, date: Date, durationMin: number, topic: string | null, notes: string | null, meetingUrl: string) {
-  const dateStr = `${DAYS_FR[date.getDay()]} ${date.getDate()} ${MONTHS_FR[date.getMonth()]}`
-  const timeStr = `${pad(date.getHours())}h${pad(date.getMinutes())}`
+function buildAdminHtml(clientName: string, iso: string, durationMin: number, topic: string | null, notes: string | null, meetingUrl: string) {
+  const p = formatParisParts(iso)
+  const dateStr = `${p.weekday.charAt(0).toUpperCase() + p.weekday.slice(1)} ${p.day} ${p.month}`
+  const timeStr = `${p.hour}h${p.minute}`
   const safe = (s: string) => s.replace(/[<>]/g, '')
   const inner = `
     <tr><td align="center" style="padding-bottom:12px;">
@@ -165,7 +185,7 @@ export async function POST(req: Request) {
           from: FROM,
           to: recipientEmail,
           subject: `Rendez-vous confirmé, ${firstName}`,
-          html: buildHtml(firstName, date, apt.duration_min, apt.topic, meetingUrl),
+          html: buildHtml(firstName, apt.scheduled_at, apt.duration_min, apt.topic, meetingUrl),
         }),
       })
       if (!r.ok) {
@@ -192,7 +212,7 @@ export async function POST(req: Request) {
             from: FROM,
             to: adminEmails,
             subject: `Nouveau rendez-vous : ${recipientName || firstName}${isProspect ? ' (prospect)' : ''}`,
-            html: buildAdminHtml(adminName, date, apt.duration_min, apt.topic, extraNotes, meetingUrl),
+            html: buildAdminHtml(adminName, apt.scheduled_at, apt.duration_min, apt.topic, extraNotes, meetingUrl),
           }),
         })
       }
