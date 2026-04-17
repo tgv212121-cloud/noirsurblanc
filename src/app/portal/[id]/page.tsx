@@ -1,7 +1,7 @@
 'use client'
 
 import { use, useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthGuard } from '@/lib/useAuthGuard'
 import { signOut } from '@/lib/auth'
 import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders } from '@/lib/queries'
@@ -26,8 +26,24 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
   const [metrics, setMetrics] = useState<PostMetrics[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<Tab>('calendar')
+  const searchParams = useSearchParams()
+  const urlTab = searchParams.get('tab') as Tab | null
+  const validTabs: Tab[] = ['calendar', 'messages', 'stats', 'history', 'booking', 'account']
+  const initialTab: Tab = urlTab && validTabs.includes(urlTab) ? urlTab : 'calendar'
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [expandedPost, setExpandedPost] = useState<string | null>(null)
+
+  // Sync tab with URL so refresh keeps it
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    if (activeTab === 'calendar') url.searchParams.delete('tab')
+    else url.searchParams.set('tab', activeTab)
+    const next = url.pathname + (url.search ? url.search : '')
+    if (window.location.pathname + window.location.search !== next) {
+      window.history.replaceState(null, '', next)
+    }
+  }, [activeTab])
 
   useEffect(() => {
     Promise.all([fetchClient(id), fetchClientPosts(id), fetchMetrics(), fetchReminders()]).then(([c, p, m, r]) => {
@@ -156,7 +172,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
       <div className="mb-10">
         <GooeyNav
           items={TABS.map(t => ({ label: t.label }))}
-          initialActiveIndex={0}
+          initialActiveIndex={Math.max(0, TABS.findIndex(t => t.id === activeTab))}
           particleCount={15}
           particleDistances={[70, 10]}
           particleR={80}

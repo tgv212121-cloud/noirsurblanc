@@ -1,6 +1,7 @@
 'use client'
 
 import { use, useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useAuthGuard } from '@/lib/useAuthGuard'
 import { useToast } from '@/components/ui/Toast'
 import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders, createPost, fetchOnboardingAnswers, uploadPostFile } from '@/lib/queries'
@@ -32,7 +33,23 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const [metrics, setMetrics] = useState<PostMetrics[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<Tab>('calendar')
+  const searchParams = useSearchParams()
+  const urlTab = searchParams.get('tab') as Tab | null
+  const validTabs: Tab[] = ['calendar', 'conversation', 'stats', 'onboarding']
+  const initialTab: Tab = urlTab && validTabs.includes(urlTab) ? urlTab : 'calendar'
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab)
+
+  // Sync tab with URL so refresh keeps it
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    if (activeTab === 'calendar') url.searchParams.delete('tab')
+    else url.searchParams.set('tab', activeTab)
+    const next = url.pathname + (url.search ? url.search : '')
+    if (window.location.pathname + window.location.search !== next) {
+      window.history.replaceState(null, '', next)
+    }
+  }, [activeTab])
   const [newPost, setNewPost] = useState('')
   const [editingDate, setEditingDate] = useState<string | null>(null)
   const [expandedPost, setExpandedPost] = useState<string | null>(null)
@@ -153,7 +170,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       <div className="mb-10">
         <GooeyNav
           items={TABS.map(t => ({ label: t.label }))}
-          initialActiveIndex={0}
+          initialActiveIndex={Math.max(0, TABS.findIndex(t => t.id === activeTab))}
           particleCount={18}
           particleDistances={[70, 10]}
           particleR={80}
