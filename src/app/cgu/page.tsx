@@ -93,7 +93,7 @@ export default function CGUPage() {
       <h2>8. Suspension et résiliation</h2>
       <p>
         L&apos;Utilisateur peut à tout moment supprimer son compte depuis son espace personnel ou en écrivant à
-        <strong> enzo@noirsurblanc.studio</strong>. Les données seront supprimées conformément à notre
+        <strong> enzochab3@gmail.com</strong>. Les données seront supprimées conformément à notre
         <a href="/confidentialite"> Politique de confidentialité</a>.
       </p>
       <p>
@@ -122,7 +122,7 @@ export default function CGUPage() {
       <h2>11. Contact</h2>
       <p>
         Pour toute question relative aux présentes CGU, l&apos;Utilisateur peut contacter l&apos;éditeur à l&apos;adresse
-        <strong> enzo@noirsurblanc.studio</strong>.
+        <strong> enzochab3@gmail.com</strong>.
       </p>
     </LegalLayout>
   )

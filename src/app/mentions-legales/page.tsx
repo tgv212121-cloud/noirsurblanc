@@ -12,7 +12,7 @@ export default function MentionsLegalesPage() {
       <ul>
         <li><strong>Nom / raison sociale</strong> : Enzo Chabbi, entrepreneur individuel (micro-entreprise)</li>
         <li><strong>Adresse</strong> : [ADRESSE À COMPLÉTER]</li>
-        <li><strong>Email</strong> : <a href="mailto:enzo@noirsurblanc.studio">enzo@noirsurblanc.studio</a></li>
+        <li><strong>Email</strong> : <a href="mailto:enzochab3@gmail.com">enzochab3@gmail.com</a></li>
         <li><strong>Téléphone</strong> : [TÉLÉPHONE À COMPLÉTER]</li>
         <li><strong>SIRET</strong> : 100 291 731 00014</li>
         <li><strong>Numéro TVA intracommunautaire</strong> : non applicable (franchise en base de TVA, article 293 B du CGI)</li>
@@ -71,7 +71,7 @@ export default function MentionsLegalesPage() {
 
       <h2>Contact</h2>
       <p>
-        Pour toute question relative au Site, vous pouvez nous contacter à l&apos;adresse <strong>enzo@noirsurblanc.studio</strong>.
+        Pour toute question relative au Site, vous pouvez nous contacter à l&apos;adresse <strong>enzochab3@gmail.com</strong>.
       </p>
     </LegalLayout>
   )
