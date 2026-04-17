@@ -157,7 +157,7 @@ export async function createCalendarEvent(params: {
     body.attendees = [{ email: params.attendeeEmail }]
   }
   const res = await fetch(
-    `${CAL_API}/calendars/${encodeURIComponent(token.calendar_id || 'primary')}/events?conferenceDataVersion=1&sendUpdates=all`,
+    `${CAL_API}/calendars/${encodeURIComponent(token.calendar_id || 'primary')}/events?conferenceDataVersion=1&sendUpdates=none`,
     {
       method: 'POST',
       headers: {
