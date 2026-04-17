@@ -204,24 +204,7 @@ export async function POST(req: Request) {
       }
     } catch (e) { console.error('google event', e) }
 
-    // 1. Email confirmation au client/prospect (si email dispo)
-    if (recipientEmail) {
-      const r = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({
-          from: FROM,
-          to: recipientEmail,
-          subject: `Rendez-vous confirmé, ${firstName}`,
-          html: buildHtml(firstName, apt.scheduled_at, apt.duration_min, apt.topic, meetingUrl),
-        }),
-      })
-      if (!r.ok) {
-        const d = await r.json().catch(() => ({}))
-        console.error('Resend (client) error', d)
-      }
-    }
-
+    // 1. Email confirmation client : desactive (le RDV apparait directement dans l'agenda Google du client + invitation Google)
     // 2. Email de notification admin (liste notification_emails + fallback profils admin)
     try {
       const { data: notifRows } = await supabase.from('notification_emails').select('email')
