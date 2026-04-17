@@ -284,7 +284,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
           <p className="text-sm text-blanc-muted">Aucun créneau disponible dans les 3 prochaines semaines.</p>
         </div>
       ) : (
-        <div className="relative rounded-2xl overflow-hidden" style={{ background: 'rgba(10,10,10,0.6)', padding: '4px' }}>
+        <div className="relative rounded-2xl" style={{ background: 'rgba(10,10,10,0.6)', padding: '4px' }}>
           {/* Cadre or */}
           <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{
             background: 'linear-gradient(135deg, #a16207, #ca8a04, #eab308, #ca8a04, #a16207)',
