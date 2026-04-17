@@ -10,7 +10,6 @@ import type { Client, Post, PostMetrics, Reminder } from '@/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import GooeyNav from '@/components/ui/GooeyNavComponent'
 import MessageThread from '@/components/messaging/MessageThread'
-import NotificationPrompt from '@/components/ui/NotificationPrompt'
 import BookingTab from '@/components/booking/BookingTab'
 
 type Tab = 'calendar' | 'messages' | 'stats' | 'history' | 'booking'
@@ -123,8 +122,6 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
           Déconnexion
         </button>
       </header>
-
-      <NotificationPrompt />
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-6 mb-12">
