@@ -157,26 +157,22 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
           : 0
         const totalImpressions = metrics.reduce((s, m) => s + (m.impressions || 0), 0)
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12" style={{ gridAutoRows: '1fr' }}>
-            {/* Grande carte : Posts publiés */}
-            <MagicCard className="md:row-span-2 md:col-span-1">
-              <div className="flex flex-col justify-between h-full" style={{ padding: '28px 30px', minHeight: '220px' }}>
-                <div>
-                  <div className="flex items-center gap-2" style={{ marginBottom: '14px' }}>
-                    <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-blanc-muted/70">Posts publiés</p>
-                  </div>
-                  <p className="font-heading italic text-6xl text-blanc leading-none" style={{ letterSpacing: '-0.02em' }}>
-                    <NumberTicker value={publishedPosts.length} />
-                  </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+            {/* Posts publiés */}
+            <MagicCard>
+              <div style={{ padding: '22px 26px' }}>
+                <div className="flex items-center gap-2" style={{ marginBottom: '10px' }}>
+                  <span className="inline-block rounded-full" style={{ width: '5px', height: '5px', background: '#ca8a04', boxShadow: '0 0 8px rgba(202,138,4,0.6)' }} />
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-blanc-muted/70">Posts publiés</p>
                 </div>
-                <div style={{ marginTop: '24px' }}>
-                  <p className="text-xs text-blanc-muted/60 leading-relaxed">
-                    {totalImpressions > 0
-                      ? <><NumberTicker value={totalImpressions} /> impressions cumulées</>
-                      : 'Tes posts apparaîtront ici dès qu\u2019ils seront publiés.'}
-                  </p>
-                </div>
+                <p className="font-heading italic text-4xl text-blanc leading-none" style={{ letterSpacing: '-0.02em' }}>
+                  <NumberTicker value={publishedPosts.length} />
+                </p>
+                <p className="text-[11px] text-blanc-muted/60" style={{ marginTop: '8px' }}>
+                  {totalImpressions > 0
+                    ? <><NumberTicker value={totalImpressions} /> impressions</>
+                    : 'aucun post encore'}
+                </p>
               </div>
             </MagicCard>
 

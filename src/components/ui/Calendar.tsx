@@ -1,5 +1,5 @@
 // <!-- Integrated via Catalogue by Thomas Gildas (digitaltimes.fr) — 2026-04-17 -->
-// Source : https://ui.shadcn.com/docs/components/calendar
+// Source : https://ui.shadcn.com/docs/components/calendar — restyle custom or
 // Library : shadcn (react-day-picker v9)
 'use client'
 
@@ -19,25 +19,29 @@ export default function Calendar({ className, classNames, ...props }: Props) {
       classNames={{
         root: 'text-blanc',
         months: 'flex flex-col gap-4',
-        month: 'space-y-3',
-        month_caption: 'flex justify-center pt-1 relative items-center h-8',
-        caption_label: 'text-sm font-medium text-blanc capitalize',
-        nav: 'flex items-center justify-between absolute inset-x-0 top-1 px-1 pointer-events-none',
-        button_previous: 'h-7 w-7 bg-white/5 hover:bg-white/10 rounded-md inline-flex items-center justify-center text-blanc-muted hover:text-blanc transition-colors pointer-events-auto cursor-pointer',
-        button_next: 'h-7 w-7 bg-white/5 hover:bg-white/10 rounded-md inline-flex items-center justify-center text-blanc-muted hover:text-blanc transition-colors pointer-events-auto cursor-pointer',
+        month: 'space-y-4',
+        month_caption: 'flex justify-start items-center h-9 relative',
+        caption_label: 'text-[15px] font-semibold text-blanc capitalize tracking-tight',
+        nav: 'flex items-center gap-1 absolute right-0 top-0 pointer-events-none',
+        button_previous: 'h-8 w-8 bg-white/5 hover:bg-[#ca8a04]/20 rounded-md inline-flex items-center justify-center text-blanc-muted hover:text-[#ca8a04] transition-colors pointer-events-auto cursor-pointer',
+        button_next: 'h-8 w-8 bg-white/5 hover:bg-[#ca8a04]/20 rounded-md inline-flex items-center justify-center text-blanc-muted hover:text-[#ca8a04] transition-colors pointer-events-auto cursor-pointer',
         month_grid: 'w-full border-collapse',
         weekdays: 'flex',
-        weekday: 'text-blanc-muted/60 w-9 font-normal text-[0.72rem] uppercase tracking-wider py-2',
-        week: 'flex w-full mt-1',
-        day: 'h-9 w-9 text-center text-sm relative p-0',
-        day_button: 'h-9 w-9 p-0 font-normal rounded-md text-blanc hover:bg-white/5 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent inline-flex items-center justify-center',
-        selected: '[&>button]:!bg-[#ca8a04] [&>button]:!text-noir [&>button]:!font-semibold [&>button:hover]:!bg-[#eab308]',
-        today: '[&>button]:ring-1 [&>button]:ring-[#ca8a04]/40',
-        outside: '[&>button]:text-blanc-muted/25',
-        disabled: '[&>button]:!text-blanc-muted/20 [&>button]:!cursor-not-allowed [&>button:hover]:!bg-transparent',
+        weekday: 'text-blanc-muted/50 flex-1 font-normal text-[11px] uppercase tracking-[0.2em] py-2 text-center',
+        week: 'flex w-full mt-1 gap-1',
+        day: 'flex-1 aspect-square text-center text-sm relative p-0',
+        day_button: 'w-full h-full font-medium rounded-lg text-blanc hover:bg-[#ca8a04]/15 transition-all cursor-pointer disabled:cursor-not-allowed inline-flex items-center justify-center',
+        selected: '[&>button]:!bg-noir [&>button]:!text-[#ca8a04] [&>button]:!font-bold [&>button]:!ring-2 [&>button]:!ring-[#ca8a04] [&>button:hover]:!bg-noir',
+        today: '[&>button]:underline [&>button]:underline-offset-4 [&>button]:decoration-[#ca8a04]/60',
+        outside: '[&>button]:text-blanc-muted/20',
+        disabled: '[&>button]:!bg-transparent [&>button]:!text-blanc-muted/20 [&>button]:!cursor-not-allowed [&>button:hover]:!bg-transparent',
         hidden: 'invisible',
         chevron: 'w-4 h-4 fill-current',
         ...classNames,
+      }}
+      modifiersClassNames={{
+        available: '[&>button]:bg-[#ca8a04]/15 [&>button]:text-[#ca8a04] [&>button]:ring-1 [&>button]:ring-[#ca8a04]/25 [&>button:hover]:bg-[#ca8a04]/25',
+        ...(props.modifiersClassNames || {}),
       }}
       {...props}
     />
