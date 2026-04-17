@@ -294,7 +294,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
             maskComposite: 'exclude',
           }} />
 
-          <div className="relative rounded-xl grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6" style={{ background: 'rgba(15,15,15,0.95)', padding: '22px 24px' }}>
+          <div className="relative rounded-xl grid grid-cols-1 md:grid-cols-[300px_1fr] gap-10" style={{ background: 'rgba(15,15,15,0.95)', padding: '34px 36px' }}>
             {/* Calendrier - colonne gauche, taille reduite */}
             <div style={{ fontSize: '13px' }}>
               <Calendar
@@ -309,7 +309,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
             </div>
 
             {/* Créneaux - colonne droite */}
-            <div className="md:border-l md:pl-6 flex flex-col" style={{ borderColor: 'rgba(202,138,4,0.15)' }}>
+            <div className="md:border-l md:pl-10 flex flex-col" style={{ borderColor: 'rgba(202,138,4,0.15)' }}>
               {selectedDay ? (
                 <>
                   <p className="text-[10px] uppercase tracking-[0.22em] text-blanc-muted/60" style={{ marginBottom: '14px' }}>
