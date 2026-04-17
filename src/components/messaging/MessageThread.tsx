@@ -7,6 +7,7 @@ import { formatMessageTime, cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import AudioPlayer from './AudioPlayer'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import { useToast } from '@/components/ui/Toast'
 
 type Props = {
   clientId: string
@@ -24,6 +25,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
   const [editText, setEditText] = useState('')
   const [toDelete, setToDelete] = useState<Message | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const toast = useToast()
   const [recording, setRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -150,7 +152,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
       setRecordingTime(0)
       recordingTimerRef.current = setInterval(() => setRecordingTime((t) => t + 1), 1000)
     } catch (err) {
-      alert("Impossible d'accéder au micro. Autorise l'accès dans ton navigateur.")
+      toast.error("Impossible d'accéder au micro. Autorise l'accès dans ton navigateur.")
       console.error(err)
     }
   }

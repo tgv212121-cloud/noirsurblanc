@@ -2,6 +2,7 @@
 
 import { use, useState, useEffect, useCallback } from 'react'
 import { useAuthGuard } from '@/lib/useAuthGuard'
+import { useToast } from '@/components/ui/Toast'
 import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders, createPost, fetchOnboardingAnswers, uploadPostFile } from '@/lib/queries'
 import type { PostFile } from '@/types'
 import { formatNumber, formatDate, formatRelative, cn } from '@/lib/utils'
@@ -24,6 +25,7 @@ function formatBytes(bytes: number): string {
 export default function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const { checking } = useAuthGuard({ requireRole: 'admin' })
+  const toast = useToast()
   const [client, setClient] = useState<Client | null>(null)
   const [initialPosts, setInitialPosts] = useState<Post[]>([])
   const [metrics, setMetrics] = useState<PostMetrics[]>([])
@@ -388,7 +390,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                             setUploadingFile(true)
                             const result = await uploadPostFile(file)
                             setUploadingFile(false)
-                            if (!result) { alert("Erreur lors de l'upload."); return }
+                            if (!result) { toast.error("Erreur lors de l'upload du fichier."); return }
                             setPostFiles(prev => [...prev, result])
                           }}
                         />
@@ -413,7 +415,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                             files: postFiles,
                           })
                           setSavingPost(false)
-                          if (!created) { alert("Erreur lors de l'enregistrement du post."); return }
+                          if (!created) { toast.error("Erreur lors de l'enregistrement du post."); return }
                           const refreshed = await fetchClientPosts(id)
                           setInitialPosts(refreshed)
                           setEditingDate(null); setSelectedDate(null); setNewPost(''); setPostImages([]); setPostFiles([])

@@ -3,6 +3,7 @@ import { Jost, Bodoni_Moda } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/layout/Sidebar";
 import MainWrapper from "@/components/layout/MainWrapper";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const jost = Jost({
   subsets: ["latin"],
@@ -33,8 +34,10 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`h-full ${jost.variable} ${bodoni.variable}`}>
       <body className="h-full">
-        <Sidebar />
-        <MainWrapper>{children}</MainWrapper>
+        <ToastProvider>
+          <Sidebar />
+          <MainWrapper>{children}</MainWrapper>
+        </ToastProvider>
       </body>
     </html>
   );

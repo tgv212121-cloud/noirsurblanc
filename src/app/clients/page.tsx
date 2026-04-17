@@ -8,12 +8,14 @@ import PulseButton from '@/components/ui/PulseButton'
 import { GooeyInput } from '@/components/ui/GooeyInput'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import InviteClientModal from '@/components/ui/InviteClientModal'
+import { useToast } from '@/components/ui/Toast'
 import type { Client } from '@/types'
 import { motion } from 'framer-motion'
 
 export default function ClientsPage() {
   const router = useRouter()
   const { checking } = useAuthGuard({ requireRole: 'admin' })
+  const toast = useToast()
   const [search, setSearch] = useState('')
   const [clients, setClients] = useState<Client[]>([])
   const [toDelete, setToDelete] = useState<Client | null>(null)
@@ -161,7 +163,7 @@ export default function ClientsPage() {
           setDeleting(true)
           const done = await deleteClient(toDelete.id)
           setDeleting(false)
-          if (!done) { alert("Erreur lors de la suppression."); return }
+          if (!done) { toast.error("Erreur lors de la suppression."); return }
           setClients(prev => prev.filter(x => x.id !== toDelete.id))
           setToDelete(null)
         }}

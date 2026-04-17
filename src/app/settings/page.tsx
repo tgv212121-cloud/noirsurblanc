@@ -7,6 +7,7 @@ import { fetchClients, exportAllData, fetchAvailabilityRules, upsertAvailability
 import type { Client, AvailabilityRule, Appointment } from '@/types'
 import { motion } from 'framer-motion'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import { useToast } from '@/components/ui/Toast'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -21,6 +22,7 @@ export default function SettingsPage() {
   const [newClientId, setNewClientId] = useState('')
   const [creating, setCreating] = useState(false)
   const [feedback, setFeedback] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null)
+  const toast = useToast()
   const [exporting, setExporting] = useState(false)
   const [lastExport, setLastExport] = useState<string | null>(null)
   const [rules, setRules] = useState<AvailabilityRule[]>([])
@@ -64,7 +66,7 @@ export default function SettingsPage() {
       setLastExport(now)
     } catch (e) {
       console.error(e)
-      alert("Erreur pendant l'export. Réessaye.")
+      toast.error("Erreur pendant l'export. Réessaye.")
     } finally {
       setExporting(false)
     }
@@ -340,6 +342,7 @@ function StatMini({ label, value, sub, accent }: { label: string; value: string;
 const DAYS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
 function AvailabilityCard({ rules, onChange }: { rules: AvailabilityRule[]; onChange: () => void }) {
+  const toast = useToast()
   const [saving, setSaving] = useState(false)
   const [newDay, setNewDay] = useState(1)
   const [newStart, setNewStart] = useState('10:00')
@@ -347,14 +350,14 @@ function AvailabilityCard({ rules, onChange }: { rules: AvailabilityRule[]; onCh
   const [newDuration, setNewDuration] = useState(30)
 
   const addRule = async () => {
-    if (newStart >= newEnd) { alert('Heure de fin doit être après heure de début.'); return }
+    if (newStart >= newEnd) { toast.warning('Heure de fin doit être après heure de début.'); return }
     setSaving(true)
     const ok = await upsertAvailabilityRule({
       dayOfWeek: newDay, startTime: newStart + ':00', endTime: newEnd + ':00',
       slotDurationMin: newDuration, enabled: true,
     })
     setSaving(false)
-    if (!ok) { alert("Erreur. Est-ce que tu as bien lancé la migration SQL ?"); return }
+    if (!ok) { toast.error("Erreur. Est-ce que tu as bien lancé la migration SQL ?"); return }
     onChange()
   }
 
@@ -551,6 +554,7 @@ function UpcomingAppointmentsCard({
 }
 
 function NotificationEmailsCard({ emails, onChange }: { emails: NotificationEmail[]; onChange: () => void }) {
+  const toast = useToast()
   const [newEmail, setNewEmail] = useState('')
   const [newLabel, setNewLabel] = useState('')
   const [saving, setSaving] = useState(false)
@@ -558,11 +562,11 @@ function NotificationEmailsCard({ emails, onChange }: { emails: NotificationEmai
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!/^\S+@\S+\.\S+$/.test(newEmail.trim())) { alert('Email invalide.'); return }
+    if (!/^\S+@\S+\.\S+$/.test(newEmail.trim())) { toast.warning('Email invalide.'); return }
     setSaving(true)
     const ok = await addNotificationEmail(newEmail.trim(), newLabel.trim() || undefined)
     setSaving(false)
-    if (!ok) { alert("Erreur. Cet email est peut-être déjà dans la liste."); return }
+    if (!ok) { toast.error("Erreur. Cet email est peut-être déjà dans la liste."); return }
     setNewEmail(''); setNewLabel('')
     onChange()
   }
@@ -639,6 +643,7 @@ function NotificationEmailsCard({ emails, onChange }: { emails: NotificationEmai
 }
 
 function GoogleCalendarCard() {
+  const toast = useToast()
   const [status, setStatus] = useState<{ connected: boolean; email?: string } | null>(null)
   const [loading, setLoading] = useState(false)
   const cardStyle = { background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.09)' } as const
@@ -656,7 +661,7 @@ function GoogleCalendarCard() {
     const r = await fetch('/api/google/auth-url')
     const d = await r.json()
     if (d.url) window.location.href = d.url
-    else { setLoading(false); alert("Impossible de générer l'URL Google. Vérifie GOOGLE_CLIENT_ID sur Vercel.") }
+    else { setLoading(false); toast.error("Impossible de générer l'URL Google. Vérifie GOOGLE_CLIENT_ID sur Vercel.") }
   }
 
   const disconnect = async () => {

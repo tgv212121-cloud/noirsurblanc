@@ -10,6 +10,7 @@ import {
 } from '@/lib/queries'
 import type { AvailabilityRule, Appointment } from '@/types'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import { useToast } from '@/components/ui/Toast'
 
 type Props = { clientId: string; clientName: string }
 
@@ -65,6 +66,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
   const [success, setSuccess] = useState(false)
   const [toCancel, setToCancel] = useState<Appointment | null>(null)
   const [cancelling, setCancelling] = useState(false)
+  const toast = useToast()
 
   useEffect(() => { load() }, [clientId])
 
@@ -116,7 +118,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
       notes: notes.trim() || undefined,
     })
     setSubmitting(false)
-    if (!apt) { alert("Ce créneau vient d'être pris. Choisis-en un autre."); await load(); setSelectedSlot(null); return }
+    if (!apt) { toast.warning("Ce créneau vient d'être pris. Choisis-en un autre."); await load(); setSelectedSlot(null); return }
 
     // Fire confirmation email (non-blocking)
     try {
