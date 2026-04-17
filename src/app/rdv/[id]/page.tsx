@@ -84,7 +84,7 @@ export default function MeetingPage({ params }: { params: Promise<{ id: string }
                     {(() => { const d = new Date(apt.scheduled_at); return `${pad(d.getHours())}h${pad(d.getMinutes())}` })()}
                   </p>
                   <p className="text-sm text-blanc-muted/70" style={{ marginTop: '10px' }}>
-                    {apt.duration_min} minutes{client ? ' · avec ' + client.name : ''}
+                    {apt.duration_min} minutes · avec Enzo
                   </p>
                 </div>
 
