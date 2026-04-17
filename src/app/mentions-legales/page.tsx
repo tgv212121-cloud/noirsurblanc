@@ -10,13 +10,13 @@ export default function MentionsLegalesPage() {
         Le site <strong>Noirsurblanc</strong> (ci-après « le Site ») est édité par&nbsp;:
       </p>
       <ul>
-        <li><strong>Nom / raison sociale</strong> : [À COMPLÉTER, ex. Enzo Chabbi, entrepreneur individuel]</li>
-        <li><strong>Adresse</strong> : [À COMPLÉTER]</li>
-        <li><strong>Email</strong> : [À COMPLÉTER]</li>
-        <li><strong>Téléphone</strong> : [À COMPLÉTER]</li>
-        <li><strong>SIRET</strong> : [À COMPLÉTER]</li>
-        <li><strong>Numéro TVA intracommunautaire</strong> : [À COMPLÉTER si applicable]</li>
-        <li><strong>Directeur de la publication</strong> : [À COMPLÉTER]</li>
+        <li><strong>Nom / raison sociale</strong> : Enzo Chabbi, entrepreneur individuel (micro-entreprise)</li>
+        <li><strong>Adresse</strong> : [ADRESSE À COMPLÉTER]</li>
+        <li><strong>Email</strong> : <a href="mailto:enzo@noirsurblanc.studio">enzo@noirsurblanc.studio</a></li>
+        <li><strong>Téléphone</strong> : [TÉLÉPHONE À COMPLÉTER]</li>
+        <li><strong>SIRET</strong> : 100 291 731 00014</li>
+        <li><strong>Numéro TVA intracommunautaire</strong> : non applicable (franchise en base de TVA, article 293 B du CGI)</li>
+        <li><strong>Directeur de la publication</strong> : Enzo Chabbi</li>
       </ul>
 
       <h2>Hébergement</h2>
@@ -71,7 +71,7 @@ export default function MentionsLegalesPage() {
 
       <h2>Contact</h2>
       <p>
-        Pour toute question relative au Site, vous pouvez nous contacter à l&apos;adresse <strong>[email contact]</strong>.
+        Pour toute question relative au Site, vous pouvez nous contacter à l&apos;adresse <strong>enzo@noirsurblanc.studio</strong>.
       </p>
     </LegalLayout>
   )

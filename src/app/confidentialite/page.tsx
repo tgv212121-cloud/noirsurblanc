@@ -18,14 +18,14 @@ export default function ConfidentialitePage() {
         Le responsable du traitement des données est&nbsp;:
       </p>
       <ul>
-        <li><strong>[Nom / raison sociale]</strong> :[À COMPLÉTER]</li>
-        <li>Adresse : [À COMPLÉTER]</li>
-        <li>Email : <strong>[email contact]</strong></li>
-        <li>SIRET : [À COMPLÉTER]</li>
+        <li><strong>Enzo Chabbi</strong>, entrepreneur individuel (micro-entreprise)</li>
+        <li>Adresse : [ADRESSE À COMPLÉTER]</li>
+        <li>Email : <strong><a href="mailto:enzo@noirsurblanc.studio">enzo@noirsurblanc.studio</a></strong></li>
+        <li>SIRET : 100 291 731 00014</li>
       </ul>
       <p>
         Pour toute question relative au traitement de vos données, vous pouvez écrire à l&apos;adresse
-        <strong> [email contact privacy] </strong>.
+        <strong> enzo@noirsurblanc.studio </strong>.
       </p>
 
       <h2>2. Données collectées</h2>
@@ -142,7 +142,7 @@ export default function ConfidentialitePage() {
         <li><strong>Droit de retirer votre consentement</strong> à tout moment lorsque le traitement est fondé sur celui-ci.</li>
       </ul>
       <p>
-        Pour exercer ces droits, adressez-nous un email à <strong>[email contact privacy]</strong> accompagné d&apos;un
+        Pour exercer ces droits, adressez-nous un email à <strong>enzo@noirsurblanc.studio</strong> accompagné d&apos;un
         justificatif d&apos;identité. Nous vous répondrons dans un délai maximum d&apos;un mois à compter de la réception
         de votre demande.
       </p>
@@ -204,7 +204,7 @@ export default function ConfidentialitePage() {
       <h2>12. Contact</h2>
       <p>
         Pour toute question relative à la présente Politique, vous pouvez nous contacter à l&apos;adresse
-        <strong> [email contact privacy]</strong>.
+        <strong> enzo@noirsurblanc.studio</strong>.
       </p>
     </LegalLayout>
   )
