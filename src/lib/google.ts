@@ -175,6 +175,24 @@ export async function createCalendarEvent(params: {
   return { id: data.id, hangoutLink: data.hangoutLink }
 }
 
+// Delete a Google Calendar event by ID
+export async function deleteCalendarEvent(eventId: string): Promise<boolean> {
+  const token = await getPrimaryToken()
+  if (!token || !eventId) return false
+  const res = await fetch(
+    `${CAL_API}/calendars/${encodeURIComponent(token.calendar_id || 'primary')}/events/${encodeURIComponent(eventId)}?sendUpdates=none`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token.access_token}` },
+    },
+  )
+  if (!res.ok && res.status !== 404 && res.status !== 410) {
+    console.error('delete event failed', res.status, await res.text())
+    return false
+  }
+  return true
+}
+
 // Revoke the stored token + delete from DB
 export async function disconnectPrimary(): Promise<boolean> {
   const sb = getAdminSupabase()

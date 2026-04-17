@@ -170,9 +170,12 @@ export async function POST(req: Request) {
         attendeeEmail: recipientEmail || undefined,
       })
       if (evt?.hangoutLink) {
-        // Use the real Google Meet link as the meetingUrl
         meetingUrl = evt.hangoutLink
-        await supabase.from('appointments').update({ meeting_url: evt.hangoutLink }).eq('id', apt.id)
+      }
+      if (evt?.id) {
+        const update: Record<string, unknown> = { google_event_id: evt.id }
+        if (evt.hangoutLink) update.meeting_url = evt.hangoutLink
+        await supabase.from('appointments').update(update).eq('id', apt.id)
       }
     } catch (e) { console.error('google event', e) }
 
