@@ -445,6 +445,38 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
         {/* Account tab : Google Calendar + mot de passe */}
         {activeTab === 'account' && (
           <motion.div key="account" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+            {/* Infos personnelles */}
+            <div className="relative rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.09)', marginBottom: '24px' }}>
+              <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+              <div className="flex items-center gap-3" style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
+                <h2 className="font-heading text-lg text-blanc italic">Informations personnelles</h2>
+              </div>
+              <div style={{ padding: '20px 24px' }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[10px] text-blanc-muted/60 uppercase tracking-wider" style={{ marginBottom: '6px' }}>Email</p>
+                    <div className="flex items-center gap-2">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                      <p className="text-sm text-blanc" style={{ wordBreak: 'break-all' }}>{client.email || '—'}</p>
+                    </div>
+                  </div>
+                  {client.phone && (
+                    <div>
+                      <p className="text-[10px] text-blanc-muted/60 uppercase tracking-wider" style={{ marginBottom: '6px' }}>Téléphone</p>
+                      <div className="flex items-center gap-2">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        <p className="text-sm text-blanc">{client.phone}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[11px] text-blanc-muted/50" style={{ marginTop: '16px', lineHeight: '1.6' }}>
+                  Pour modifier ton email ou ton téléphone, contacte ton copywriter.
+                </p>
+              </div>
+            </div>
+
             <GoogleCalendarCard audience="client" returnTo={`/portal/${client.id}`} />
             <ChangePasswordCard />
           </motion.div>
