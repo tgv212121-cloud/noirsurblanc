@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { fetchAvailabilityRules, fetchAppointments, createAppointment } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
 import type { AvailabilityRule, Appointment } from '@/types'
+import Calendar from '@/components/ui/Calendar'
 
 const DAYS_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
@@ -53,6 +54,8 @@ export default function BookPublicPage() {
   const [busy, setBusy] = useState<{ start: string; end: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedSlot, setSelectedSlot] = useState<{ date: Date; iso: string } | null>(null)
+  const [selectedDay, setSelectedDay] = useState<Date | undefined>(undefined)
+  const [pickedSlot, setPickedSlot] = useState<{ date: Date; iso: string } | null>(null)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -121,6 +124,18 @@ export default function BookPublicPage() {
   }, [slots])
 
   const duration = rules.find(r => r.enabled)?.slotDurationMin || 30
+
+  const availableDayKeys = useMemo(() => new Set(Object.keys(slotsByDay)), [slotsByDay])
+  const availableDates = useMemo(() => Object.values(slotsByDay).map(d => d[0].date), [slotsByDay])
+
+  useEffect(() => {
+    if (!selectedDay && availableDates.length > 0) setSelectedDay(availableDates[0])
+  }, [availableDates, selectedDay])
+
+  const selectedDaySlots = useMemo(() => {
+    if (!selectedDay) return []
+    return slotsByDay[dateKey(selectedDay)] || []
+  }, [selectedDay, slotsByDay])
 
   const handleConfirm = async () => {
     if (!selectedSlot) return
@@ -217,30 +232,104 @@ export default function BookPublicPage() {
           </div>
         ) : (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.15 }}
-            className="w-full space-y-4" style={{ maxWidth: '680px' }}>
-            {Object.entries(slotsByDay).map(([key, daySlots]) => {
-              const date = daySlots[0].date
-              return (
-                <div key={key} className="rounded-2xl" style={{ padding: '20px 24px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '14px' }}>
-                    {DAYS_SHORT[date.getDay()]} {date.getDate()} {MONTHS_FR[date.getMonth()]}
-                  </p>
-                  <div className="flex flex-wrap gap-2.5">
-                    {daySlots.map(s => (
-                      <button key={s.iso} onClick={() => setSelectedSlot(s)}
-                        className="text-sm cursor-pointer transition-all hover:scale-105"
-                        style={{
-                          padding: '10px 20px', borderRadius: '10px',
-                          background: 'rgba(202,138,4,0.08)', border: '1px solid rgba(202,138,4,0.25)',
-                          color: '#ca8a04',
-                        }}>
-                        {pad(s.date.getHours())}h{pad(s.date.getMinutes())}
-                      </button>
-                    ))}
-                  </div>
+            className="w-full" style={{ maxWidth: '780px' }}>
+            <div className="relative rounded-2xl" style={{ background: 'rgba(10,10,10,0.6)', padding: '4px' }}>
+              <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{
+                background: 'linear-gradient(135deg, #a16207, #ca8a04, #eab308, #ca8a04, #a16207)',
+                padding: '2px',
+                WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+                WebkitMaskComposite: 'xor',
+                maskComposite: 'exclude',
+              }} />
+              <div className="relative rounded-xl grid grid-cols-1 md:grid-cols-[300px_1fr] gap-10" style={{ background: 'rgba(15,15,15,0.95)', padding: '34px 36px' }}>
+                {/* Calendrier gauche */}
+                <div style={{ fontSize: '13px' }}>
+                  <Calendar
+                    mode="single"
+                    selected={selectedDay}
+                    onSelect={(d) => { if (d) { setSelectedDay(d); setPickedSlot(null) } }}
+                    disabled={(date) => !availableDayKeys.has(dateKey(date))}
+                    modifiers={{ available: (date) => availableDayKeys.has(dateKey(date)) }}
+                    startMonth={new Date()}
+                    endMonth={(() => { const d = new Date(); d.setDate(d.getDate() + 30); return d })()}
+                  />
                 </div>
-              )
-            })}
+
+                {/* Créneaux droite */}
+                <div className="md:border-l md:pl-10 flex flex-col" style={{ borderColor: 'rgba(202,138,4,0.15)' }}>
+                  {selectedDay ? (
+                    <>
+                      <p className="text-[10px] uppercase tracking-[0.22em] text-blanc-muted/60" style={{ marginBottom: '14px' }}>
+                        Créneaux du {selectedDay.getDate()} {MONTHS_FR[selectedDay.getMonth()]}
+                      </p>
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={dateKey(selectedDay)}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          transition={{ duration: 0.18 }}
+                          className="flex flex-col gap-2 flex-1"
+                        >
+                          {selectedDaySlots.length === 0 ? (
+                            <p className="text-sm text-blanc-muted/70" style={{ padding: '16px 0' }}>
+                              Choisis une autre date dans le calendrier.
+                            </p>
+                          ) : selectedDaySlots.map(s => {
+                            const endDate = new Date(s.date.getTime() + duration * 60_000)
+                            const isPicked = pickedSlot?.iso === s.iso
+                            return (
+                              <button
+                                key={s.iso}
+                                onClick={() => setPickedSlot(s)}
+                                className="text-sm cursor-pointer transition-all text-left w-full"
+                                style={{
+                                  padding: '12px 16px',
+                                  borderRadius: '10px',
+                                  background: isPicked ? '#0a0a0a' : 'transparent',
+                                  border: `1px solid ${isPicked ? 'rgba(202,138,4,0.8)' : 'rgba(202,138,4,0.25)'}`,
+                                  color: isPicked ? '#ca8a04' : '#e7e5e4',
+                                  fontWeight: isPicked ? 600 : 500,
+                                  letterSpacing: '0.02em',
+                                }}
+                              >
+                                {pad(s.date.getHours())}{'\u00A0'}h{'\u00A0'}{pad(s.date.getMinutes())}{'\u00A0'}→{'\u00A0'}{pad(endDate.getHours())}{'\u00A0'}h{'\u00A0'}{pad(endDate.getMinutes())}
+                              </button>
+                            )
+                          })}
+                        </motion.div>
+                      </AnimatePresence>
+
+                      {selectedDaySlots.length > 0 && (
+                        <button
+                          onClick={() => { if (pickedSlot) setSelectedSlot(pickedSlot) }}
+                          disabled={!pickedSlot}
+                          className="w-full text-center cursor-pointer transition-all disabled:cursor-not-allowed"
+                          style={{
+                            marginTop: '14px',
+                            padding: '14px 18px',
+                            borderRadius: '10px',
+                            background: pickedSlot ? '#0a0a0a' : 'rgba(10,10,10,0.4)',
+                            border: `1px solid ${pickedSlot ? '#ca8a04' : 'rgba(202,138,4,0.2)'}`,
+                            color: pickedSlot ? '#ca8a04' : 'rgba(202,138,4,0.35)',
+                            fontWeight: 600,
+                            fontSize: '11px',
+                            letterSpacing: '0.15em',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {pickedSlot
+                            ? <>Confirmer {pad(pickedSlot.date.getHours())}{'\u00A0'}h{'\u00A0'}{pad(pickedSlot.date.getMinutes())} →</>
+                            : 'Sélectionne un créneau'}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-blanc-muted/70">Sélectionne une date dans le calendrier.</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
 
