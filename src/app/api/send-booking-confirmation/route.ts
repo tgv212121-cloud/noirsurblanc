@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient as createSupabase } from '@supabase/supabase-js'
-import { createCalendarEvent } from '@/lib/google'
+import { createCalendarEvent, createEventForUser } from '@/lib/google'
 
 const FROM = process.env.RESEND_FROM || 'Noirsurblanc <noreply@digitaltimes.fr>'
 
@@ -176,6 +176,31 @@ export async function POST(req: Request) {
         const update: Record<string, unknown> = { google_event_id: evt.id }
         if (evt.hangoutLink) update.meeting_url = evt.hangoutLink
         await supabase.from('appointments').update(update).eq('id', apt.id)
+      }
+
+      // Dupliquer l'event sur l'agenda perso du client s'il a connecte son Google
+      // (garantit que le RDV apparait dans son propre agenda sans dependre de l'invitation Gmail)
+      if (apt.client_id) {
+        try {
+          const { data: prof } = await supabase.from('profiles').select('id').eq('client_id', apt.client_id).maybeSingle()
+          const clientUserId = prof?.id
+          if (clientUserId) {
+            const clientEvt = await createEventForUser(clientUserId, {
+              title: `Rendez-vous Noirsurblanc${apt.topic ? ' — ' + apt.topic : ''}`,
+              description: [
+                apt.topic ? `Sujet : ${apt.topic}` : null,
+                apt.notes ? `Notes :\n${apt.notes}` : null,
+                'Rendez-vous pris via ton espace Noirsurblanc.',
+              ].filter(Boolean).join('\n\n'),
+              startIso: apt.scheduled_at,
+              endIso,
+              meetingUrl: meetingUrl || undefined,
+            })
+            if (clientEvt?.id) {
+              await supabase.from('appointments').update({ client_google_event_id: clientEvt.id }).eq('id', apt.id)
+            }
+          }
+        } catch (e) { console.error('client google event', e) }
       }
     } catch (e) { console.error('google event', e) }
 

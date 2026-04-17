@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminSupabase } from '@/lib/supabase-admin'
-import { deleteCalendarEvent } from '@/lib/google'
+import { deleteCalendarEvent, deleteEventForUser } from '@/lib/google'
 
 const FROM = process.env.RESEND_FROM || 'Noirsurblanc <noreply@digitaltimes.fr>'
 
@@ -28,6 +28,7 @@ export async function POST(req: Request) {
       id: string
       client_id: string | null
       google_event_id: string | null
+      client_google_event_id: string | null
       scheduled_at: string
       prospect_email: string | null
       prospect_name: string | null
@@ -36,9 +37,18 @@ export async function POST(req: Request) {
     // Mark as cancelled (frees the slot via partial unique index)
     await sb.from('appointments').update({ status: 'cancelled' }).eq('id', row.id)
 
-    // Delete from Google Calendar if connected
+    // Delete from admin's Google Calendar if connected
     if (row.google_event_id) {
-      try { await deleteCalendarEvent(row.google_event_id) } catch (e) { console.error('google delete', e) }
+      try { await deleteCalendarEvent(row.google_event_id) } catch (e) { console.error('google delete admin', e) }
+    }
+
+    // Delete from client's own Google Calendar if duplicated there
+    if (row.client_google_event_id && row.client_id) {
+      try {
+        const { data: prof } = await sb.from('profiles').select('id').eq('client_id', row.client_id).maybeSingle()
+        const clientUserId = (prof as { id?: string } | null)?.id
+        if (clientUserId) await deleteEventForUser(clientUserId, row.client_google_event_id)
+      } catch (e) { console.error('google delete client', e) }
     }
 
     // Only notify admins when a CLIENT (or prospect) cancels. When admin cancels, no notif.

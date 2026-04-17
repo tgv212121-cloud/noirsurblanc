@@ -189,6 +189,52 @@ export async function createCalendarEvent(params: {
   return { id: data.id, hangoutLink: data.hangoutLink }
 }
 
+// Create an event on a specific user's own calendar (used so a client sees the RDV in his own Google agenda)
+export async function createEventForUser(userId: string, params: {
+  title: string
+  description?: string
+  startIso: string
+  endIso: string
+  meetingUrl?: string
+}): Promise<{ id: string } | null> {
+  const token = await getTokenForUser(userId)
+  if (!token) return null
+  const body: Record<string, unknown> = {
+    summary: params.title,
+    description: params.description || '',
+    start: { dateTime: params.startIso, timeZone: 'Europe/Paris' },
+    end: { dateTime: params.endIso, timeZone: 'Europe/Paris' },
+  }
+  if (params.meetingUrl) {
+    // Attach existing Meet link as URL reference (can't generate a new Meet on client calendar)
+    body.description = `${body.description ? body.description + '\n\n' : ''}Lien visio : ${params.meetingUrl}`
+    body.location = params.meetingUrl
+  }
+  const res = await fetch(
+    `${CAL_API}/calendars/${encodeURIComponent(token.calendar_id || 'primary')}/events?sendUpdates=none`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token.access_token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  )
+  if (!res.ok) { console.error('create user event failed', await res.text()); return null }
+  const data = await res.json()
+  return { id: data.id }
+}
+
+// Delete an event from a specific user's calendar
+export async function deleteEventForUser(userId: string, eventId: string): Promise<boolean> {
+  if (!eventId) return false
+  const token = await getTokenForUser(userId)
+  if (!token) return false
+  const res = await fetch(
+    `${CAL_API}/calendars/${encodeURIComponent(token.calendar_id || 'primary')}/events/${encodeURIComponent(eventId)}?sendUpdates=none`,
+    { method: 'DELETE', headers: { Authorization: `Bearer ${token.access_token}` } },
+  )
+  return res.ok || res.status === 404 || res.status === 410
+}
+
 // Delete a Google Calendar event by ID
 export async function deleteCalendarEvent(eventId: string): Promise<boolean> {
   const token = await getPrimaryToken()
