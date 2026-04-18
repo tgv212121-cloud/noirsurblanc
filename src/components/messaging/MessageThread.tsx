@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { fetchMessages, sendMessage, uploadMessageFile, updateMessage, deleteMessage, type Message } from '@/lib/queries'
+import { fetchMessages, sendMessage, uploadMessageFile, updateMessage, deleteMessage, markMessagesAsRead, type Message } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
 import { formatMessageTime, cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -49,13 +49,15 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
       const msgs = await fetchMessages(clientId)
       if (!mounted) return
       setMessages(prev => {
-        // Avoid re-render if nothing changed (length + last id + edit timestamps)
+        // Avoid re-render if nothing changed (length + last id + edit/read timestamps)
         if (
           prev.length === msgs.length &&
-          prev.every((m, i) => m.id === msgs[i].id && m.editedAt === msgs[i].editedAt)
+          prev.every((m, i) => m.id === msgs[i].id && m.editedAt === msgs[i].editedAt && m.readAt === msgs[i].readAt)
         ) return prev
         return msgs
       })
+      // Marque comme lus tous les messages de l'autre partie
+      markMessagesAsRead(clientId, currentUser).catch(() => {})
     }
     load()
 
@@ -67,7 +69,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
         (payload) => {
           const newMsg = payload.new as {
             id: string; client_id: string; sender: 'admin' | 'client';
-            text?: string; file_url?: string; voice_url?: string; created_at: string;
+            text?: string; file_url?: string; voice_url?: string; created_at: string; read_at?: string;
           }
           setMessages((prev) => {
             if (prev.some(m => m.id === newMsg.id)) return prev
@@ -81,9 +83,25 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                 fileUrl: newMsg.file_url ?? null,
                 voiceUrl: newMsg.voice_url ?? null,
                 createdAt: newMsg.created_at,
+                readAt: newMsg.read_at ?? null,
               } as Message,
             ]
           })
+          // Si c'est l'autre partie qui vient d'envoyer et qu'on est sur le thread, marque comme lu
+          if (newMsg.sender !== currentUser) {
+            markMessagesAsRead(clientId, currentUser).catch(() => {})
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'messages', filter: `client_id=eq.${clientId}` },
+        (payload) => {
+          const upd = payload.new as { id: string; read_at?: string; text?: string; edited_at?: string }
+          setMessages((prev) => prev.map(m => m.id === upd.id
+            ? { ...m, readAt: upd.read_at ?? m.readAt, text: upd.text ?? m.text, editedAt: upd.edited_at ?? m.editedAt }
+            : m
+          ))
         }
       )
       .subscribe()
@@ -349,9 +367,25 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                     )
                   )}
                 </div>
-                <p className={cn('text-xs text-blanc-muted', isMe ? 'text-right' : 'text-left')} style={{ marginTop: '8px' }}>
-                  {isMe ? 'Vous' : otherUserName} · {formatMessageTime(msg.createdAt)}
-                  {msg.editedAt && <span className="italic"> · modifié</span>}
+                <p className={cn('text-xs text-blanc-muted flex items-center gap-1.5', isMe ? 'justify-end text-right' : 'justify-start text-left')} style={{ marginTop: '8px' }}>
+                  <span>
+                    {isMe ? 'Vous' : otherUserName} · {formatMessageTime(msg.createdAt)}
+                    {msg.editedAt && <span className="italic"> · modifié</span>}
+                  </span>
+                  {isMe && (msg.readAt ? (
+                    <span title={`Lu le ${new Date(msg.readAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}`} style={{ color: '#ca8a04', display: 'inline-flex', alignItems: 'center' }}>
+                      <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1.5 9l3 3 6-6" />
+                        <path d="M7 12l3 3 7-7" />
+                      </svg>
+                    </span>
+                  ) : (
+                    <span title="Envoyé" style={{ color: 'rgba(255,255,255,0.35)', display: 'inline-flex', alignItems: 'center' }}>
+                      <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 9l4 4 8-8" />
+                      </svg>
+                    </span>
+                  ))}
                 </p>
               </div>
               </div>

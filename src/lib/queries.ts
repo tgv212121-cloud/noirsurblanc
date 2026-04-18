@@ -255,6 +255,7 @@ export type Message = {
   voiceUrl: string | null
   createdAt: string
   editedAt?: string | null
+  readAt?: string | null
 }
 
 export async function fetchMessages(clientId: string): Promise<Message[]> {
@@ -274,7 +275,21 @@ export async function fetchMessages(clientId: string): Promise<Message[]> {
     voiceUrl: row.voice_url,
     createdAt: row.created_at,
     editedAt: row.edited_at || null,
+    readAt: row.read_at || null,
   }))
+}
+
+// Marque comme lus tous les messages dont je ne suis PAS l'auteur (cad envoyes par l'autre partie)
+export async function markMessagesAsRead(clientId: string, viewer: 'admin' | 'client'): Promise<number> {
+  const otherSender = viewer === 'admin' ? 'client' : 'admin'
+  const { count, error } = await supabase
+    .from('messages')
+    .update({ read_at: new Date().toISOString() }, { count: 'exact' })
+    .eq('client_id', clientId)
+    .eq('sender', otherSender)
+    .is('read_at', null)
+  if (error) { console.error('markMessagesAsRead', error); return 0 }
+  return count || 0
 }
 
 export async function updateMessage(id: string, newText: string): Promise<boolean> {
