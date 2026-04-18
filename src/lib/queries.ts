@@ -298,6 +298,19 @@ export async function sendMessage(message: {
     })
 
   if (error) { console.error('sendMessage', error); return false }
+
+  // Notif admin email uniquement quand c'est un client qui envoie (pas quand admin envoie a lui-meme)
+  if (message.sender === 'client') {
+    try {
+      const preview = message.text || (message.voiceUrl ? '🎤 Message vocal' : message.fileUrl ? '📎 Fichier joint' : '')
+      fetch('/api/notify/new-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: message.clientId, sender: message.sender, preview }),
+      }).catch(() => {}) // fire-and-forget, ne bloque pas l'UX
+    } catch {}
+  }
+
   return true
 }
 
