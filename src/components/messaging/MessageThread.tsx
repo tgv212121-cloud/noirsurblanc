@@ -272,19 +272,39 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                   )}
 
                   {/* File */}
-                  {msg.fileUrl && !msg.voiceUrl && (
-                    <a
-                      href={msg.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 underline text-sm"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-                      </svg>
-                      {msg.text || 'Fichier joint'}
-                    </a>
-                  )}
+                  {msg.fileUrl && !msg.voiceUrl && (() => {
+                    const isImage = /\.(png|jpe?g|gif|webp|bmp|svg|heic|heif)(\?|$)/i.test(msg.fileUrl)
+                    if (isImage) {
+                      return (
+                        <a
+                          href={msg.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                          style={{ margin: '-4px -4px 4px', borderRadius: '12px', overflow: 'hidden', maxWidth: '280px' }}
+                        >
+                          <img
+                            src={msg.fileUrl}
+                            alt={msg.text || 'Image'}
+                            style={{ display: 'block', width: '100%', height: 'auto', maxHeight: '360px', objectFit: 'cover', borderRadius: '12px' }}
+                          />
+                        </a>
+                      )
+                    }
+                    return (
+                      <a
+                        href={msg.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 underline text-sm"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                        </svg>
+                        {msg.text || 'Fichier joint'}
+                      </a>
+                    )
+                  })()}
 
                   {/* Text (or edit mode) */}
                   {msg.text && !msg.fileUrl && !msg.voiceUrl && (
