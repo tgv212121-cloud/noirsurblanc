@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient as createSupabase } from '@supabase/supabase-js'
+import { getAdminSupabase } from '@/lib/supabase-admin'
 
 const FROM = process.env.RESEND_FROM || 'Noirsurblanc <noreply@digitaltimes.fr>'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://noirsurblanc.vercel.app'
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     const apiKey = process.env.RESEND_API_KEY
     if (!apiKey) return NextResponse.json({ ok: true, noKey: true })
 
-    const sb = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+    const sb = getAdminSupabase()
     const { data: client } = await sb
       .from('clients')
       .select('name, email, last_post_notified_at')
