@@ -392,7 +392,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                     el.style.height = Math.min(Math.max(el.scrollHeight, 24), 260) + 'px'
                   }
                 }}
-                placeholder="Votre message... (Ctrl+V pour coller une image)"
+                placeholder="Votre message..."
                 className="w-full bg-transparent text-sm text-blanc placeholder:text-blanc-muted/50 outline-none leading-relaxed"
                 style={{ resize: 'none', padding: '4px 8px', minHeight: '24px', maxHeight: '260px', overflowY: 'auto' }}
                 onKeyDown={(e) => {
