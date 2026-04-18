@@ -21,6 +21,14 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!lightboxUrl) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxUrl(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [lightboxUrl])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
   const [toDelete, setToDelete] = useState<Message | null>(null)
@@ -276,19 +284,18 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                     const isImage = /\.(png|jpe?g|gif|webp|bmp|svg|heic|heif)(\?|$)/i.test(msg.fileUrl)
                     if (isImage) {
                       return (
-                        <a
-                          href={msg.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block"
-                          style={{ margin: '-4px -4px 4px', borderRadius: '12px', overflow: 'hidden', maxWidth: '280px' }}
+                        <button
+                          type="button"
+                          onClick={() => setLightboxUrl(msg.fileUrl!)}
+                          className="block cursor-zoom-in"
+                          style={{ margin: '-4px -4px 4px', borderRadius: '12px', overflow: 'hidden', maxWidth: '280px', border: 'none', padding: 0, background: 'transparent' }}
                         >
                           <img
                             src={msg.fileUrl}
                             alt={msg.text || 'Image'}
                             style={{ display: 'block', width: '100%', height: 'auto', maxHeight: '360px', objectFit: 'cover', borderRadius: '12px' }}
                           />
-                        </a>
+                        </button>
                       )
                     }
                     return (
@@ -474,6 +481,50 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
           setToDelete(null)
         }}
       />
+
+      {/* Lightbox image (plein ecran, clic hors image pour fermer, Echap aussi) */}
+      <AnimatePresence>
+        {lightboxUrl && (
+          <motion.div
+            key="lightbox"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center cursor-zoom-out"
+            style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)' }}
+            onClick={() => setLightboxUrl(null)}
+          >
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightboxUrl(null) }}
+              className="absolute flex items-center justify-center rounded-full text-white/80 hover:text-white transition-colors cursor-pointer"
+              style={{ top: '20px', right: '20px', width: '40px', height: '40px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
+              aria-label="Fermer"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+            <a
+              href={lightboxUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="absolute flex items-center justify-center rounded-full text-white/80 hover:text-white transition-colors cursor-pointer"
+              style={{ top: '20px', right: '70px', width: '40px', height: '40px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
+              aria-label="Ouvrir dans un nouvel onglet"
+              title="Ouvrir dans un nouvel onglet"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+            </a>
+            <motion.img
+              key={lightboxUrl}
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              src={lightboxUrl}
+              alt="Aperçu"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: '92vw', maxHeight: '88vh', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
