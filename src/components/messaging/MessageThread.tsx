@@ -139,6 +139,31 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
+  // Colle une image directement depuis le presse-papier (Ctrl+V / Cmd+V)
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item.type.startsWith('image/')) {
+        e.preventDefault()
+        const blob = item.getAsFile()
+        if (!blob) continue
+        const ext = (item.type.split('/')[1] || 'png').split(';')[0]
+        const file = new File([blob], `paste-${Date.now()}.${ext}`, { type: item.type })
+        setSending(true)
+        const url = await uploadMessageFile(file)
+        if (url) {
+          await sendMessage({ clientId, sender: currentUser, fileUrl: url, text: file.name })
+          fetchMessages(clientId).then(setMessages)
+          notifyCounterparty('Nouvelle image')
+        }
+        setSending(false)
+        return
+      }
+    }
+  }
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -335,6 +360,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
+                onPaste={handlePaste}
                 onInput={(e) => {
                   const el = e.currentTarget
                   el.style.height = 'auto'
@@ -346,7 +372,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                     el.style.height = Math.min(Math.max(el.scrollHeight, 24), 260) + 'px'
                   }
                 }}
-                placeholder="Votre message..."
+                placeholder="Votre message... (Ctrl+V pour coller une image)"
                 className="w-full bg-transparent text-sm text-blanc placeholder:text-blanc-muted/50 outline-none leading-relaxed"
                 style={{ resize: 'none', padding: '4px 8px', minHeight: '24px', maxHeight: '260px', overflowY: 'auto' }}
                 onKeyDown={(e) => {
