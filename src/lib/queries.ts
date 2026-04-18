@@ -100,6 +100,7 @@ function mapClient(row: any): Client {
     status: row.status,
     onboardedAt: row.onboarded_at,
     linkedinUrl: row.linkedin_url,
+    lastSeenAt: row.last_seen_at || null,
   }
 }
 

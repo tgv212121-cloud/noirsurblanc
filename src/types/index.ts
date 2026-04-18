@@ -10,6 +10,7 @@ export type Client = {
   status: ClientStatus
   onboardedAt: string
   linkedinUrl: string
+  lastSeenAt?: string | null
 }
 
 export type PostStatus = 'draft' | 'published' | 'scheduled'

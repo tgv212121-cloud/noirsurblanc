@@ -53,6 +53,23 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
     })
   }, [id])
 
+  // Ping presence : met à jour clients.last_seen_at à chaque chargement + toutes les 60s pendant la session
+  useEffect(() => {
+    if (!id) return
+    const ping = () => {
+      fetch('/api/presence/ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: id }),
+      }).catch(() => {})
+    }
+    ping()
+    const interval = setInterval(ping, 60_000)
+    const onVisible = () => { if (document.visibilityState === 'visible') ping() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVisible) }
+  }, [id])
+
   // Calendar state (must be before any conditional return)
   const now = new Date()
   const [calendarMonth, setCalendarMonth] = useState(now.getMonth())

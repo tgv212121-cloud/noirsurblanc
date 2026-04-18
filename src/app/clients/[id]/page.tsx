@@ -161,6 +161,30 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         <div className="flex flex-wrap items-center gap-x-8 gap-y-3 mt-8" style={{ borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
           <div><p className="text-xs text-blanc-muted mb-1">Client depuis</p><p className="text-sm text-blanc">{formatDate(client.onboardedAt)}</p></div>
           <div><p className="text-xs text-blanc-muted mb-1">LinkedIn</p>{client.linkedinUrl ? <a href={client.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-gold hover:text-gold-dark transition-colors duration-200">Voir le profil</a> : <p className="text-sm text-blanc-muted/50">Non renseigné</p>}</div>
+          <div>
+            <p className="text-xs text-blanc-muted mb-1">Dernière connexion</p>
+            {client.lastSeenAt ? (() => {
+              const d = new Date(client.lastSeenAt)
+              const diffMs = Date.now() - d.getTime()
+              const online = diffMs < 2 * 60_000
+              const min = Math.floor(diffMs / 60_000)
+              const hour = Math.floor(diffMs / 3_600_000)
+              const day = Math.floor(diffMs / 86_400_000)
+              let label: string
+              if (online) label = 'En ligne'
+              else if (min < 60) label = `il y a ${min} min`
+              else if (hour < 24) label = `il y a ${hour} h`
+              else if (day < 7) label = `il y a ${day} j`
+              else label = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+              const exact = d.toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })
+              return (
+                <div className="flex items-center gap-2" title={exact}>
+                  <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: online ? '#22c55e' : 'rgba(255,255,255,0.3)', boxShadow: online ? '0 0 8px rgba(34,197,94,0.6)' : 'none' }} />
+                  <p className="text-sm text-blanc">{label}</p>
+                </div>
+              )
+            })() : <p className="text-sm text-blanc-muted/50">Jamais connecté</p>}
+          </div>
         </div>
       </div>
 
