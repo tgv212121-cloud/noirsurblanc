@@ -152,6 +152,17 @@ export async function createPost(post: {
     .single()
 
   if (error) { console.error('createPost', error); return null }
+
+  // Notif email au client (nouveau post a valider), cooldown 30 min
+  try {
+    const preview = post.content ? post.content.slice(0, 180) : 'Un nouveau post est prêt à être validé.'
+    fetch('/api/notify/new-post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId: post.clientId, preview }),
+    }).catch(() => {})
+  } catch {}
+
   return data ? mapPost(data) : null
 }
 
