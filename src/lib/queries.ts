@@ -279,6 +279,20 @@ export async function fetchMessages(clientId: string): Promise<Message[]> {
   }))
 }
 
+// Recupere le last_seen_at le plus recent parmi les profils admin.
+// Utile sur l'espace client pour afficher "Enzo · En ligne / il y a X".
+export async function fetchAdminLastSeen(): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('last_seen_at')
+    .eq('role', 'admin')
+    .order('last_seen_at', { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle()
+  if (error || !data) return null
+  return (data as { last_seen_at?: string | null }).last_seen_at || null
+}
+
 // Marque comme lus tous les messages dont je ne suis PAS l'auteur (cad envoyes par l'autre partie)
 export async function markMessagesAsRead(clientId: string, viewer: 'admin' | 'client'): Promise<number> {
   const otherSender = viewer === 'admin' ? 'client' : 'admin'

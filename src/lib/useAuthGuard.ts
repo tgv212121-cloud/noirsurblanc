@@ -15,7 +15,8 @@ export function useAuthGuard(opts: Options = {}) {
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    (async () => {
+    let stopPing: (() => void) | null = null
+    ;(async () => {
       const p = await getMyProfile()
       if (!p) { router.push('/login'); return }
       // Role mismatch : redirect to user's own home (no loop to /login)
@@ -31,7 +32,24 @@ export function useAuthGuard(opts: Options = {}) {
         return
       }
       setProfile(p); setChecking(false)
+
+      // Ping de presence admin (toutes les 60s + au retour de visibilite)
+      if (p.role === 'admin') {
+        const ping = () => {
+          fetch('/api/presence/admin-ping', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: p.id }),
+          }).catch(() => {})
+        }
+        ping()
+        const interval = setInterval(ping, 60_000)
+        const onVisible = () => { if (document.visibilityState === 'visible') ping() }
+        document.addEventListener('visibilitychange', onVisible)
+        stopPing = () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVisible) }
+      }
     })()
+    return () => { if (stopPing) stopPing() }
   }, [router, opts.requireRole, opts.requireClientId])
 
   return { profile, checking }

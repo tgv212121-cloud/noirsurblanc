@@ -500,6 +500,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
               currentUser="admin"
               accentColor="#2563eb"
               otherUserName={client.name.split(' ')[0]}
+              otherUserLastSeen={client.lastSeenAt}
               whatsappPhone={client.phone}
             />
           </motion.div>

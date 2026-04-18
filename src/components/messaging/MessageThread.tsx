@@ -14,10 +14,11 @@ type Props = {
   currentUser: 'admin' | 'client'
   accentColor: string
   otherUserName: string
+  otherUserLastSeen?: string | null
   whatsappPhone?: string
 }
 
-export default function MessageThread({ clientId, currentUser, accentColor, otherUserName, whatsappPhone }: Props) {
+export default function MessageThread({ clientId, currentUser, accentColor, otherUserName, otherUserLastSeen, whatsappPhone }: Props) {
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -397,9 +398,33 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
 
       {/* Input */}
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: '28px' }}>
-        <p className="text-xs text-blanc-muted mb-4">
-          Message à {otherUserName}
-        </p>
+        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+          <p className="text-xs text-blanc-muted">
+            Message à {otherUserName}
+          </p>
+          {otherUserLastSeen !== undefined && (() => {
+            if (!otherUserLastSeen) return <span className="text-[11px] text-blanc-muted/40">Jamais connecté</span>
+            const d = new Date(otherUserLastSeen)
+            const diffMs = Date.now() - d.getTime()
+            const online = diffMs < 2 * 60_000
+            const min = Math.floor(diffMs / 60_000)
+            const hour = Math.floor(diffMs / 3_600_000)
+            const day = Math.floor(diffMs / 86_400_000)
+            let label: string
+            if (online) label = 'En ligne'
+            else if (min < 60) label = `il y a ${min} min`
+            else if (hour < 24) label = `il y a ${hour} h`
+            else if (day < 7) label = `il y a ${day} j`
+            else label = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+            const exact = d.toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })
+            return (
+              <span className="inline-flex items-center gap-1.5 text-[11px] text-blanc-muted/70" title={exact}>
+                <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: online ? '#22c55e' : 'rgba(255,255,255,0.3)', boxShadow: online ? '0 0 8px rgba(34,197,94,0.6)' : 'none' }} />
+                {otherUserName} · {label}
+              </span>
+            )
+          })()}
+        </div>
 
         <div className="bg-noir-elevated rounded-2xl" style={{ padding: '16px' }}>
           {recording ? (

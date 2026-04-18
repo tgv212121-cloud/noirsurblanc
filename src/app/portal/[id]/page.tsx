@@ -4,7 +4,7 @@ import { use, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthGuard } from '@/lib/useAuthGuard'
 import { signOut } from '@/lib/auth'
-import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders } from '@/lib/queries'
+import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders, fetchAdminLastSeen } from '@/lib/queries'
 import { formatNumber, formatRelative, cn } from '@/lib/utils'
 import type { Client, Post, PostMetrics, Reminder } from '@/types'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -47,11 +47,25 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
     }
   }, [activeTab])
 
+  const [adminLastSeen, setAdminLastSeen] = useState<string | null>(null)
+
   useEffect(() => {
     Promise.all([fetchClient(id), fetchClientPosts(id), fetchMetrics(), fetchReminders()]).then(([c, p, m, r]) => {
       setClient(c); setPosts(p); setMetrics(m); setReminders(r.filter(x => x.clientId === id)); setLoading(false)
     })
   }, [id])
+
+  // Refetch admin last seen every 30s pour tenir la pastille a jour
+  useEffect(() => {
+    let mounted = true
+    const fetchSeen = async () => {
+      const v = await fetchAdminLastSeen()
+      if (mounted) setAdminLastSeen(v)
+    }
+    fetchSeen()
+    const int = setInterval(fetchSeen, 30_000)
+    return () => { mounted = false; clearInterval(int) }
+  }, [])
 
   // Ping presence : met à jour clients.last_seen_at à chaque chargement + toutes les 60s pendant la session
   useEffect(() => {
@@ -621,7 +635,8 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
               clientId={client.id}
               currentUser="client"
               accentColor="#8b5cf6"
-              otherUserName="Noirsurblanc"
+              otherUserName="Enzo"
+              otherUserLastSeen={adminLastSeen}
             />
           </motion.div>
         )}
