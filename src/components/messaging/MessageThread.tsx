@@ -24,6 +24,22 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
   const [sending, setSending] = useState(false)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [replyTo, setReplyTo] = useState<Message | null>(null)
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; msg: Message } | null>(null)
+
+  // Ferme le menu contextuel sur Echap ou clic exterieur
+  useEffect(() => {
+    if (!ctxMenu) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setCtxMenu(null) }
+    const onClick = () => setCtxMenu(null)
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('click', onClick)
+    window.addEventListener('scroll', onClick, true)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('click', onClick)
+      window.removeEventListener('scroll', onClick, true)
+    }
+  }, [ctxMenu])
 
   useEffect(() => {
     if (!lightboxUrl) return
@@ -299,47 +315,13 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
             const canEdit = isMe && !!msg.text && !msg.voiceUrl && !msg.fileUrl
             return (
               <div key={msg.id} className={cn('flex', isMe ? 'justify-end' : 'justify-start')}>
-              <div className="group relative w-fit max-w-[65%]">
-                {/* Hover action bar : Repondre pour tous + Modifier/Supprimer pour mes messages */}
-                <div
-                  className={cn('absolute flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity')}
-                  style={{ top: '-12px', [isMe ? 'right' : 'left']: '8px', zIndex: 5 }}
-                >
-                  <button
-                    onClick={() => setReplyTo(msg)}
-                    title="Répondre"
-                    className="flex items-center justify-center rounded-md cursor-pointer"
-                    style={{ width: '26px', height: '26px', background: 'rgba(20,20,20,0.95)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
-                    </svg>
-                  </button>
-                  {canEdit && (
-                    <button
-                      onClick={() => { setEditingId(msg.id); setEditText(msg.text || '') }}
-                      title="Modifier"
-                      className="flex items-center justify-center rounded-md cursor-pointer"
-                      style={{ width: '26px', height: '26px', background: 'rgba(20,20,20,0.95)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                      </svg>
-                    </button>
-                  )}
-                  {isMe && (
-                    <button
-                      onClick={() => setToDelete(msg)}
-                      title="Supprimer"
-                      className="flex items-center justify-center rounded-md cursor-pointer"
-                      style={{ width: '26px', height: '26px', background: 'rgba(20,20,20,0.95)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                      </svg>
-                    </button>
-                  )}
-                </div>
+              <div
+                className="relative w-fit max-w-[65%]"
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  setCtxMenu({ x: e.clientX, y: e.clientY, msg })
+                }}
+              >
 
                 {/* Quote du message cite si c'est une reponse */}
                 {msg.replyToId && (() => {
@@ -711,6 +693,95 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
             />
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* Menu contextuel clic-droit */}
+      <AnimatePresence>
+        {ctxMenu && (() => {
+          const m = ctxMenu.msg
+          const isMine = m.sender === currentUser
+          const canEditMsg = isMine && !!m.text && !m.voiceUrl && !m.fileUrl
+          const canCopy = !!m.text
+          // Clamp position pour ne pas sortir de l'ecran
+          const menuW = 220
+          const menuH = 50 + 42 * (1 + (canCopy ? 1 : 0) + (canEditMsg ? 1 : 0) + (isMine ? 1 : 0))
+          const x = Math.min(ctxMenu.x, window.innerWidth - menuW - 8)
+          const y = Math.min(ctxMenu.y, window.innerHeight - menuH - 8)
+          return (
+            <motion.div
+              key="ctx-menu"
+              initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.12 }}
+              className="fixed z-[300] rounded-xl overflow-hidden"
+              style={{
+                left: x, top: y, width: menuW,
+                background: 'rgba(20,20,20,0.98)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+                backdropFilter: 'blur(10px)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              <button
+                onClick={() => { setReplyTo(m); setCtxMenu(null) }}
+                className="flex items-center gap-3 w-full text-left cursor-pointer hover:bg-white/5 transition-colors"
+                style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.9)' }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
+                </svg>
+                <span className="text-sm">Répondre</span>
+              </button>
+
+              {canCopy && (
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(m.text!).catch(() => {})
+                    toast.info('Message copié')
+                    setCtxMenu(null)
+                  }}
+                  className="flex items-center gap-3 w-full text-left cursor-pointer hover:bg-white/5 transition-colors"
+                  style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.9)' }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                  </svg>
+                  <span className="text-sm">Copier</span>
+                </button>
+              )}
+
+              {canEditMsg && (
+                <button
+                  onClick={() => { setEditingId(m.id); setEditText(m.text || ''); setCtxMenu(null) }}
+                  className="flex items-center gap-3 w-full text-left cursor-pointer hover:bg-white/5 transition-colors"
+                  style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.9)' }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                  </svg>
+                  <span className="text-sm">Modifier</span>
+                </button>
+              )}
+
+              {isMine && (
+                <>
+                  <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
+                  <button
+                    onClick={() => { setToDelete(m); setCtxMenu(null) }}
+                    className="flex items-center gap-3 w-full text-left cursor-pointer hover:bg-red-500/10 transition-colors"
+                    style={{ padding: '12px 16px', color: '#f87171' }}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                    <span className="text-sm">Supprimer</span>
+                  </button>
+                </>
+              )}
+            </motion.div>
+          )
+        })()}
       </AnimatePresence>
     </div>
   )
