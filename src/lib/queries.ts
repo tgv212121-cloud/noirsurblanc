@@ -256,6 +256,7 @@ export type Message = {
   createdAt: string
   editedAt?: string | null
   readAt?: string | null
+  replyToId?: string | null
 }
 
 export async function fetchMessages(clientId: string): Promise<Message[]> {
@@ -276,6 +277,7 @@ export async function fetchMessages(clientId: string): Promise<Message[]> {
     createdAt: row.created_at,
     editedAt: row.edited_at || null,
     readAt: row.read_at || null,
+    replyToId: row.reply_to_id || null,
   }))
 }
 
@@ -327,8 +329,9 @@ export async function sendMessage(message: {
   text?: string
   fileUrl?: string
   voiceUrl?: string
+  replyToId?: string
 }): Promise<boolean> {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('messages')
     .insert({
       client_id: message.clientId,
@@ -336,6 +339,7 @@ export async function sendMessage(message: {
       text: message.text || null,
       file_url: message.fileUrl || null,
       voice_url: message.voiceUrl || null,
+      reply_to_id: message.replyToId || null,
     })
 
   if (error) { console.error('sendMessage', error); return false }

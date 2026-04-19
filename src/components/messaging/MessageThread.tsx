@@ -23,6 +23,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [replyTo, setReplyTo] = useState<Message | null>(null)
 
   useEffect(() => {
     if (!lightboxUrl) return
@@ -36,10 +37,13 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
   const [deleting, setDeleting] = useState(false)
   const toast = useToast()
   const [recording, setRecording] = useState(false)
+  const [recordingPaused, setRecordingPaused] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const audioStreamRef = useRef<MediaStream | null>(null)
+  const shouldSendRef = useRef(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -70,7 +74,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
         (payload) => {
           const newMsg = payload.new as {
             id: string; client_id: string; sender: 'admin' | 'client';
-            text?: string; file_url?: string; voice_url?: string; created_at: string; read_at?: string;
+            text?: string; file_url?: string; voice_url?: string; created_at: string; read_at?: string; reply_to_id?: string;
           }
           setMessages((prev) => {
             if (prev.some(m => m.id === newMsg.id)) return prev
@@ -85,6 +89,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                 voiceUrl: newMsg.voice_url ?? null,
                 createdAt: newMsg.created_at,
                 readAt: newMsg.read_at ?? null,
+                replyToId: newMsg.reply_to_id ?? null,
               } as Message,
             ]
           })
@@ -143,9 +148,11 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
     if (!text.trim() || sending) return
     setSending(true)
     const payload = text.trim()
-    const success = await sendMessage({ clientId, sender: currentUser, text: payload })
+    const replyId = replyTo?.id
+    const success = await sendMessage({ clientId, sender: currentUser, text: payload, replyToId: replyId })
     if (success) {
       setText('')
+      setReplyTo(null)
       fetchMessages(clientId).then(setMessages)
       notifyCounterparty(payload)
     }
@@ -196,13 +203,23 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const recorder = new MediaRecorder(stream)
       audioChunksRef.current = []
+      shouldSendRef.current = true
 
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) audioChunksRef.current.push(e.data)
       }
 
       recorder.onstop = async () => {
+        // Stop tracks tout le temps (libere le micro)
+        stream.getTracks().forEach((track) => track.stop())
+        audioStreamRef.current = null
+        // Si l'utilisateur a annule, on n'envoie rien
+        if (!shouldSendRef.current) {
+          audioChunksRef.current = []
+          return
+        }
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        if (blob.size === 0) return
         const file = new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' })
         setSending(true)
         const url = await uploadMessageFile(file)
@@ -212,12 +229,14 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
           notifyCounterparty('Message vocal')
         }
         setSending(false)
-        stream.getTracks().forEach((track) => track.stop())
+        audioChunksRef.current = []
       }
 
       recorder.start()
       mediaRecorderRef.current = recorder
+      audioStreamRef.current = stream
       setRecording(true)
+      setRecordingPaused(false)
       setRecordingTime(0)
       recordingTimerRef.current = setInterval(() => setRecordingTime((t) => t + 1), 1000)
     } catch (err) {
@@ -226,12 +245,39 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
     }
   }
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && recording) {
-      mediaRecorderRef.current.stop()
-      setRecording(false)
-      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current)
+  const pauseRecording = () => {
+    const r = mediaRecorderRef.current
+    if (!r || !recording) return
+    if (r.state === 'recording') {
+      r.pause()
+      setRecordingPaused(true)
+      if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null }
+    } else if (r.state === 'paused') {
+      r.resume()
+      setRecordingPaused(false)
+      recordingTimerRef.current = setInterval(() => setRecordingTime((t) => t + 1), 1000)
     }
+  }
+
+  const cancelRecording = () => {
+    shouldSendRef.current = false
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop()
+    }
+    setRecording(false)
+    setRecordingPaused(false)
+    setRecordingTime(0)
+    if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null }
+  }
+
+  const sendRecording = () => {
+    shouldSendRef.current = true
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop()
+    }
+    setRecording(false)
+    setRecordingPaused(false)
+    if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null }
   }
 
   const formatTime = (seconds: number) => {
@@ -254,24 +300,34 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
             return (
               <div key={msg.id} className={cn('flex', isMe ? 'justify-end' : 'justify-start')}>
               <div className="group relative w-fit max-w-[65%]">
-                {/* Hover action bar (own messages only) */}
-                {isMe && (
-                  <div
-                    className="absolute flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ top: '-12px', right: '8px', zIndex: 5 }}
+                {/* Hover action bar : Repondre pour tous + Modifier/Supprimer pour mes messages */}
+                <div
+                  className={cn('absolute flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity')}
+                  style={{ top: '-12px', [isMe ? 'right' : 'left']: '8px', zIndex: 5 }}
+                >
+                  <button
+                    onClick={() => setReplyTo(msg)}
+                    title="Répondre"
+                    className="flex items-center justify-center rounded-md cursor-pointer"
+                    style={{ width: '26px', height: '26px', background: 'rgba(20,20,20,0.95)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}
                   >
-                    {canEdit && (
-                      <button
-                        onClick={() => { setEditingId(msg.id); setEditText(msg.text || '') }}
-                        title="Modifier"
-                        className="flex items-center justify-center rounded-md cursor-pointer"
-                        style={{ width: '26px', height: '26px', background: 'rgba(20,20,20,0.95)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                        </svg>
-                      </button>
-                    )}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
+                    </svg>
+                  </button>
+                  {canEdit && (
+                    <button
+                      onClick={() => { setEditingId(msg.id); setEditText(msg.text || '') }}
+                      title="Modifier"
+                      className="flex items-center justify-center rounded-md cursor-pointer"
+                      style={{ width: '26px', height: '26px', background: 'rgba(20,20,20,0.95)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                      </svg>
+                    </button>
+                  )}
+                  {isMe && (
                     <button
                       onClick={() => setToDelete(msg)}
                       title="Supprimer"
@@ -282,10 +338,31 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                         <path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                       </svg>
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
+
+                {/* Quote du message cite si c'est une reponse */}
+                {msg.replyToId && (() => {
+                  const quoted = messages.find(m => m.id === msg.replyToId)
+                  if (!quoted) return null
+                  const quotedSender = quoted.sender === currentUser ? 'Vous' : otherUserName
+                  const quotedPreview = quoted.text
+                    ? (quoted.text.length > 80 ? quoted.text.slice(0, 79) + '…' : quoted.text)
+                    : quoted.voiceUrl ? '🎤 Message vocal' : quoted.fileUrl ? '📎 Fichier joint' : 'Message supprimé'
+                  return (
+                    <div
+                      onClick={() => { const el = document.getElementById('msg-' + quoted.id); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.transition = 'box-shadow 0.3s'; el.style.boxShadow = `0 0 0 2px ${accentColor}`; setTimeout(() => { el.style.boxShadow = '' }, 1200) } }}
+                      className="cursor-pointer rounded-xl mb-1 opacity-70 hover:opacity-100 transition-opacity"
+                      style={{ padding: '8px 12px', borderLeft: `2px solid ${accentColor}`, background: 'rgba(255,255,255,0.04)', fontSize: '12px' }}
+                    >
+                      <p className="text-[10px] uppercase tracking-wider text-blanc-muted/70" style={{ marginBottom: '2px' }}>{quotedSender}</p>
+                      <p className="text-blanc-muted/80 truncate">{quotedPreview}</p>
+                    </div>
+                  )
+                })()}
 
                 <div
+                  id={'msg-' + msg.id}
                   className="rounded-2xl"
                   style={{
                     padding: msg.voiceUrl ? '10px 14px' : (msg.text ? '14px 18px' : '8px'),
@@ -426,20 +503,71 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
           })()}
         </div>
 
+        {/* Bandeau 'Reponse a' */}
+        {replyTo && (
+          <div className="flex items-start gap-3 rounded-xl mb-2" style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderLeft: `2px solid ${accentColor}` }}>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] uppercase tracking-wider text-blanc-muted/70" style={{ marginBottom: '2px' }}>
+                Réponse à {replyTo.sender === currentUser ? 'toi' : otherUserName}
+              </p>
+              <p className="text-sm text-blanc-muted/80 truncate">
+                {replyTo.text || (replyTo.voiceUrl ? '🎤 Message vocal' : replyTo.fileUrl ? '📎 Fichier joint' : '')}
+              </p>
+            </div>
+            <button onClick={() => setReplyTo(null)} aria-label="Annuler la reponse" className="flex items-center justify-center rounded-md text-blanc-muted/60 hover:text-blanc cursor-pointer" style={{ width: '24px', height: '24px' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+        )}
+
         <div className="bg-noir-elevated rounded-2xl" style={{ padding: '16px' }}>
           {recording ? (
-            <div className="flex items-center justify-between" style={{ padding: '16px' }}>
+            <div className="flex items-center justify-between gap-4 flex-wrap" style={{ padding: '16px' }}>
               <div className="flex items-center gap-3">
-                <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-sm text-blanc">Enregistrement... {formatTime(recordingTime)}</span>
+                <span className={cn('w-3 h-3 rounded-full', recordingPaused ? 'bg-blanc-muted/50' : 'bg-red-500 animate-pulse')} />
+                <span className="text-sm text-blanc tabular-nums">
+                  {recordingPaused ? 'En pause' : 'Enregistrement'} · {formatTime(recordingTime)}
+                </span>
               </div>
-              <button
-                onClick={stopRecording}
-                className="text-sm font-medium text-white rounded-xl cursor-pointer transition-transform active:scale-95"
-                style={{ backgroundColor: accentColor, padding: '14px 28px', letterSpacing: '0.02em' }}
-              >
-                Arrêter et envoyer
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Supprimer */}
+                <button
+                  onClick={cancelRecording}
+                  title="Supprimer"
+                  className="flex items-center justify-center rounded-xl text-red-400/80 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                  style={{ width: '44px', height: '44px', border: '1px solid rgba(248,113,113,0.25)' }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                </button>
+
+                {/* Pause / Reprendre */}
+                <button
+                  onClick={pauseRecording}
+                  title={recordingPaused ? 'Reprendre' : 'Pause'}
+                  className="flex items-center justify-center rounded-xl text-blanc hover:bg-white/5 transition-colors cursor-pointer"
+                  style={{ width: '44px', height: '44px', border: '1px solid rgba(255,255,255,0.12)' }}
+                >
+                  {recordingPaused ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7L8 5z"/></svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+                  )}
+                </button>
+
+                {/* Envoyer */}
+                <button
+                  onClick={sendRecording}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-white rounded-xl cursor-pointer transition-transform active:scale-95"
+                  style={{ backgroundColor: accentColor, padding: '12px 22px', letterSpacing: '0.02em' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+                  </svg>
+                  Envoyer
+                </button>
+              </div>
             </div>
           ) : (
             <>
