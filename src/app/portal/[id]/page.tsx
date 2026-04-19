@@ -645,8 +645,21 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
   )
 }
 
+const IMG_RE = /\.(png|jpe?g|gif|webp|bmp|svg|heic|heif)(\?|$)/i
+
 function PostCopyCard({ content, files }: { content: string; files?: { name: string; url: string; size?: number }[] }) {
   const [copied, setCopied] = useState(false)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!lightboxUrl) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxUrl(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [lightboxUrl])
+
+  const images = (files || []).filter(f => IMG_RE.test(f.url) || IMG_RE.test(f.name))
+  const otherFiles = (files || []).filter(f => !(IMG_RE.test(f.url) || IMG_RE.test(f.name)))
 
   const handleCopy = async () => {
     try {
@@ -679,10 +692,36 @@ function PostCopyCard({ content, files }: { content: string; files?: { name: str
         {content}
       </div>
 
-      {/* Files */}
-      {files && files.length > 0 && (
+      {/* Images - preview cliquable */}
+      {images.length > 0 && (
+        <div className={cn('grid gap-2 mb-8', images.length === 1 ? 'grid-cols-1' : images.length === 2 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3')}>
+          {images.map((f, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setLightboxUrl(f.url)}
+              className="relative cursor-zoom-in overflow-hidden rounded-xl group"
+              style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)', padding: 0, aspectRatio: images.length === 1 ? '16 / 10' : '1 / 1' }}
+            >
+              <img
+                src={f.url}
+                alt={f.name}
+                style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.35)' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/>
+                </svg>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Autres fichiers - affichage lien classique */}
+      {otherFiles.length > 0 && (
         <div className="flex flex-col gap-2 mb-8">
-          {files.map((f, i) => (
+          {otherFiles.map((f, i) => (
             <a key={i} href={f.url} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-3 bg-noir-card rounded-lg hover:bg-noir-card/70 transition-colors"
               style={{ padding: '12px 16px' }}>
@@ -699,6 +738,38 @@ function PostCopyCard({ content, files }: { content: string; files?: { name: str
           ))}
         </div>
       )}
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxUrl && (
+          <motion.div
+            key="post-lightbox"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center cursor-zoom-out"
+            style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)' }}
+            onClick={() => setLightboxUrl(null)}
+          >
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightboxUrl(null) }}
+              className="absolute flex items-center justify-center rounded-full text-white/80 hover:text-white transition-colors cursor-pointer"
+              style={{ top: '20px', right: '20px', width: '40px', height: '40px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
+              aria-label="Fermer"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+            <motion.img
+              key={lightboxUrl}
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              src={lightboxUrl}
+              alt="Aperçu"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: '92vw', maxHeight: '88vh', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Copy button */}
       <div className="flex items-center gap-4">

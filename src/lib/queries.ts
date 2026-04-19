@@ -328,7 +328,7 @@ export async function sendMessage(message: {
   fileUrl?: string
   voiceUrl?: string
 }): Promise<boolean> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('messages')
     .insert({
       client_id: message.clientId,
