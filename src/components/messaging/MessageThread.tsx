@@ -328,17 +328,23 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                   const quoted = messages.find(m => m.id === msg.replyToId)
                   if (!quoted) return null
                   const quotedSender = quoted.sender === currentUser ? 'Vous' : otherUserName
+                  const isImg = quoted.fileUrl && /\.(png|jpe?g|gif|webp|bmp|svg|heic|heif)(\?|$)/i.test(quoted.fileUrl)
                   const quotedPreview = quoted.text
                     ? (quoted.text.length > 80 ? quoted.text.slice(0, 79) + '…' : quoted.text)
-                    : quoted.voiceUrl ? '🎤 Message vocal' : quoted.fileUrl ? '📎 Fichier joint' : 'Message supprimé'
+                    : quoted.voiceUrl ? '🎤 Message vocal' : isImg ? 'Image' : quoted.fileUrl ? '📎 Fichier joint' : 'Message supprimé'
                   return (
                     <div
                       onClick={() => { const el = document.getElementById('msg-' + quoted.id); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.transition = 'box-shadow 0.3s'; el.style.boxShadow = `0 0 0 2px ${accentColor}`; setTimeout(() => { el.style.boxShadow = '' }, 1200) } }}
-                      className="cursor-pointer rounded-xl mb-1 opacity-70 hover:opacity-100 transition-opacity"
-                      style={{ padding: '8px 12px', borderLeft: `2px solid ${accentColor}`, background: 'rgba(255,255,255,0.04)', fontSize: '12px' }}
+                      className="cursor-pointer rounded-xl mb-1 opacity-70 hover:opacity-100 transition-opacity flex items-center gap-2.5"
+                      style={{ padding: '8px 10px', borderLeft: `2px solid ${accentColor}`, background: 'rgba(255,255,255,0.04)', fontSize: '12px' }}
                     >
-                      <p className="text-[10px] uppercase tracking-wider text-blanc-muted/70" style={{ marginBottom: '2px' }}>{quotedSender}</p>
-                      <p className="text-blanc-muted/80 truncate">{quotedPreview}</p>
+                      {isImg && (
+                        <img src={quoted.fileUrl!} alt="" style={{ width: '36px', height: '36px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] uppercase tracking-wider text-blanc-muted/70" style={{ marginBottom: '2px' }}>{quotedSender}</p>
+                        <p className="text-blanc-muted/80 truncate">{quotedPreview}</p>
+                      </div>
                     </div>
                   )
                 })()}
@@ -486,21 +492,26 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
         </div>
 
         {/* Bandeau 'Reponse a' */}
-        {replyTo && (
-          <div className="flex items-start gap-3 rounded-xl mb-2" style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderLeft: `2px solid ${accentColor}` }}>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] uppercase tracking-wider text-blanc-muted/70" style={{ marginBottom: '2px' }}>
-                Réponse à {replyTo.sender === currentUser ? 'toi' : otherUserName}
-              </p>
-              <p className="text-sm text-blanc-muted/80 truncate">
-                {replyTo.text || (replyTo.voiceUrl ? '🎤 Message vocal' : replyTo.fileUrl ? '📎 Fichier joint' : '')}
-              </p>
+        {replyTo && (() => {
+          const isImg = replyTo.fileUrl && /\.(png|jpe?g|gif|webp|bmp|svg|heic|heif)(\?|$)/i.test(replyTo.fileUrl)
+          const preview = replyTo.text || (replyTo.voiceUrl ? '🎤 Message vocal' : isImg ? 'Image' : replyTo.fileUrl ? '📎 Fichier joint' : '')
+          return (
+            <div className="flex items-center gap-3 rounded-xl mb-2" style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderLeft: `2px solid ${accentColor}` }}>
+              {isImg && (
+                <img src={replyTo.fileUrl!} alt="" style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-blanc-muted/70" style={{ marginBottom: '2px' }}>
+                  Réponse à {replyTo.sender === currentUser ? 'toi' : otherUserName}
+                </p>
+                <p className="text-sm text-blanc-muted/80 truncate">{preview}</p>
+              </div>
+              <button onClick={() => setReplyTo(null)} aria-label="Annuler la reponse" className="flex items-center justify-center rounded-md text-blanc-muted/60 hover:text-blanc cursor-pointer" style={{ width: '24px', height: '24px', flexShrink: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
             </div>
-            <button onClick={() => setReplyTo(null)} aria-label="Annuler la reponse" className="flex items-center justify-center rounded-md text-blanc-muted/60 hover:text-blanc cursor-pointer" style={{ width: '24px', height: '24px' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-            </button>
-          </div>
-        )}
+          )
+        })()}
 
         <div className="bg-noir-elevated rounded-2xl" style={{ padding: '16px' }}>
           {recording ? (
