@@ -692,28 +692,52 @@ function PostCopyCard({ content, files }: { content: string; files?: { name: str
         {content}
       </div>
 
-      {/* Images - preview cliquable */}
+      {/* Images - preview cliquable avec bouton Telecharger */}
       {images.length > 0 && (
         <div className={cn('grid gap-2 mb-8', images.length === 1 ? 'grid-cols-1' : images.length === 2 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3')}>
           {images.map((f, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setLightboxUrl(f.url)}
-              className="relative cursor-zoom-in overflow-hidden rounded-xl group"
-              style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)', padding: 0, aspectRatio: images.length === 1 ? '16 / 10' : '1 / 1' }}
-            >
-              <img
-                src={f.url}
-                alt={f.name}
-                style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.35)' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/>
-                </svg>
-              </div>
-            </button>
+            <div key={i} className="relative group rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)', aspectRatio: images.length === 1 ? '16 / 10' : '1 / 1' }}>
+              <button
+                type="button"
+                onClick={() => setLightboxUrl(f.url)}
+                className="absolute inset-0 cursor-zoom-in"
+                style={{ padding: 0, background: 'transparent', border: 'none' }}
+                aria-label={`Ouvrir ${f.name}`}
+              >
+                <img
+                  src={f.url}
+                  alt={f.name}
+                  style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.35)' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/>
+                  </svg>
+                </div>
+              </button>
+              {/* Bouton Télécharger (en haut a droite, toujours visible) */}
+              <button
+                type="button"
+                onClick={async (e) => {
+                  e.stopPropagation()
+                  try {
+                    const r = await fetch(f.url)
+                    const blob = await r.blob()
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = f.name || f.url.split('/').pop()?.split('?')[0] || 'image'
+                    document.body.appendChild(a); a.click(); a.remove()
+                    setTimeout(() => URL.revokeObjectURL(url), 2000)
+                  } catch {}
+                }}
+                title="Télécharger"
+                className="absolute flex items-center justify-center rounded-lg cursor-pointer transition-all opacity-90 hover:opacity-100 hover:scale-105"
+                style={{ top: '10px', right: '10px', width: '36px', height: '36px', background: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.18)', color: 'white', backdropFilter: 'blur(6px)' }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+              </button>
+            </div>
           ))}
         </div>
       )}
