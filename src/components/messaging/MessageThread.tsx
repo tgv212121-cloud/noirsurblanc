@@ -383,17 +383,39 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                       )
                     }
                     return (
-                      <a
-                        href={msg.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 underline text-sm"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-                        </svg>
-                        {msg.text || 'Fichier joint'}
-                      </a>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={msg.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 underline text-sm flex-1 min-w-0"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                            <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                          </svg>
+                          <span className="truncate">{msg.text || 'Fichier joint'}</span>
+                        </a>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            try {
+                              const r = await fetch(msg.fileUrl!)
+                              const blob = await r.blob()
+                              const url = URL.createObjectURL(blob)
+                              const a = document.createElement('a')
+                              a.href = url
+                              a.download = msg.text || msg.fileUrl!.split('/').pop()?.split('?')[0] || 'fichier'
+                              document.body.appendChild(a); a.click(); a.remove()
+                              setTimeout(() => URL.revokeObjectURL(url), 2000)
+                            } catch {}
+                          }}
+                          title="Télécharger"
+                          className="flex items-center justify-center rounded-md cursor-pointer transition-colors"
+                          style={{ width: '30px', height: '30px', background: 'rgba(255,255,255,0.08)', color: 'inherit' }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        </button>
+                      </div>
                     )
                   })()}
 
@@ -681,18 +703,27 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
-            <a
-              href={lightboxUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+            <button
+              onClick={async (e) => {
+                e.stopPropagation()
+                try {
+                  const r = await fetch(lightboxUrl!)
+                  const blob = await r.blob()
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = lightboxUrl!.split('/').pop()?.split('?')[0] || 'image'
+                  document.body.appendChild(a); a.click(); a.remove()
+                  setTimeout(() => URL.revokeObjectURL(url), 2000)
+                } catch {}
+              }}
               className="absolute flex items-center justify-center rounded-full text-white/80 hover:text-white transition-colors cursor-pointer"
               style={{ top: '20px', right: '70px', width: '40px', height: '40px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
-              aria-label="Ouvrir dans un nouvel onglet"
-              title="Ouvrir dans un nouvel onglet"
+              aria-label="Télécharger"
+              title="Télécharger"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
-            </a>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            </button>
             <motion.img
               key={lightboxUrl}
               initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}
