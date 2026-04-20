@@ -100,14 +100,9 @@ export default function GoogleCalendarCard({ returnTo, audience = 'admin' }: Pro
             Déconnecter
           </button>
         ) : status ? (
-          <button onClick={connect} disabled={loading}
-            className="group relative inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
-            style={{ padding: '14px 24px' }}>
-            <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(135deg,#a16207,#ca8a04,#eab308)', border: '1px solid rgba(202,138,4,0.4)' }} />
-            <svg className="relative z-10" width="16" height="16" viewBox="0 0 24 24" fill="#0a0a0a"><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm2 2v12h14V7H5zm2 2h4v4H7V9zm0 5h4v4H7v-4zm5-5h5v4h-5V9zm0 5h5v4h-5v-4z"/></svg>
-            <span className="relative z-10 text-noir font-semibold uppercase tracking-[0.12em]" style={{ fontSize: '12px' }}>
-              {loading ? 'Connexion…' : 'Connecter Google'}
-            </span>
+          <button onClick={connect} disabled={loading} className="nsb-btn nsb-btn-primary" style={{ padding: '14px 24px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#0a0a0a"><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm2 2v12h14V7H5zm2 2h4v4H7V9zm0 5h4v4H7v-4zm5-5h5v4h-5V9zm0 5h5v4h-5v-4z"/></svg>
+            {loading ? 'Connexion…' : 'Connecter Google'}
           </button>
         ) : null}
       </div>

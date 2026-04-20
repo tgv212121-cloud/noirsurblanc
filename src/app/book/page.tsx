@@ -394,19 +394,16 @@ export default function BookPublicPage() {
                 </p>
               )}
 
-              <div className="flex items-center gap-3" style={{ marginTop: '26px' }}>
+              <div className="flex items-center" style={{ marginTop: '26px', gap: '10px' }}>
                 <button onClick={() => { if (!submitting) setSelectedSlot(null) }} disabled={submitting}
-                  className="flex-1 rounded-xl text-blanc text-sm font-medium hover:bg-white/[0.03] cursor-pointer disabled:opacity-40"
-                  style={{ padding: '14px 20px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  className="nsb-btn nsb-btn-secondary flex-1"
+                  style={{ padding: '14px 20px' }}>
                   Retour
                 </button>
                 <button onClick={handleConfirm} disabled={submitting}
-                  className="group relative flex-1 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+                  className="nsb-btn nsb-btn-primary flex-1"
                   style={{ padding: '14px 20px' }}>
-                  <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(135deg,#a16207,#ca8a04,#eab308)', border: '1px solid rgba(202,138,4,0.4)' }} />
-                  <span className="relative z-10 text-noir font-semibold uppercase tracking-[0.12em]" style={{ fontSize: '12px' }}>
-                    {submitting ? 'Réservation…' : 'Confirmer'}
-                  </span>
+                  {submitting ? 'Réservation…' : 'Confirmer'}
                 </button>
               </div>
             </motion.div>

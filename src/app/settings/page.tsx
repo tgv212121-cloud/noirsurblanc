@@ -439,9 +439,7 @@ function AvailabilityCard({ rules, onChange }: { rules: AvailabilityRule[]; onCh
               {[15, 30, 45, 60].map(d => <option key={d} value={d} style={{ background: '#141414', color: '#fafaf9' }}>{d} min</option>)}
             </select>
           </div>
-          <button onClick={addRule} disabled={saving}
-            className="rounded-xl text-noir font-semibold text-xs uppercase tracking-wider cursor-pointer disabled:opacity-40"
-            style={{ padding: '10px 16px', background: 'linear-gradient(135deg,#a16207,#ca8a04,#eab308)', border: '1px solid rgba(202,138,4,0.4)' }}>
+          <button onClick={addRule} disabled={saving} className="nsb-btn nsb-btn-primary" style={{ padding: '11px 20px' }}>
             {saving ? '...' : '+ Ajouter'}
           </button>
         </div>
@@ -634,9 +632,7 @@ function NotificationEmailsCard({ emails, onChange }: { emails: NotificationEmai
               placeholder="Enzo, test, équipe..."
               style={{ width: '100%', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fafaf9', fontSize: '13px', padding: '10px 12px', outline: 'none', fontFamily: 'inherit' }} />
           </div>
-          <button type="submit" disabled={saving}
-            className="rounded-xl text-noir font-semibold text-xs uppercase tracking-wider cursor-pointer disabled:opacity-40"
-            style={{ padding: '10px 18px', background: 'linear-gradient(135deg,#a16207,#ca8a04,#eab308)', border: '1px solid rgba(202,138,4,0.4)' }}>
+          <button type="submit" disabled={saving} className="nsb-btn nsb-btn-primary" style={{ padding: '11px 20px' }}>
             {saving ? '...' : '+ Ajouter'}
           </button>
         </form>

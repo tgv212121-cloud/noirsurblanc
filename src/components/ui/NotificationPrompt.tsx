@@ -98,13 +98,8 @@ export default function NotificationPrompt() {
           </p>
         </div>
         {state !== 'denied' && (
-          <button onClick={handleEnable}
-            className="relative inline-flex items-center justify-center gap-2 cursor-pointer group"
-            style={{ padding: '10px 20px' }}>
-            <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(135deg,#a16207,#ca8a04,#eab308)', border: '1px solid rgba(202,138,4,0.4)' }} />
-            <span className="relative z-10 text-noir font-semibold uppercase tracking-[0.12em]" style={{ fontSize: '11px' }}>
-              Activer
-            </span>
+          <button onClick={handleEnable} className="nsb-btn nsb-btn-primary" style={{ padding: '11px 22px', fontSize: '11px' }}>
+            Activer
           </button>
         )}
         {state === 'denied' && (

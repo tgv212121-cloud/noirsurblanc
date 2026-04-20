@@ -100,7 +100,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="ton@email.com"
-                    className="w-full bg-white/[0.025] border border-white/[0.08] rounded-xl text-blanc text-[15px] placeholder:text-blanc-muted/25 focus:border-gold/30 focus:bg-white/[0.045] focus:shadow-[0_0_30px_rgba(202,138,4,0.06)] transition-all duration-300 outline-none"
+                    className="nsb-input text-[15px]"
                     style={{ padding: '16px 18px 16px 50px' }}
                   />
                 </div>
@@ -123,7 +123,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-white/[0.025] border border-white/[0.08] rounded-xl text-blanc text-[15px] placeholder:text-blanc-muted/25 focus:border-gold/30 focus:bg-white/[0.045] focus:shadow-[0_0_30px_rgba(202,138,4,0.06)] transition-all duration-300 outline-none"
+                    className="nsb-input text-[15px]"
                     style={{ padding: '16px 50px 16px 50px' }}
                   />
                   <button
@@ -165,16 +165,14 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative flex items-center justify-center gap-3 w-full cursor-pointer disabled:opacity-40"
-                style={{ padding: '18px 40px' }}
+                className="nsb-btn nsb-btn-primary w-full"
+                style={{ padding: '16px 36px', fontSize: '13px' }}
               >
-                <div className="absolute inset-0 rounded-2xl bg-gold/25 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-gold-dark via-gold to-gold-light border border-gold/30" />
-                <span className="relative z-10 text-noir font-semibold tracking-[0.14em] uppercase" style={{ fontSize: '13px' }}>
-                  {loading ? 'Connexion…' : 'Se connecter'}
-                </span>
-                {!loading && (
-                  <svg className="relative z-10 text-noir group-hover:translate-x-1 transition-transform duration-300" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                {loading ? 'Connexion…' : (
+                  <>
+                    Se connecter
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                  </>
                 )}
               </button>
 
@@ -190,8 +188,8 @@ export default function LoginPage() {
                 type="button"
                 onClick={handleGoogleLogin}
                 disabled={googleLoading || loading}
-                className="relative flex items-center justify-center gap-3 w-full cursor-pointer disabled:opacity-40 transition-colors hover:bg-white/[0.04]"
-                style={{ padding: '16px 24px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}
+                className="nsb-btn nsb-btn-secondary w-full"
+                style={{ padding: '15px 24px', fontSize: '13px', textTransform: 'none', letterSpacing: '0' }}
               >
                 {googleLoading ? (
                   <span className="text-sm text-blanc-muted">Ouverture de Google…</span>

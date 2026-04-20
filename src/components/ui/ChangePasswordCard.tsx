@@ -95,13 +95,8 @@ export default function ChangePasswordCard() {
           Afficher les mots de passe
         </label>
 
-        <button type="submit" disabled={saving}
-          className="relative inline-flex items-center justify-center cursor-pointer disabled:opacity-40"
-          style={{ padding: '12px 28px' }}>
-          <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(135deg,#a16207,#ca8a04,#eab308)', border: '1px solid rgba(202,138,4,0.4)' }} />
-          <span className="relative z-10 text-noir font-semibold tracking-[0.12em] uppercase" style={{ fontSize: '12px' }}>
-            {saving ? 'Enregistrement…' : 'Mettre à jour'}
-          </span>
+        <button type="submit" disabled={saving} className="nsb-btn nsb-btn-primary" style={{ padding: '13px 28px' }}>
+          {saving ? 'Enregistrement…' : 'Mettre à jour'}
         </button>
       </form>
     </div>
