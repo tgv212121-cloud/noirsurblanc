@@ -72,6 +72,94 @@ input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
   50% { box-shadow: 0 0 16px 4px rgba(201, 169, 97, 0.12); }
 }
 
+/* ============================================================
+ * DESIGN SYSTEM NOIRSURBLANC : utilities transverses
+ * Classes reutilisables pour boutons, inputs, cards
+ * Ambiance : noir + blanc + or avec miroitement premium
+ * ============================================================ */
+
+/* --- Boutons --- */
+.nsb-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 13px 26px; border-radius: 12px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  cursor: pointer; transition: transform .2s, box-shadow .3s, background .3s, border-color .2s;
+  border: none; font-family: inherit; white-space: nowrap;
+}
+.nsb-btn:active { transform: translateY(1px); }
+.nsb-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Primaire : degrade or avec effet miroitement au hover */
+.nsb-btn-primary {
+  position: relative; color: #0a0a0a; overflow: hidden;
+  background: linear-gradient(135deg, #a16207 0%, #ca8a04 50%, #eab308 100%);
+  border: 1px solid rgba(202,138,4,0.5);
+}
+.nsb-btn-primary::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,0.4) 50%, transparent 80%);
+  transform: translateX(-110%); transition: transform .6s ease;
+}
+.nsb-btn-primary:hover:not(:disabled)::before { transform: translateX(110%); }
+.nsb-btn-primary:hover:not(:disabled) { box-shadow: 0 8px 28px rgba(202,138,4,0.35); }
+
+/* Secondaire : ghost */
+.nsb-btn-secondary {
+  background: transparent; color: var(--blanc);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+.nsb-btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.25); }
+
+/* Danger : degrade rouge */
+.nsb-btn-danger {
+  color: white;
+  background: linear-gradient(135deg, #b91c1c, #dc2626, #ef4444);
+  border: 1px solid rgba(239,68,68,0.45);
+}
+.nsb-btn-danger:hover:not(:disabled) { box-shadow: 0 8px 28px rgba(239,68,68,0.35); }
+
+/* Icone carree */
+.nsb-btn-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 10px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  color: var(--blanc-muted); cursor: pointer; transition: all .2s;
+}
+.nsb-btn-icon:hover { color: var(--blanc); background: rgba(255,255,255,0.06); border-color: rgba(202,138,4,0.35); }
+
+/* --- Inputs --- */
+.nsb-input {
+  width: 100%;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--blanc);
+  font-size: 14px; padding: 12px 14px; outline: none;
+  transition: border-color .2s, background .2s;
+  font-family: inherit;
+}
+.nsb-input:focus { border-color: rgba(202,138,4,0.55); background: rgba(255,255,255,0.04); }
+.nsb-input::placeholder { color: rgba(255,255,255,0.35); }
+
+.nsb-input-label {
+  display: block; color: rgba(255,255,255,0.6);
+  font-size: 10.5px; letter-spacing: 0.15em; text-transform: uppercase;
+  margin-bottom: 7px;
+}
+
+/* --- Card --- */
+.nsb-card {
+  background: var(--card, rgba(255,255,255,0.03));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  position: relative;
+}
+.nsb-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+}
+
 /* === GooeyNav Component === */
 :root {
   --linear-ease: linear(0, 0.068, 0.19 2.7%, 0.804 8.1%, 1.037, 1.199 13.2%, 1.245, 1.27 15.8%, 1.274, 1.272 17.4%, 1.249 19.1%, 0.996 28%, 0.949, 0.928 33.3%, 0.926, 0.933 36.8%, 1.001 45.6%, 1.013, 1.019 50.8%, 1.018 54.4%, 1 63.1%, 0.995 68%, 1.001 85%, 1);

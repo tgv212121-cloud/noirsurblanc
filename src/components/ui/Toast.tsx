@@ -66,11 +66,11 @@ function ToastViewport({ items, onDismiss }: { items: ToastItem[]; onDismiss: (i
       aria-live="polite"
       style={{
         position: 'fixed',
-        top: '24px',
-        right: '24px',
+        bottom: '28px',
+        right: '28px',
         zIndex: 9999,
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'column-reverse',
         gap: '10px',
         pointerEvents: 'none',
       }}
@@ -120,19 +120,22 @@ function ToastLine({ item, onDismiss }: { item: ToastItem; onDismiss: () => void
       animate={{ opacity: 1, x: 0, scale: 1 }}
       exit={{ opacity: 0, x: 40, scale: 0.96 }}
       transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="flex items-start gap-3"
+      className="relative flex items-start gap-3"
       style={{
         pointerEvents: 'auto',
-        background: 'rgba(20,20,20,0.96)',
+        background: 'rgba(20,20,20,0.98)',
         border: `1px solid ${c.border}`,
         borderRadius: '14px',
-        padding: '14px 18px 14px 16px',
-        minWidth: '280px',
+        padding: '14px 18px 14px 22px',
+        minWidth: '300px',
         maxWidth: '420px',
         backdropFilter: 'blur(12px)',
         boxShadow: '0 14px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.02) inset',
+        overflow: 'hidden',
       }}
     >
+      {/* Barre laterale coloree */}
+      <span style={{ position: 'absolute', left: '0', top: '10%', bottom: '10%', width: '3px', borderRadius: '3px', background: c.dot }} />
       <div className="flex items-center justify-center shrink-0" style={{ width: '24px', height: '24px', color: c.dot, marginTop: '1px' }}>
         {c.icon}
       </div>
