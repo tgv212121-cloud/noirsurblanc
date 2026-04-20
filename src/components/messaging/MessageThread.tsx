@@ -484,8 +484,8 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
       </div>
 
       {/* Input */}
-      <div style={{ borderTop: '1px solid var(--border)', paddingTop: '28px' }}>
-        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: '40px', marginTop: '32px' }}>
+        <div className="flex items-center justify-between gap-3 flex-wrap" style={{ marginBottom: '16px' }}>
           <p className="text-xs text-blanc-muted">
             Message à {otherUserName}
           </p>
@@ -535,7 +535,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
           )
         })()}
 
-        <div className="bg-noir-elevated rounded-2xl" style={{ padding: '16px' }}>
+        <div className="bg-noir-elevated rounded-2xl" style={{ padding: '20px 22px' }}>
           {recording ? (
             <div className="flex items-center justify-between gap-4 flex-wrap" style={{ padding: '16px' }}>
               <div className="flex items-center gap-3">
@@ -612,7 +612,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                 }}
               />
 
-              <div className="flex items-center justify-between" style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
+              <div className="flex items-center justify-between" style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
                 <div className="flex items-center gap-2">
                   <input
                     ref={fileInputRef}
