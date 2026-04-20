@@ -8,7 +8,7 @@ import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders, fetchAdmin
 import { formatNumber, formatRelative, cn } from '@/lib/utils'
 import type { Client, Post, PostMetrics, Reminder } from '@/types'
 import { motion, AnimatePresence } from 'framer-motion'
-import GooeyNav from '@/components/ui/GooeyNavComponent'
+import SliderTabs from '@/components/ui/SliderTabs'
 import MessageThread from '@/components/messaging/MessageThread'
 import NotificationPrompt from '@/components/ui/NotificationPrompt'
 import ChangePasswordCard from '@/components/ui/ChangePasswordCard'
@@ -166,10 +166,10 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
         </div>
         <button
           onClick={async () => { await signOut(); router.push('/login') }}
-          className="inline-flex items-center gap-2 text-sm text-blanc-muted hover:text-blanc border border-white/[0.08] hover:border-white/[0.15] rounded-xl cursor-pointer transition-colors"
-          style={{ padding: '10px 18px' }}
+          className="nsb-btn nsb-btn-secondary"
+          style={{ padding: '12px 22px' }}
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>
           </svg>
           Déconnexion
@@ -188,7 +188,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
           : 0
         const totalImpressions = metrics.reduce((s, m) => s + (m.impressions || 0), 0)
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ marginBottom: '56px' }}>
             {/* Posts publiés */}
             <MagicCard>
               <div style={{ padding: '22px 26px' }}>
@@ -241,17 +241,11 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
       })()}
 
       {/* Tabs */}
-      <div className="mb-10">
-        <GooeyNav
-          items={TABS.map(t => ({ label: t.label }))}
-          initialActiveIndex={Math.max(0, TABS.findIndex(t => t.id === activeTab))}
-          particleCount={15}
-          particleDistances={[70, 10]}
-          particleR={80}
-          animationTime={500}
-          timeVariance={400}
-          colors={[1, 2, 3, 1, 2, 3, 1, 4]}
-          onActiveChange={(index) => setActiveTab(TABS[index].id)}
+      <div className="overflow-x-auto" style={{ marginBottom: '48px' }}>
+        <SliderTabs
+          items={TABS.map(t => ({ id: t.id, label: t.label }))}
+          value={activeTab}
+          onChange={(id) => setActiveTab(id as Tab)}
         />
       </div>
 
@@ -524,12 +518,12 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
           >
             {/* Programmés */}
             {pendingPosts.length > 0 && (
-              <section className="mb-14">
+              <section style={{ marginBottom: '72px' }}>
                 <h2 className="text-base font-semibold text-blanc mb-6 flex items-center gap-3">
                   <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#2563eb' }} />
                   Programmés
                 </h2>
-                <div className="space-y-5">
+                <div className="flex flex-col" style={{ gap: '16px' }}>
                   {pendingPosts.map(post => {
                     const firstLine = post.content.split('\n').filter(l => l.trim())[0] || ''
                     const isOpen = expandedPost === post.id
@@ -579,7 +573,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
               {publishedPosts.length === 0 ? (
                 <p className="text-sm text-blanc-muted py-10">Aucun post publié pour le moment.</p>
               ) : (
-                <div className="space-y-5">
+                <div className="flex flex-col" style={{ gap: '16px' }}>
                   {publishedPosts.map(post => {
                     const firstLine = post.content.split('\n').filter(l => l.trim())[0] || ''
                     const isOpen = expandedPost === post.id

@@ -10,7 +10,7 @@ import { formatNumber, formatDate, formatRelative, cn } from '@/lib/utils'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import PulseButton from '@/components/ui/PulseButton'
-import GooeyNav from '@/components/ui/GooeyNavComponent'
+import SliderTabs from '@/components/ui/SliderTabs'
 import MessageThread from '@/components/messaging/MessageThread'
 import NotificationPrompt from '@/components/ui/NotificationPrompt'
 import type { Client, Post, PostMetrics, Reminder, PostStatus } from '@/types'
@@ -191,17 +191,11 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
 
 
       {/* Tabs */}
-      <div className="mb-10">
-        <GooeyNav
-          items={TABS.map(t => ({ label: t.label }))}
-          initialActiveIndex={Math.max(0, TABS.findIndex(t => t.id === activeTab))}
-          particleCount={18}
-          particleDistances={[70, 10]}
-          particleR={80}
-          animationTime={500}
-          timeVariance={400}
-          colors={[1, 2, 3, 1, 2, 3, 1, 4]}
-          onActiveChange={(index) => setActiveTab(TABS[index].id)}
+      <div className="mb-10 overflow-x-auto">
+        <SliderTabs
+          items={TABS.map(t => ({ id: t.id, label: t.label }))}
+          value={activeTab}
+          onChange={(id) => setActiveTab(id as typeof activeTab)}
         />
       </div>
 
