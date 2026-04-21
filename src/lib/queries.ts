@@ -186,7 +186,19 @@ function mapPost(row: any): Post {
     status: row.status,
     linkedinUrl: row.linkedin_url,
     files: Array.isArray(row.files) ? row.files : [],
+    validatedAt: row.validated_at || null,
   }
+}
+
+// Marque un post comme valide par le client (idempotent : ne re-ecrase pas si deja valide)
+export async function validatePost(postId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('posts')
+    .update({ validated_at: new Date().toISOString() })
+    .eq('id', postId)
+    .is('validated_at', null)
+  if (error) { console.error('validatePost', error); return false }
+  return true
 }
 
 // ============================================================

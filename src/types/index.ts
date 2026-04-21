@@ -25,6 +25,7 @@ export type Post = {
   status: PostStatus
   linkedinUrl?: string
   files?: PostFile[]
+  validatedAt?: string | null
 }
 
 export type PostMetrics = {

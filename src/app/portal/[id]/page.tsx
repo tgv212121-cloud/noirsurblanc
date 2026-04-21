@@ -111,7 +111,10 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
 
   const publishedPosts = clientPosts.filter(p => p.status === 'published')
-  const pendingPosts = clientPosts.filter(p => p.status === 'draft' || p.status === 'scheduled')
+  // "En attente" (compteur stats) = non publiés ET non encore validés par le client
+  const pendingPosts = clientPosts.filter(p => (p.status === 'draft' || p.status === 'scheduled') && !p.validatedAt)
+  // "Programmés" (dans l'onglet Historique) = tous les non publiés, validés ou non (badge visuel distinct)
+  const scheduledPosts = clientPosts.filter(p => p.status === 'draft' || p.status === 'scheduled')
 
   const clientReminders = reminders.filter(r => r.clientId === id).sort((a, b) => (b.lastSentAt || '').localeCompare(a.lastSentAt || ''))
   const messageThread = clientReminders.filter(r => r.lastSentAt).flatMap(r => {
@@ -342,7 +345,14 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                   Post du {new Date(selectedDate + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </p>
                 {postsByDate[selectedDate].map(post => (
-                  <PostCopyCard key={post.id} content={post.content} files={post.files} />
+                  <PostCopyCard
+                    key={post.id}
+                    postId={post.id}
+                    content={post.content}
+                    files={post.files}
+                    validatedAt={post.validatedAt}
+                    onValidate={() => setPosts(prev => prev.map(p => p.id === post.id ? { ...p, validatedAt: new Date().toISOString() } : p))}
+                  />
                 ))}
               </motion.div>
             ) : (
@@ -517,27 +527,34 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
             transition={{ duration: 0.3 }}
           >
             {/* Programmés */}
-            {pendingPosts.length > 0 && (
+            {scheduledPosts.length > 0 && (
               <section style={{ marginBottom: '72px' }}>
                 <h2 className="text-base font-semibold text-blanc mb-6 flex items-center gap-3">
                   <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#2563eb' }} />
                   Programmés
                 </h2>
                 <div className="flex flex-col" style={{ gap: '16px' }}>
-                  {pendingPosts.map(post => {
+                  {scheduledPosts.map(post => {
                     const firstLine = post.content.split('\n').filter(l => l.trim())[0] || ''
                     const isOpen = expandedPost === post.id
+                    const isValid = !!post.validatedAt
                     return (
                       <div key={post.id}>
                         <button
                           onClick={() => setExpandedPost(isOpen ? null : post.id)}
                           className="w-full text-left rounded-xl transition-all duration-200 cursor-pointer hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
-                          style={{ padding: '22px 26px', backgroundColor: 'var(--noir-elevated)', border: '1px solid #2563eb20' }}
+                          style={{ padding: '22px 26px', backgroundColor: 'var(--noir-elevated)', border: `1px solid ${isValid ? 'rgba(34,197,94,0.25)' : '#2563eb20'}` }}
                         >
-                          <div className="flex items-center gap-3 mb-3">
+                          <div className="flex items-center gap-3 mb-3 flex-wrap">
                             <span className="text-[10px] font-medium uppercase tracking-wider rounded" style={{ padding: '4px 10px', backgroundColor: '#2563eb12', color: '#2563eb' }}>
                               Programmé
                             </span>
+                            {isValid && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider rounded" style={{ padding: '4px 10px', backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.25)' }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                Validé
+                              </span>
+                            )}
                             <span className="text-xs text-blanc-muted">{formatRelative(post.publishedAt)}</span>
                           </div>
                           <p className="text-base text-blanc">{firstLine}</p>
@@ -641,9 +658,20 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
 
 const IMG_RE = /\.(png|jpe?g|gif|webp|bmp|svg|heic|heif)(\?|$)/i
 
-function PostCopyCard({ content, files }: { content: string; files?: { name: string; url: string; size?: number }[] }) {
+function PostCopyCard({ postId, content, files, validatedAt, onValidate }: { postId: string; content: string; files?: { name: string; url: string; size?: number }[]; validatedAt?: string | null; onValidate: () => void }) {
   const [copied, setCopied] = useState(false)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [validating, setValidating] = useState(false)
+  const isValidated = !!validatedAt
+
+  const doValidate = async () => {
+    if (isValidated || validating) return
+    setValidating(true)
+    const { validatePost } = await import('@/lib/queries')
+    const ok = await validatePost(postId)
+    setValidating(false)
+    if (ok) onValidate()
+  }
 
   useEffect(() => {
     if (!lightboxUrl) return
@@ -674,6 +702,8 @@ function PostCopyCard({ content, files }: { content: string; files?: { name: str
       setCopied(true)
       setTimeout(() => setCopied(false), 2500)
     }
+    // Auto-valide a la copie pour LinkedIn (idempotent)
+    doValidate()
   }
 
   return (
@@ -810,8 +840,8 @@ function PostCopyCard({ content, files }: { content: string; files?: { name: str
         )}
       </AnimatePresence>
 
-      {/* Copy button */}
-      <div className="flex items-center gap-4">
+      {/* Actions */}
+      <div className="flex items-center flex-wrap" style={{ gap: '12px' }}>
         <button
           onClick={handleCopy}
           className="inline-flex items-center gap-2 text-sm font-medium rounded-xl cursor-pointer transition-all duration-300"
@@ -826,7 +856,7 @@ function PostCopyCard({ content, files }: { content: string; files?: { name: str
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 6 9 17l-5-5" />
               </svg>
-              Copié !
+              Copié&#8201;!
             </>
           ) : (
             <>
@@ -837,6 +867,24 @@ function PostCopyCard({ content, files }: { content: string; files?: { name: str
             </>
           )}
         </button>
+
+        {/* Bouton Valider (ou chip 'Validé' si deja fait) */}
+        {isValidated ? (
+          <span className="inline-flex items-center gap-2 text-sm font-medium rounded-xl" style={{ padding: '12px 22px', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#22c55e' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Validé
+          </span>
+        ) : (
+          <button
+            onClick={doValidate}
+            disabled={validating}
+            className="nsb-btn nsb-btn-secondary"
+            style={{ padding: '12px 22px', fontSize: '11px' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {validating ? 'Validation…' : 'Valider'}
+          </button>
+        )}
 
         {copied && (
           <span className="text-xs text-blanc-muted animate-pulse">
