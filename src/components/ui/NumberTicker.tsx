@@ -3,7 +3,7 @@
 // Library : magic-ui
 'use client'
 
-import { useInView, useMotionValue, useSpring } from 'framer-motion'
+import { useMotionValue, useSpring } from 'framer-motion'
 import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -27,15 +27,14 @@ export default function NumberTicker({
   const ref = useRef<HTMLSpanElement>(null)
   const motionValue = useMotionValue(direction === 'down' ? value : 0)
   const springValue = useSpring(motionValue, { damping: 60, stiffness: 100 })
-  const isInView = useInView(ref, { once: true, margin: '0px' })
 
+  // Anime toujours vers la nouvelle valeur (pas besoin d'etre in-view : les cards sont top of page)
   useEffect(() => {
-    if (!isInView) return
     const t = setTimeout(() => {
       motionValue.set(direction === 'down' ? 0 : value)
     }, delay * 1000)
     return () => clearTimeout(t)
-  }, [isInView, motionValue, direction, value, delay])
+  }, [motionValue, direction, value, delay])
 
   useEffect(() => {
     return springValue.on('change', (latest) => {

@@ -201,6 +201,16 @@ export async function validatePost(postId: string): Promise<boolean> {
   return true
 }
 
+// Annule la validation d'un post (remet validated_at a null)
+export async function unvalidatePost(postId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('posts')
+    .update({ validated_at: null })
+    .eq('id', postId)
+  if (error) { console.error('unvalidatePost', error); return false }
+  return true
+}
+
 // ============================================================
 // METRICS
 // ============================================================

@@ -354,6 +354,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                     files={post.files}
                     validatedAt={post.validatedAt}
                     onValidate={() => setPosts(prev => prev.map(p => p.id === post.id ? { ...p, validatedAt: new Date().toISOString() } : p))}
+                    onUnvalidate={() => setPosts(prev => prev.map(p => p.id === post.id ? { ...p, validatedAt: null } : p))}
                   />
                 ))}
               </motion.div>
@@ -660,7 +661,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
 
 const IMG_RE = /\.(png|jpe?g|gif|webp|bmp|svg|heic|heif)(\?|$)/i
 
-function PostCopyCard({ postId, content, files, validatedAt, onValidate }: { postId: string; content: string; files?: { name: string; url: string; size?: number }[]; validatedAt?: string | null; onValidate: () => void }) {
+function PostCopyCard({ postId, content, files, validatedAt, onValidate, onUnvalidate }: { postId: string; content: string; files?: { name: string; url: string; size?: number }[]; validatedAt?: string | null; onValidate: () => void; onUnvalidate: () => void }) {
   const [copied, setCopied] = useState(false)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [validating, setValidating] = useState(false)
@@ -673,6 +674,15 @@ function PostCopyCard({ postId, content, files, validatedAt, onValidate }: { pos
     const ok = await validatePost(postId)
     setValidating(false)
     if (ok) onValidate()
+  }
+
+  const doUnvalidate = async () => {
+    if (!isValidated || validating) return
+    setValidating(true)
+    const { unvalidatePost } = await import('@/lib/queries')
+    const ok = await unvalidatePost(postId)
+    setValidating(false)
+    if (ok) onUnvalidate()
   }
 
   useEffect(() => {
@@ -870,12 +880,20 @@ function PostCopyCard({ postId, content, files, validatedAt, onValidate }: { pos
           )}
         </button>
 
-        {/* Bouton Valider (ou chip 'Validé' si deja fait) */}
+        {/* Bouton Valider (ou chip 'Validé' cliquable pour annuler la validation) */}
         {isValidated ? (
-          <span className="inline-flex items-center gap-2 text-sm font-medium rounded-xl" style={{ padding: '12px 22px', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#22c55e' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Validé
-          </span>
+          <button
+            onClick={doUnvalidate}
+            disabled={validating}
+            title="Cliquer pour annuler la validation"
+            className="group inline-flex items-center gap-2 text-sm font-medium rounded-xl cursor-pointer transition-colors"
+            style={{ padding: '12px 22px', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#22c55e' }}
+          >
+            <svg className="group-hover:hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg className="hidden group-hover:block" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            <span className="group-hover:hidden">{validating ? '…' : 'Validé'}</span>
+            <span className="hidden group-hover:block">{validating ? '…' : 'Annuler'}</span>
+          </button>
         ) : (
           <button
             onClick={doValidate}
