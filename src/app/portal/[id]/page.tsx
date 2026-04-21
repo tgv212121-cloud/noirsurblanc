@@ -111,11 +111,11 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
 
   const nowDate = new Date()
-  // "Posts publiés" = status=published OU date de publication deja passee (meme si status=scheduled)
-  const publishedPosts = clientPosts.filter(p => p.status === 'published' || new Date(p.publishedAt) <= nowDate)
-  // "En attente" (compteur stats) = non encore publies (date future) ET non encore valides par le client
+  // "Posts publiés" = status=published OU date passee OU deja valide par le client
+  const publishedPosts = clientPosts.filter(p => p.status === 'published' || new Date(p.publishedAt) <= nowDate || !!p.validatedAt)
+  // "En attente" (compteur stats) = pas encore valide ET date future ET pas deja publie
   const pendingPosts = clientPosts.filter(p => p.status !== 'published' && new Date(p.publishedAt) > nowDate && !p.validatedAt)
-  // "Programmés" (onglet Historique) = tous les posts dont la date est future (validés ou non, badge distinct)
+  // "Programmés" (onglet Historique) = tous les posts pas encore publies (date future), valides ou non
   const scheduledPosts = clientPosts.filter(p => p.status !== 'published' && new Date(p.publishedAt) > nowDate)
 
   const clientReminders = reminders.filter(r => r.clientId === id).sort((a, b) => (b.lastSentAt || '').localeCompare(a.lastSentAt || ''))
