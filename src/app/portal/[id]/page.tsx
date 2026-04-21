@@ -110,11 +110,13 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
     .filter(p => p.clientId === id)
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
 
-  const publishedPosts = clientPosts.filter(p => p.status === 'published')
-  // "En attente" (compteur stats) = non publiés ET non encore validés par le client
-  const pendingPosts = clientPosts.filter(p => (p.status === 'draft' || p.status === 'scheduled') && !p.validatedAt)
-  // "Programmés" (dans l'onglet Historique) = tous les non publiés, validés ou non (badge visuel distinct)
-  const scheduledPosts = clientPosts.filter(p => p.status === 'draft' || p.status === 'scheduled')
+  const nowDate = new Date()
+  // "Posts publiés" = status=published OU date de publication deja passee (meme si status=scheduled)
+  const publishedPosts = clientPosts.filter(p => p.status === 'published' || new Date(p.publishedAt) <= nowDate)
+  // "En attente" (compteur stats) = non encore publies (date future) ET non encore valides par le client
+  const pendingPosts = clientPosts.filter(p => p.status !== 'published' && new Date(p.publishedAt) > nowDate && !p.validatedAt)
+  // "Programmés" (onglet Historique) = tous les posts dont la date est future (validés ou non, badge distinct)
+  const scheduledPosts = clientPosts.filter(p => p.status !== 'published' && new Date(p.publishedAt) > nowDate)
 
   const clientReminders = reminders.filter(r => r.clientId === id).sort((a, b) => (b.lastSentAt || '').localeCompare(a.lastSentAt || ''))
   const messageThread = clientReminders.filter(r => r.lastSentAt).flatMap(r => {
