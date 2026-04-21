@@ -204,11 +204,11 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                 <p className="font-heading italic text-4xl text-blanc leading-none" style={{ letterSpacing: '-0.02em' }}>
                   <NumberTicker value={publishedPosts.length} />
                 </p>
-                <p className="text-[11px] text-blanc-muted/60" style={{ marginTop: '8px' }}>
-                  {totalImpressions > 0
-                    ? <><NumberTicker value={totalImpressions} /> impressions</>
-                    : 'aucun post encore'}
-                </p>
+                {totalImpressions > 0 && (
+                  <p className="text-[11px] text-blanc-muted/60" style={{ marginTop: '8px' }}>
+                    <NumberTicker value={totalImpressions} /> impressions
+                  </p>
+                )}
               </div>
             </MagicCard>
 
