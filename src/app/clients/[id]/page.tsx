@@ -38,6 +38,8 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const [editingPostId, setEditingPostId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
   const [editDate, setEditDate] = useState('')
+  const [editFiles, setEditFiles] = useState<PostFile[]>([])
+  const [editUploading, setEditUploading] = useState(false)
   const [editSaving, setEditSaving] = useState(false)
   const [postToDelete, setPostToDelete] = useState<Post | null>(null)
   const [deletingPost, setDeletingPost] = useState(false)
@@ -271,22 +273,33 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                       setEditingPostId(post.id)
                       setEditContent(post.content)
                       setEditDate(post.publishedAt)
+                      setEditFiles(post.files || [])
                     }
                     const cancelEdit = () => {
                       setEditingPostId(null)
                       setEditContent('')
                       setEditDate('')
+                      setEditFiles([])
                     }
                     const saveEdit = async () => {
                       if (editSaving) return
                       setEditSaving(true)
-                      const ok = await updatePost(post.id, { content: editContent, publishedAt: editDate })
+                      const ok = await updatePost(post.id, { content: editContent, publishedAt: editDate, files: editFiles })
                       setEditSaving(false)
                       if (!ok) { toast.error('Sauvegarde échouée.'); return }
-                      setInitialPosts(prev => prev.map(p => p.id === post.id ? { ...p, content: editContent, publishedAt: editDate } : p))
+                      setInitialPosts(prev => prev.map(p => p.id === post.id ? { ...p, content: editContent, publishedAt: editDate, files: editFiles } : p))
                       toast.success('Post mis à jour.')
                       cancelEdit()
                       if (editDate !== post.publishedAt) setEditingDate(editDate)
+                    }
+                    const editRemoveFile = (idx: number) => setEditFiles(prev => prev.filter((_, i) => i !== idx))
+                    const editUpload = async (file: File | undefined) => {
+                      if (!file) return
+                      setEditUploading(true)
+                      const result = await uploadPostFile(file)
+                      setEditUploading(false)
+                      if (!result) { toast.error("Erreur lors de l'upload."); return }
+                      setEditFiles(prev => [...prev, result])
                     }
 
                     return (
@@ -327,7 +340,43 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                               className="nsb-input leading-relaxed"
                               style={{ minHeight: '220px', resize: 'none', fontSize: '15px' }}
                             />
-                            <div className="flex items-center gap-3" style={{ marginTop: '18px' }}>
+
+                            {/* Fichiers / images */}
+                            <label className="text-[10px] text-blanc-muted/70 uppercase tracking-wider block" style={{ marginTop: '18px', marginBottom: '10px' }}>Photos &amp; fichiers</label>
+                            {editFiles.length > 0 && (
+                              <div className="flex flex-wrap gap-3" style={{ marginBottom: '14px' }}>
+                                {editFiles.map((f, i) => {
+                                  const isImg = /\.(png|jpe?g|gif|webp|bmp|svg|heic|heif)(\?|$)/i.test(f.url)
+                                  return (
+                                    <div key={i} className="relative group">
+                                      {isImg ? (
+                                        <img src={f.url} alt={f.name} style={{ width: '110px', height: '110px', borderRadius: '10px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.08)' }} />
+                                      ) : (
+                                        <div className="flex items-center gap-2 rounded-lg" style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', maxWidth: '260px' }}>
+                                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                          <span className="text-xs text-blanc truncate">{f.name}</span>
+                                        </div>
+                                      )}
+                                      <button
+                                        onClick={() => editRemoveFile(i)}
+                                        title="Retirer"
+                                        className="absolute flex items-center justify-center rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                                        style={{ top: '-6px', right: '-6px', width: '22px', height: '22px', background: '#ef4444', color: 'white', border: '2px solid #0a0a0a' }}
+                                      >
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                      </button>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )}
+                            <label className="inline-flex items-center gap-2 cursor-pointer nsb-btn nsb-btn-secondary" style={{ padding: '9px 18px', fontSize: '10.5px' }}>
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                              {editUploading ? 'Envoi…' : 'Ajouter un fichier'}
+                              <input type="file" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ''; await editUpload(f) }} />
+                            </label>
+
+                            <div className="flex items-center gap-3" style={{ marginTop: '22px' }}>
                               <button onClick={cancelEdit} disabled={editSaving} className="nsb-btn nsb-btn-secondary" style={{ padding: '11px 22px' }}>
                                 Annuler
                               </button>
