@@ -360,7 +360,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                 >
                   {/* Voice */}
                   {msg.voiceUrl && (
-                    <AudioPlayer src={msg.voiceUrl} accentColor={accentColor} isMe={isMe} />
+                    <AudioPlayer src={msg.voiceUrl} accentColor={accentColor} isMe={isMe} label={`Message vocal · ${isMe ? 'Toi' : otherUserName}`} />
                   )}
 
                   {/* File */}

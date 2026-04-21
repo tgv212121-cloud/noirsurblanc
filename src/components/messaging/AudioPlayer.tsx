@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useMemo } from 'react'
+import { useAudioPlayer } from '@/components/audio/AudioPlayerProvider'
 
 type Props = {
   src: string
   accentColor: string
   isMe: boolean
+  label?: string
 }
 
 function formatTime(seconds: number): string {
@@ -15,65 +17,51 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-export default function AudioPlayer({ src, accentColor, isMe }: Props) {
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const [playing, setPlaying] = useState(false)
-  const [duration, setDuration] = useState(0)
-  const [current, setCurrent] = useState(0)
+export default function AudioPlayer({ src, accentColor, isMe, label }: Props) {
+  const { track, playing, current, duration, play, toggle, seekTo } = useAudioPlayer()
+  const isActive = track?.src === src
 
-  useEffect(() => {
-    const a = audioRef.current
-    if (!a) return
-    const onLoaded = () => setDuration(a.duration || 0)
-    const onTime = () => setCurrent(a.currentTime || 0)
-    const onEnd = () => { setPlaying(false); setCurrent(0) }
-    a.addEventListener('loadedmetadata', onLoaded)
-    a.addEventListener('timeupdate', onTime)
-    a.addEventListener('ended', onEnd)
-    return () => {
-      a.removeEventListener('loadedmetadata', onLoaded)
-      a.removeEventListener('timeupdate', onTime)
-      a.removeEventListener('ended', onEnd)
-    }
-  }, [src])
+  // Local duration probe pour afficher la duree meme quand le track n'est pas actif
+  // On laisse a 0 ; l'utilisateur voit le vrai timing une fois qu'il lance la lecture
+  const displayDuration = isActive ? duration : 0
+  const displayCurrent = isActive ? current : 0
+  const isPlaying = isActive && playing
 
-  const toggle = () => {
-    const a = audioRef.current
-    if (!a) return
-    if (playing) { a.pause(); setPlaying(false) }
-    else { a.play(); setPlaying(true) }
+  const progress = displayDuration > 0 ? (displayCurrent / displayDuration) * 100 : 0
+
+  const onToggle = () => {
+    if (isActive) toggle()
+    else play({ src, label: label || 'Message vocal' })
   }
 
-  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const a = audioRef.current
-    if (!a || !duration) return
+  const onSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isActive || !displayDuration) return
     const rect = e.currentTarget.getBoundingClientRect()
     const pct = (e.clientX - rect.left) / rect.width
-    a.currentTime = Math.max(0, Math.min(duration, pct * duration))
+    seekTo(Math.max(0, Math.min(displayDuration, pct * displayDuration)))
   }
 
-  const progress = duration > 0 ? (current / duration) * 100 : 0
   const fg = isMe ? '#ffffff' : accentColor
   const fgSoft = isMe ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)'
 
-  return (
-    <div className="flex items-center gap-3" style={{ minWidth: '240px', padding: '4px 6px 4px 4px' }}>
-      <audio ref={audioRef} src={src} preload="metadata" />
+  const playerStyle = useMemo<React.CSSProperties>(() => ({ minWidth: '240px', padding: '4px 6px 4px 4px' }), [])
 
+  return (
+    <div className="flex items-center gap-3" style={playerStyle}>
       <button
-        onClick={toggle}
+        onClick={onToggle}
         className="flex items-center justify-center shrink-0 cursor-pointer transition-transform active:scale-95"
         style={{
           width: '40px',
           height: '40px',
           borderRadius: '50%',
           background: isMe ? 'rgba(255,255,255,0.2)' : accentColor,
-          color: isMe ? '#ffffff' : '#ffffff',
+          color: '#ffffff',
           border: isMe ? '1px solid rgba(255,255,255,0.35)' : 'none',
         }}
-        aria-label={playing ? 'Pause' : 'Lire'}
+        aria-label={isPlaying ? 'Pause' : 'Lire'}
       >
-        {playing ? (
+        {isPlaying ? (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
             <rect x="6" y="5" width="4" height="14" rx="1" />
             <rect x="14" y="5" width="4" height="14" rx="1" />
@@ -87,7 +75,7 @@ export default function AudioPlayer({ src, accentColor, isMe }: Props) {
 
       <div className="flex-1 flex flex-col justify-center gap-1.5" style={{ minWidth: '120px' }}>
         <div
-          onClick={seek}
+          onClick={onSeek}
           className="relative cursor-pointer"
           style={{ height: '4px', background: fgSoft, borderRadius: '999px' }}
         >
@@ -119,10 +107,10 @@ export default function AudioPlayer({ src, accentColor, isMe }: Props) {
         </div>
         <div className="flex items-center justify-between" style={{ fontVariantNumeric: 'tabular-nums' }}>
           <span className="text-[11px]" style={{ color: isMe ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.55)' }}>
-            {formatTime(current)}
+            {formatTime(displayCurrent)}
           </span>
           <span className="text-[11px]" style={{ color: isMe ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.35)' }}>
-            {formatTime(duration)}
+            {formatTime(displayDuration)}
           </span>
         </div>
       </div>
