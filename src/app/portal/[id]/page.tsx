@@ -111,8 +111,8 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
 
   const nowDate = new Date()
-  // "Posts publiés" = status=published OU date de publi passee (peu importe la validation)
-  const publishedPosts = clientPosts.filter(p => p.status === 'published' || new Date(p.publishedAt) <= nowDate)
+  // "Posts publiés" = status=published OU date passee OU valide par le client
+  const publishedPosts = clientPosts.filter(p => p.status === 'published' || new Date(p.publishedAt) <= nowDate || !!p.validatedAt)
   // "En attente" (compteur stats) = pas encore valide ET date future ET pas deja publie
   const pendingPosts = clientPosts.filter(p => p.status !== 'published' && new Date(p.publishedAt) > nowDate && !p.validatedAt)
   // "Programmés" (onglet Historique) = tous les posts pas encore publies (date future), valides ou non
@@ -298,6 +298,10 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                 const isToday = dateStr === now.toISOString().split('T')[0]
                 const isSelected = selectedDate === dateStr
                 const hasPost = dayPosts.length > 0
+                // Etat visuel : vert = tous valides (ou publies) / orange = au moins 1 non valide
+                const allValidated = hasPost && dayPosts.every(p => p.status === 'published' || !!p.validatedAt)
+                const dotColor = allValidated ? '#22c55e' : '#ea580c'
+                const bgTint = allValidated ? '#22c55e10' : '#ea580c10'
 
                 return (
                   <button
@@ -310,9 +314,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                     )}
                     style={{
                       padding: '12px 0',
-                      backgroundColor: hasPost
-                        ? (dayPosts[0].status === 'published' ? '#05966910' : '#ea580c10')
-                        : isToday ? 'var(--noir-elevated)' : 'transparent',
+                      backgroundColor: hasPost ? bgTint : isToday ? 'var(--noir-elevated)' : 'transparent',
                       color: hasPost ? 'var(--blanc)' : undefined,
                       ['--tw-ring-color' as string]: '#8b5cf6',
                     }}
@@ -324,7 +326,8 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                         style={{
                           width: '5px',
                           height: '5px',
-                          backgroundColor: dayPosts[0].status === 'published' ? '#059669' : '#ea580c',
+                          backgroundColor: dotColor,
+                          boxShadow: allValidated ? '0 0 6px rgba(34,197,94,0.5)' : 'none',
                         }}
                       />
                     )}
