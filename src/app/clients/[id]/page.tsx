@@ -4,7 +4,8 @@ import { use, useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAuthGuard } from '@/lib/useAuthGuard'
 import { useToast } from '@/components/ui/Toast'
-import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders, createPost, fetchOnboardingAnswers, uploadPostFile } from '@/lib/queries'
+import { fetchClient, fetchClientPosts, fetchMetrics, fetchReminders, createPost, updatePost, deletePost, fetchOnboardingAnswers, uploadPostFile } from '@/lib/queries'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 import type { PostFile } from '@/types'
 import { formatNumber, formatDate, formatRelative, cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -33,6 +34,13 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const [metrics, setMetrics] = useState<PostMetrics[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [loading, setLoading] = useState(true)
+  // Edition de post existant
+  const [editingPostId, setEditingPostId] = useState<string | null>(null)
+  const [editContent, setEditContent] = useState('')
+  const [editDate, setEditDate] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
+  const [postToDelete, setPostToDelete] = useState<Post | null>(null)
+  const [deletingPost, setDeletingPost] = useState(false)
   const searchParams = useSearchParams()
   const urlTab = searchParams.get('tab') as Tab | null
   const validTabs: Tab[] = ['calendar', 'conversation', 'stats', 'onboarding']
@@ -256,42 +264,110 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                 {postsByDate[editingDate] ? (
                   postsByDate[editingDate].map(post => {
                     const m = metrics.find(mt => mt.postId === post.id)
+                    const isEditing = editingPostId === post.id
+                    const canEdit = post.status !== 'published'
+
+                    const startEdit = () => {
+                      setEditingPostId(post.id)
+                      setEditContent(post.content)
+                      setEditDate(post.publishedAt)
+                    }
+                    const cancelEdit = () => {
+                      setEditingPostId(null)
+                      setEditContent('')
+                      setEditDate('')
+                    }
+                    const saveEdit = async () => {
+                      if (editSaving) return
+                      setEditSaving(true)
+                      const ok = await updatePost(post.id, { content: editContent, publishedAt: editDate })
+                      setEditSaving(false)
+                      if (!ok) { toast.error('Sauvegarde échouée.'); return }
+                      setInitialPosts(prev => prev.map(p => p.id === post.id ? { ...p, content: editContent, publishedAt: editDate } : p))
+                      toast.success('Post mis à jour.')
+                      cancelEdit()
+                      if (editDate !== post.publishedAt) setEditingDate(editDate)
+                    }
+
                     return (
                       <div key={post.id} className="bg-noir-elevated rounded-xl" style={{ padding: '28px' }}>
-                        <div className="flex items-center gap-3 mb-5">
+                        <div className="flex items-center gap-3 mb-5 flex-wrap">
                           <span className="text-[10px] font-medium uppercase tracking-wider rounded"
                             style={{ padding: '4px 10px', backgroundColor: post.status === 'published' ? '#05966912' : '#2563eb12', color: post.status === 'published' ? '#059669' : '#2563eb' }}>
                             {post.status === 'published' ? 'Publié' : 'Programmé'}
                           </span>
+                          {post.validatedAt && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider rounded" style={{ padding: '4px 10px', background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.25)' }}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                              Validé par le client
+                            </span>
+                          )}
+                          {canEdit && !isEditing && (
+                            <div className="ml-auto flex items-center gap-2">
+                              <button onClick={startEdit} className="nsb-btn nsb-btn-secondary" style={{ padding: '8px 16px', fontSize: '10.5px' }}>
+                                Modifier
+                              </button>
+                              <button onClick={() => setPostToDelete(post)} className="nsb-btn nsb-btn-secondary" style={{ padding: '8px 14px', fontSize: '10.5px', color: '#f87171', borderColor: 'rgba(248,113,113,0.3)' }}>
+                                Supprimer
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        <p className="text-[15px] text-blanc leading-[1.9] whitespace-pre-line mb-6" style={{ maxWidth: '60ch' }}>{post.content}</p>
-                        {post.files && post.files.length > 0 && (
-                          <div className="flex flex-col gap-2 mb-6" style={{ maxWidth: '60ch' }}>
-                            {post.files.map((f, i) => (
-                              <a key={i} href={f.url} target="_blank" rel="noopener noreferrer"
-                                className="flex items-center gap-3 bg-noir-card rounded-lg hover:bg-noir-elevated transition-colors"
-                                style={{ padding: '10px 14px' }}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-gold shrink-0">
-                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                                </svg>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm text-blanc truncate">{f.name}</p>
-                                  {typeof f.size === 'number' && <p className="text-[11px] text-blanc-muted/60">{formatBytes(f.size)}</p>}
-                                </div>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-blanc-muted shrink-0">
-                                  <path d="M7 17L17 7"/><path d="M7 7h10v10"/>
-                                </svg>
-                              </a>
-                            ))}
-                          </div>
-                        )}
-                        {m && (
-                          <div className="grid grid-cols-4 gap-3">
-                            <div className="bg-noir-card rounded-lg" style={{ padding: '12px 16px' }}><p className="text-[10px] text-blanc-muted mb-1">Impressions</p><p className="text-sm font-semibold text-blanc">{formatNumber(m.impressions)}</p></div>
-                            <div className="bg-noir-card rounded-lg" style={{ padding: '12px 16px' }}><p className="text-[10px] text-blanc-muted mb-1">Likes</p><p className="text-sm font-semibold text-blanc">{m.likes}</p></div>
-                            <div className="bg-noir-card rounded-lg" style={{ padding: '12px 16px' }}><p className="text-[10px] text-blanc-muted mb-1">Commentaires</p><p className="text-sm font-semibold text-blanc">{m.comments}</p></div>
-                            <div className="bg-noir-card rounded-lg" style={{ padding: '12px 16px' }}><p className="text-[10px] text-blanc-muted mb-1">Engagement</p><p className="text-sm font-semibold text-gold">{m.engagementRate}%</p></div>
-                          </div>
+
+                        {isEditing ? (
+                          <>
+                            <label className="text-[10px] text-blanc-muted/70 uppercase tracking-wider block" style={{ marginBottom: '6px' }}>Date de publication</label>
+                            <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} className="nsb-input" style={{ maxWidth: '220px', marginBottom: '18px' }} />
+                            <label className="text-[10px] text-blanc-muted/70 uppercase tracking-wider block" style={{ marginBottom: '6px' }}>Contenu</label>
+                            <textarea
+                              value={editContent}
+                              onChange={e => setEditContent(e.target.value)}
+                              ref={(el) => { if (el) { el.style.height = 'auto'; el.style.height = Math.max(el.scrollHeight, 220) + 'px' } }}
+                              onInput={e => { const el = e.currentTarget; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' }}
+                              className="nsb-input leading-relaxed"
+                              style={{ minHeight: '220px', resize: 'none', fontSize: '15px' }}
+                            />
+                            <div className="flex items-center gap-3" style={{ marginTop: '18px' }}>
+                              <button onClick={cancelEdit} disabled={editSaving} className="nsb-btn nsb-btn-secondary" style={{ padding: '11px 22px' }}>
+                                Annuler
+                              </button>
+                              <button onClick={saveEdit} disabled={editSaving || !editContent.trim() || !editDate} className="nsb-btn nsb-btn-primary" style={{ padding: '11px 22px' }}>
+                                {editSaving ? 'Enregistrement…' : 'Enregistrer'}
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-[15px] text-blanc leading-[1.9] whitespace-pre-line mb-6" style={{ maxWidth: '60ch' }}>{post.content}</p>
+                            {post.files && post.files.length > 0 && (
+                              <div className="flex flex-col gap-2 mb-6" style={{ maxWidth: '60ch' }}>
+                                {post.files.map((f, i) => (
+                                  <a key={i} href={f.url} target="_blank" rel="noopener noreferrer"
+                                    className="flex items-center gap-3 bg-noir-card rounded-lg hover:bg-noir-elevated transition-colors"
+                                    style={{ padding: '10px 14px' }}>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-gold shrink-0">
+                                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                                    </svg>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm text-blanc truncate">{f.name}</p>
+                                      {typeof f.size === 'number' && <p className="text-[11px] text-blanc-muted/60">{formatBytes(f.size)}</p>}
+                                    </div>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-blanc-muted shrink-0">
+                                      <path d="M7 17L17 7"/><path d="M7 7h10v10"/>
+                                    </svg>
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                            {m && (
+                              <div className="grid grid-cols-4 gap-3">
+                                <div className="bg-noir-card rounded-lg" style={{ padding: '12px 16px' }}><p className="text-[10px] text-blanc-muted mb-1">Impressions</p><p className="text-sm font-semibold text-blanc">{formatNumber(m.impressions)}</p></div>
+                                <div className="bg-noir-card rounded-lg" style={{ padding: '12px 16px' }}><p className="text-[10px] text-blanc-muted mb-1">Likes</p><p className="text-sm font-semibold text-blanc">{m.likes}</p></div>
+                                <div className="bg-noir-card rounded-lg" style={{ padding: '12px 16px' }}><p className="text-[10px] text-blanc-muted mb-1">Commentaires</p><p className="text-sm font-semibold text-blanc">{m.comments}</p></div>
+                                <div className="bg-noir-card rounded-lg" style={{ padding: '12px 16px' }}><p className="text-[10px] text-blanc-muted mb-1">Engagement</p><p className="text-sm font-semibold text-gold">{m.engagementRate}%</p></div>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     )
@@ -622,6 +698,29 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        open={!!postToDelete}
+        danger
+        title="Supprimer ce post ?"
+        message={postToDelete ? `Le post du ${new Date(postToDelete.publishedAt).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} sera supprimé définitivement. Le client ne le verra plus.` : ''}
+        confirmLabel={deletingPost ? 'Suppression…' : 'Supprimer'}
+        cancelLabel="Annuler"
+        onCancel={() => { if (!deletingPost) setPostToDelete(null) }}
+        onConfirm={async () => {
+          if (!postToDelete || deletingPost) return
+          setDeletingPost(true)
+          const ok = await deletePost(postToDelete.id)
+          setDeletingPost(false)
+          if (ok) {
+            setInitialPosts(prev => prev.filter(p => p.id !== postToDelete.id))
+            toast.success('Post supprimé.')
+            setPostToDelete(null)
+          } else {
+            toast.error('Suppression échouée.')
+          }
+        }}
+      />
     </div>
   )
 }

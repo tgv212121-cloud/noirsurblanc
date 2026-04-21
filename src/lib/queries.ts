@@ -167,6 +167,29 @@ export async function createPost(post: {
   return data ? mapPost(data) : null
 }
 
+// Modifie le contenu et/ou la date d'un post programme
+export async function updatePost(postId: string, changes: {
+  content?: string
+  publishedAt?: string
+  files?: { name: string; url: string; size?: number }[]
+}): Promise<boolean> {
+  const patch: Record<string, unknown> = {}
+  if (changes.content !== undefined) patch.content = changes.content
+  if (changes.publishedAt !== undefined) patch.published_at = changes.publishedAt
+  if (changes.files !== undefined) patch.files = changes.files
+  if (Object.keys(patch).length === 0) return true
+  const { error } = await supabase.from('posts').update(patch).eq('id', postId)
+  if (error) { console.error('updatePost', error); return false }
+  return true
+}
+
+// Supprime un post
+export async function deletePost(postId: string): Promise<boolean> {
+  const { error } = await supabase.from('posts').delete().eq('id', postId)
+  if (error) { console.error('deletePost', error); return false }
+  return true
+}
+
 export async function updatePostStatus(postId: string, status: 'draft' | 'scheduled' | 'published'): Promise<boolean> {
   const { error } = await supabase
     .from('posts')
