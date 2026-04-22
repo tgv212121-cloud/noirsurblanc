@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { fetchMessages, sendMessage, uploadMessageFile, updateMessage, deleteMessage, markMessagesAsRead, type Message } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
-import { formatMessageTime, cn } from '@/lib/utils'
+import { formatMessageTime, cn, linkify } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import AudioPlayer from './AudioPlayer'
 import ConfirmModal from '@/components/ui/ConfirmModal'
@@ -451,7 +451,20 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                         </div>
                       </div>
                     ) : (
-                      <p className="text-sm leading-relaxed whitespace-pre-line">{msg.text}</p>
+                      <p className="text-sm leading-relaxed whitespace-pre-line">
+                        {linkify(msg.text || '').map((part, i) => part.type === 'text'
+                          ? <span key={i}>{part.value}</span>
+                          : <a
+                              key={i}
+                              href={part.href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="underline decoration-dotted hover:decoration-solid break-all"
+                              style={{ color: isMe ? '#fff' : '#ca8a04', textDecorationColor: isMe ? 'rgba(255,255,255,0.6)' : 'rgba(202,138,4,0.6)' }}
+                            >{part.label}</a>
+                        )}
+                      </p>
                     )
                   )}
                 </div>

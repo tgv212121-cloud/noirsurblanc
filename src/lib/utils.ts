@@ -33,6 +33,36 @@ export function cn(...classes: (string | undefined | false | null)[]): string {
   return classes.filter(Boolean).join(' ')
 }
 
+// Decoupe un texte en alternant texte brut et liens cliquables
+// Detecte http(s):// ou www. et retourne un tableau d'elements React-safe
+export type LinkifiedPart = { type: 'text'; value: string } | { type: 'link'; href: string; label: string }
+
+const URL_RE = /(\b(?:https?:\/\/|www\.)[^\s<>"']+)/gi
+
+export function linkify(text: string): LinkifiedPart[] {
+  if (!text) return []
+  const out: LinkifiedPart[] = []
+  let lastIndex = 0
+  const matches = [...text.matchAll(URL_RE)]
+  for (const m of matches) {
+    const start = m.index ?? 0
+    if (start > lastIndex) out.push({ type: 'text', value: text.slice(lastIndex, start) })
+    let url = m[0]
+    // retire la ponctuation finale parasite qui ne fait pas partie de l'URL
+    let trailing = ''
+    while (url.length > 0 && /[.,;:!?)\]]$/.test(url)) {
+      trailing = url.slice(-1) + trailing
+      url = url.slice(0, -1)
+    }
+    const href = url.startsWith('www.') ? 'https://' + url : url
+    out.push({ type: 'link', href, label: url })
+    if (trailing) out.push({ type: 'text', value: trailing })
+    lastIndex = start + m[0].length
+  }
+  if (lastIndex < text.length) out.push({ type: 'text', value: text.slice(lastIndex) })
+  return out
+}
+
 export const DAYS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
 export function formatMessageTime(date: string): string {
