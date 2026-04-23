@@ -37,7 +37,6 @@ export default function AnnotatedPostContent({ postId, clientId, content, readOn
   const contentRef = useRef<HTMLDivElement>(null)
   const [annotations, setAnnotations] = useState<PostAnnotation[]>([])
   const [loading, setLoading] = useState(true)
-  const [selection, setSelection] = useState<{ start: number; end: number; text: string; rect: DOMRect } | null>(null)
   const [composer, setComposer] = useState<{ start: number; end: number; text: string } | null>(null)
   const [openAnnotation, setOpenAnnotation] = useState<string | null>(null)
 
@@ -57,25 +56,30 @@ export default function AnnotatedPostContent({ postId, clientId, content, readOn
     return () => { mounted = false }
   }, [postId])
 
-  // Detecter une selection sur le contenu
+  // Detecter une selection sur le contenu -> ouvre DIRECTEMENT le composer
   useEffect(() => {
     if (readOnly) return
     const onMouseUp = () => {
-      const sel = window.getSelection()
-      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { setSelection(null); return }
-      const range = sel.getRangeAt(0)
-      const el = contentRef.current
-      if (!el || !el.contains(range.commonAncestorContainer)) { setSelection(null); return }
-      // Compute char offsets relatifs au contenu complet
-      const preRange = range.cloneRange()
-      preRange.selectNodeContents(el)
-      preRange.setEnd(range.startContainer, range.startOffset)
-      const start = preRange.toString().length
-      const end = start + range.toString().length
-      const text = range.toString()
-      if (!text.trim()) { setSelection(null); return }
-      const rect = range.getBoundingClientRect()
-      setSelection({ start, end, text, rect })
+      // Laisse React traiter le clic d'un item du composer avant de reagir
+      setTimeout(() => {
+        if (composer) return // deja ouvert, ne pas re-declencher
+        const sel = window.getSelection()
+        if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return
+        const range = sel.getRangeAt(0)
+        const el = contentRef.current
+        if (!el || !el.contains(range.commonAncestorContainer)) return
+        const preRange = range.cloneRange()
+        preRange.selectNodeContents(el)
+        preRange.setEnd(range.startContainer, range.startOffset)
+        const start = preRange.toString().length
+        const end = start + range.toString().length
+        const text = range.toString()
+        if (!text.trim()) return
+        // Ouvre le composer direct
+        setComposer({ start, end, text })
+        setCommentText('')
+        sel.removeAllRanges()
+      }, 0)
     }
     document.addEventListener('mouseup', onMouseUp)
     document.addEventListener('touchend', onMouseUp)
@@ -83,15 +87,7 @@ export default function AnnotatedPostContent({ postId, clientId, content, readOn
       document.removeEventListener('mouseup', onMouseUp)
       document.removeEventListener('touchend', onMouseUp)
     }
-  }, [readOnly])
-
-  const openComposer = () => {
-    if (!selection) return
-    setComposer({ start: selection.start, end: selection.end, text: selection.text })
-    setSelection(null)
-    window.getSelection()?.removeAllRanges()
-    setCommentText('')
-  }
+  }, [readOnly, composer])
 
   const closeComposer = () => {
     setComposer(null); setCommentText('')
@@ -235,44 +231,6 @@ export default function AnnotatedPostContent({ postId, clientId, content, readOn
         </div>
       )}
 
-      {/* Popup "Commenter" sur la selection */}
-      <AnimatePresence>
-        {selection && !composer && !readOnly && (
-          <motion.div
-            key="sel-popup"
-            initial={{ opacity: 0, y: 6, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.96 }}
-            transition={{ duration: 0.14 }}
-            className="fixed z-[60]"
-            style={{
-              top: selection.rect.top + window.scrollY - 44,
-              left: selection.rect.left + selection.rect.width / 2 - 60 + window.scrollX,
-            }}
-          >
-            <button
-              onClick={openComposer}
-              className="inline-flex items-center gap-2 cursor-pointer"
-              style={{
-                padding: '8px 14px',
-                background: '#0a0a0a',
-                border: '1px solid #ca8a04',
-                borderRadius: '10px',
-                color: '#ca8a04',
-                fontSize: '12px',
-                fontWeight: 600,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-              }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              Commenter
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Composer modal */}
       <AnimatePresence>
         {composer && (
@@ -280,7 +238,7 @@ export default function AnnotatedPostContent({ postId, clientId, content, readOn
             key="composer"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[90] flex items-center justify-center px-6"
+            className="fixed inset-0 z-[250] flex items-center justify-center px-6"
             style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)' }}
             onClick={closeComposer}
           >
@@ -343,7 +301,7 @@ export default function AnnotatedPostContent({ postId, clientId, content, readOn
               key="ann-popup"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[90] flex items-center justify-center px-6"
+              className="fixed inset-0 z-[250] flex items-center justify-center px-6"
               style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)' }}
               onClick={() => setOpenAnnotation(null)}
             >
