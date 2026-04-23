@@ -138,9 +138,24 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
     }
   }, [clientId])
 
-  // Auto-scroll only when the count of messages actually grows (new arrival)
+  // Auto-scroll : instant au premier chargement, smooth a chaque nouveau message
   const prevCountRef = useRef(0)
+  const initialScrolledRef = useRef(false)
   useEffect(() => {
+    if (messages.length === 0) return
+    if (!initialScrolledRef.current) {
+      // Premier rendu avec des messages -> scroll instantane en bas
+      // Plusieurs frames pour etre sur que le DOM est layoute
+      const id1 = requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
+        requestAnimationFrame(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
+        })
+      })
+      initialScrolledRef.current = true
+      prevCountRef.current = messages.length
+      return () => cancelAnimationFrame(id1)
+    }
     if (messages.length > prevCountRef.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }

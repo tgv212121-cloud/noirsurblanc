@@ -234,12 +234,16 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                 const isSelected = selectedDate === dateStr
                 const hasPost = dayPosts.length > 0
                 const isEditing = editingDate === dateStr
+                // Tous les posts du jour valides (ou publies) -> vert ; sinon bleu
+                const allValidated = hasPost && dayPosts.every(p => p.status === 'published' || !!p.validatedAt)
+                const dotColor = allValidated ? '#22c55e' : '#2563eb'
+                const bgTint = allValidated ? '#22c55e12' : '#2563eb10'
                 return (
                   <button key={day} onClick={() => { setEditingDate(isEditing ? null : dateStr); setSelectedDate(isEditing ? null : dateStr); if (!hasPost) setNewPost('') }}
                     className={cn('relative rounded-xl text-sm cursor-pointer transition-all duration-200 text-center', (isSelected || isEditing) ? 'ring-2' : '', hasPost ? 'font-semibold' : 'text-blanc-muted')}
-                    style={{ padding: '12px 0', backgroundColor: hasPost ? (dayPosts[0].status === 'published' ? '#05966910' : '#2563eb10') : isToday ? 'var(--noir-elevated)' : 'transparent', color: hasPost ? 'var(--blanc)' : undefined, ['--tw-ring-color' as string]: '#2563eb'}}>
+                    style={{ padding: '12px 0', backgroundColor: hasPost ? bgTint : isToday ? 'var(--noir-elevated)' : 'transparent', color: hasPost ? 'var(--blanc)' : undefined, ['--tw-ring-color' as string]: allValidated ? '#22c55e' : '#2563eb'}}>
                     {day}
-                    {hasPost && <span className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full" style={{ width: '5px', height: '5px', backgroundColor: dayPosts[0].status === 'published' ? '#059669' : '#2563eb' }} />}
+                    {hasPost && <span className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full" style={{ width: '5px', height: '5px', backgroundColor: dotColor, boxShadow: allValidated ? '0 0 6px rgba(34,197,94,0.5)' : 'none' }} />}
                   </button>
                 )
               })}
