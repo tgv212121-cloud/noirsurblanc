@@ -10,6 +10,7 @@ import ConfirmModal from '@/components/ui/ConfirmModal'
 import { useToast } from '@/components/ui/Toast'
 import ChangePasswordCard from '@/components/ui/ChangePasswordCard'
 import GoogleCalendarCard from '@/components/ui/GoogleCalendarCard'
+import NotificationsSettingsCard from '@/components/ui/NotificationsSettingsCard'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -178,6 +179,9 @@ export default function SettingsPage() {
 
       {/* Change password */}
       <ChangePasswordCard />
+
+      {/* Notifications push */}
+      <NotificationsSettingsCard />
 
       {/* Google Calendar integration */}
       <GoogleCalendarCard />

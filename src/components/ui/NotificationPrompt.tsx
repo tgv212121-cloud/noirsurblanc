@@ -56,18 +56,11 @@ export default function NotificationPrompt() {
 
   if (state === 'loading' || state === 'unsupported') return null
 
-  // Already enabled: show compact status + disable link
-  if (subscribed && state === 'granted') {
-    return (
-      <div className="flex items-center gap-2 text-xs text-blanc-muted/70" style={{ padding: '8px 0' }}>
-        <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#22c55e' }} />
-        Notifications activées
-        <button onClick={handleDisable} className="text-blanc-muted/50 hover:text-blanc underline underline-offset-2 cursor-pointer">
-          désactiver
-        </button>
-      </div>
-    )
-  }
+  // Deja active : on n'affiche plus rien en haut. La desactivation se fait depuis l'onglet Compte.
+  if (subscribed && state === 'granted') return null
+
+  // Non utilise directement mais laisse dispo pour d'autres contextes qui voudraient le handler
+  void handleDisable
 
   // Show enable prompt
   return (

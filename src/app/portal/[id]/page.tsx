@@ -13,6 +13,7 @@ import MessageThread from '@/components/messaging/MessageThread'
 import NotificationPrompt from '@/components/ui/NotificationPrompt'
 import ChangePasswordCard from '@/components/ui/ChangePasswordCard'
 import GoogleCalendarCard from '@/components/ui/GoogleCalendarCard'
+import NotificationsSettingsCard from '@/components/ui/NotificationsSettingsCard'
 import BookingTab from '@/components/booking/BookingTab'
 import MagicCard from '@/components/ui/MagicCard'
 import NumberTicker from '@/components/ui/NumberTicker'
@@ -531,6 +532,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
               </div>
             </div>
 
+            <NotificationsSettingsCard />
             <GoogleCalendarCard audience="client" returnTo={`/portal/${client.id}`} />
             <ChangePasswordCard />
           </motion.div>
