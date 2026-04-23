@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createAnnotation, deleteAnnotation, fetchAnnotations, uploadAnnotationVoice, type PostAnnotation } from '@/lib/queries'
 import { useToast } from '@/components/ui/Toast'
@@ -39,6 +40,8 @@ export default function AnnotatedPostContent({ postId, clientId, content, readOn
   const [loading, setLoading] = useState(true)
   const [composer, setComposer] = useState<{ start: number; end: number; text: string } | null>(null)
   const [openAnnotation, setOpenAnnotation] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
   // Composer state
   const [commentText, setCommentText] = useState('')
@@ -231,7 +234,8 @@ export default function AnnotatedPostContent({ postId, clientId, content, readOn
         </div>
       )}
 
-      {/* Composer modal */}
+      {/* Composer modal (Portal pour escape tous les stacking contexts parents) */}
+      {mounted && createPortal(
       <AnimatePresence>
         {composer && (
           <motion.div
@@ -290,8 +294,10 @@ export default function AnnotatedPostContent({ postId, clientId, content, readOn
           </motion.div>
         )}
       </AnimatePresence>
+      , document.body)}
 
-      {/* Popover d'affichage d'une annotation */}
+      {/* Popover d'affichage d'une annotation (Portal) */}
+      {mounted && createPortal(
       <AnimatePresence>
         {openAnnotation && (() => {
           const a = annotations.find(x => x.id === openAnnotation)
@@ -351,6 +357,7 @@ export default function AnnotatedPostContent({ postId, clientId, content, readOn
           )
         })()}
       </AnimatePresence>
+      , document.body)}
     </div>
   )
 }
