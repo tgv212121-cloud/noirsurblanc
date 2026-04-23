@@ -224,6 +224,92 @@ export async function validatePost(postId: string): Promise<boolean> {
   return true
 }
 
+// ============================================================
+// POST ANNOTATIONS (commentaires sur une selection de texte)
+// ============================================================
+
+export type PostAnnotation = {
+  id: string
+  postId: string
+  clientId: string | null
+  startOffset: number
+  endOffset: number
+  selectedText: string
+  textContent: string | null
+  voiceUrl: string | null
+  createdAt: string
+  resolvedAt: string | null
+}
+
+export async function fetchAnnotations(postId: string): Promise<PostAnnotation[]> {
+  const { data, error } = await supabase
+    .from('post_annotations')
+    .select('*')
+    .eq('post_id', postId)
+    .order('start_offset', { ascending: true })
+  if (error) { console.error('fetchAnnotations', error); return [] }
+  return (data || []).map((r: any) => ({
+    id: r.id,
+    postId: r.post_id,
+    clientId: r.client_id,
+    startOffset: r.start_offset,
+    endOffset: r.end_offset,
+    selectedText: r.selected_text,
+    textContent: r.text_content,
+    voiceUrl: r.voice_url,
+    createdAt: r.created_at,
+    resolvedAt: r.resolved_at,
+  }))
+}
+
+export async function createAnnotation(a: {
+  postId: string
+  clientId: string
+  startOffset: number
+  endOffset: number
+  selectedText: string
+  textContent?: string
+  voiceUrl?: string
+}): Promise<PostAnnotation | null> {
+  const { data, error } = await supabase
+    .from('post_annotations')
+    .insert({
+      post_id: a.postId,
+      client_id: a.clientId,
+      start_offset: a.startOffset,
+      end_offset: a.endOffset,
+      selected_text: a.selectedText,
+      text_content: a.textContent || null,
+      voice_url: a.voiceUrl || null,
+    })
+    .select()
+    .single()
+  if (error || !data) { console.error('createAnnotation', error); return null }
+  return {
+    id: data.id,
+    postId: data.post_id,
+    clientId: data.client_id,
+    startOffset: data.start_offset,
+    endOffset: data.end_offset,
+    selectedText: data.selected_text,
+    textContent: data.text_content,
+    voiceUrl: data.voice_url,
+    createdAt: data.created_at,
+    resolvedAt: data.resolved_at,
+  }
+}
+
+export async function deleteAnnotation(id: string): Promise<boolean> {
+  const { error } = await supabase.from('post_annotations').delete().eq('id', id)
+  if (error) { console.error('deleteAnnotation', error); return false }
+  return true
+}
+
+// Reutilise le bucket messages pour les vocaux d'annotations (le file s'appelle annotation-voice-*.webm)
+export async function uploadAnnotationVoice(file: File): Promise<string | null> {
+  return uploadMessageFile(file)
+}
+
 // Annule la validation d'un post (remet validated_at a null)
 export async function unvalidatePost(postId: string): Promise<boolean> {
   const { error } = await supabase

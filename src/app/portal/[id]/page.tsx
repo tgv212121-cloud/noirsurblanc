@@ -16,6 +16,7 @@ import GoogleCalendarCard from '@/components/ui/GoogleCalendarCard'
 import BookingTab from '@/components/booking/BookingTab'
 import MagicCard from '@/components/ui/MagicCard'
 import NumberTicker from '@/components/ui/NumberTicker'
+import AnnotatedPostContent from '@/components/posts/AnnotatedPostContent'
 
 type Tab = 'calendar' | 'messages' | 'stats' | 'history' | 'booking' | 'account'
 
@@ -353,6 +354,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                   <PostCopyCard
                     key={post.id}
                     postId={post.id}
+                    clientId={client.id}
                     content={post.content}
                     files={post.files}
                     validatedAt={post.validatedAt}
@@ -664,7 +666,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
 
 const IMG_RE = /\.(png|jpe?g|gif|webp|bmp|svg|heic|heif)(\?|$)/i
 
-function PostCopyCard({ postId, content, files, validatedAt, onValidate, onUnvalidate }: { postId: string; content: string; files?: { name: string; url: string; size?: number }[]; validatedAt?: string | null; onValidate: () => void; onUnvalidate: () => void }) {
+function PostCopyCard({ postId, clientId, content, files, validatedAt, onValidate, onUnvalidate }: { postId: string; clientId: string; content: string; files?: { name: string; url: string; size?: number }[]; validatedAt?: string | null; onValidate: () => void; onUnvalidate: () => void }) {
   const [copied, setCopied] = useState(false)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [validating, setValidating] = useState(false)
@@ -723,12 +725,9 @@ function PostCopyCard({ postId, content, files, validatedAt, onValidate, onUnval
 
   return (
     <div className="bg-noir-elevated rounded-xl" style={{ padding: '28px' }}>
-      {/* Post text , preserves line breaks exactly as written */}
-      <div
-        className="text-[15px] text-blanc leading-[1.9] whitespace-pre-line mb-8"
-        style={{ maxWidth: 'none' }}
-      >
-        {content}
+      {/* Post text avec annotations (selection -> commentaire texte/vocal) */}
+      <div className="mb-8">
+        <AnnotatedPostContent postId={postId} clientId={clientId} content={content} />
       </div>
 
       {/* Images - preview cliquable avec bouton Telecharger */}
