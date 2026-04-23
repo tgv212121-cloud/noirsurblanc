@@ -285,6 +285,22 @@ export async function createAnnotation(a: {
     .select()
     .single()
   if (error || !data) { console.error('createAnnotation', error); return null }
+
+  // Notif admin fire-and-forget (n'attend pas, ne bloque pas l'UX client)
+  try {
+    fetch('/api/notify/new-annotation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        postId: a.postId,
+        clientId: a.clientId,
+        selectedText: a.selectedText,
+        textContent: a.textContent,
+        hasVoice: !!a.voiceUrl,
+      }),
+    }).catch(() => {})
+  } catch {}
+
   return {
     id: data.id,
     postId: data.post_id,

@@ -347,9 +347,20 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <p className="text-xs text-blanc-muted mb-6">
-                  Post du {new Date(selectedDate + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                </p>
+                {(() => {
+                  const d = new Date(selectedDate + 'T00:00:00')
+                  const weekday = d.toLocaleDateString('fr-FR', { weekday: 'long' })
+                  const dayNum = d.getDate()
+                  const month = d.toLocaleDateString('fr-FR', { month: 'long' })
+                  return (
+                    <div className="flex items-baseline gap-3" style={{ marginBottom: '28px' }}>
+                      <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)', transform: 'translateY(-6px)' }} />
+                      <h3 className="font-heading italic text-blanc" style={{ fontSize: '28px', lineHeight: 1.1, letterSpacing: '-0.01em', fontWeight: 400 }}>
+                        Post du <span style={{ color: '#ca8a04' }}>{weekday}</span> {dayNum} {month}
+                      </h3>
+                    </div>
+                  )
+                })()}
                 {postsByDate[selectedDate].map(post => (
                   <PostCopyCard
                     key={post.id}

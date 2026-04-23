@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import PulseButton from '@/components/ui/PulseButton'
 import SliderTabs from '@/components/ui/SliderTabs'
 import MessageThread from '@/components/messaging/MessageThread'
+import AnnotatedPostContent from '@/components/posts/AnnotatedPostContent'
 import NotificationPrompt from '@/components/ui/NotificationPrompt'
 import type { Client, Post, PostMetrics, Reminder, PostStatus } from '@/types'
 import { questions } from '@/components/onboarding/questions'
@@ -387,7 +388,9 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                           </>
                         ) : (
                           <>
-                            <p className="text-[15px] text-blanc leading-[1.9] whitespace-pre-line mb-6" style={{ maxWidth: '60ch' }}>{post.content}</p>
+                            <div className="mb-6" style={{ maxWidth: '60ch' }}>
+                              <AnnotatedPostContent postId={post.id} clientId={id} content={post.content} readOnly />
+                            </div>
                             {post.files && post.files.length > 0 && (
                               <div className="flex flex-col gap-2 mb-6" style={{ maxWidth: '60ch' }}>
                                 {post.files.map((f, i) => (
