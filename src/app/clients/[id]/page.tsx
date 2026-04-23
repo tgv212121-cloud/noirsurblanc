@@ -256,10 +256,22 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
             )}
             {editingDate && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-                <div className="flex items-center justify-between mb-6">
-                  <p className="text-sm text-blanc">
-                    {new Date(editingDate + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                  </p>
+                <div className="flex items-center justify-between" style={{ marginBottom: '28px' }}>
+                  {(() => {
+                    const d = new Date(editingDate + 'T00:00:00')
+                    const weekday = d.toLocaleDateString('fr-FR', { weekday: 'long' })
+                    const dayNum = d.getDate()
+                    const month = d.toLocaleDateString('fr-FR', { month: 'long' })
+                    const year = d.getFullYear()
+                    return (
+                      <div className="flex items-baseline gap-3">
+                        <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)', transform: 'translateY(-6px)' }} />
+                        <h3 className="font-heading italic text-blanc" style={{ fontSize: '28px', lineHeight: 1.1, letterSpacing: '-0.01em', fontWeight: 400 }}>
+                          <span style={{ color: '#ca8a04' }}>{weekday}</span> {dayNum} {month} {year}
+                        </h3>
+                      </div>
+                    )
+                  })()}
                   <button onClick={() => { setEditingDate(null); setSelectedDate(null) }} className="text-xs text-blanc-muted hover:text-blanc cursor-pointer">Fermer</button>
                 </div>
 
