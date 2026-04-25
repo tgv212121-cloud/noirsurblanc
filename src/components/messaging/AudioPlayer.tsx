@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAudioPlayer } from '@/components/audio/AudioPlayerProvider'
 
 type Props = {
@@ -21,9 +21,20 @@ export default function AudioPlayer({ src, accentColor, isMe, label }: Props) {
   const { track, playing, current, duration, play, toggle, seekTo } = useAudioPlayer()
   const isActive = track?.src === src
 
-  // Local duration probe pour afficher la duree meme quand le track n'est pas actif
-  // On laisse a 0 ; l'utilisateur voit le vrai timing une fois qu'il lance la lecture
-  const displayDuration = isActive ? duration : 0
+  // Probe la duree localement (sans jouer) pour l'afficher des le premier rendu,
+  // meme si le track n'est pas le track actif du player global
+  const [probedDuration, setProbedDuration] = useState(0)
+  useEffect(() => {
+    if (!src) return
+    const a = new Audio()
+    a.preload = 'metadata'
+    a.src = src
+    const onMeta = () => setProbedDuration(isFinite(a.duration) ? a.duration : 0)
+    a.addEventListener('loadedmetadata', onMeta)
+    return () => { a.removeEventListener('loadedmetadata', onMeta); a.src = '' }
+  }, [src])
+
+  const displayDuration = isActive ? duration : probedDuration
   const displayCurrent = isActive ? current : 0
   const isPlaying = isActive && playing
 
