@@ -178,6 +178,23 @@ export async function updatePost(postId: string, changes: {
   if (changes.publishedAt !== undefined) patch.published_at = changes.publishedAt
   if (changes.files !== undefined) patch.files = changes.files
   if (Object.keys(patch).length === 0) return true
+
+  // Si le contenu change, on incremente la version et on archive les annotations existantes
+  // (elles ne s'alignent plus sur les nouveaux offsets de texte)
+  if (changes.content !== undefined) {
+    const { data: cur } = await supabase.from('posts').select('content, content_version').eq('id', postId).maybeSingle()
+    const curContent = (cur as { content?: string } | null)?.content
+    const curVersion = (cur as { content_version?: number } | null)?.content_version || 1
+    if (curContent !== changes.content) {
+      patch.content_version = curVersion + 1
+      await supabase
+        .from('post_annotations')
+        .update({ archived_at: new Date().toISOString() })
+        .eq('post_id', postId)
+        .is('archived_at', null)
+    }
+  }
+
   const { error } = await supabase.from('posts').update(patch).eq('id', postId)
   if (error) { console.error('updatePost', error); return false }
   return true
@@ -241,12 +258,14 @@ export type PostAnnotation = {
   resolvedAt: string | null
 }
 
-export async function fetchAnnotations(postId: string): Promise<PostAnnotation[]> {
-  const { data, error } = await supabase
+export async function fetchAnnotations(postId: string, opts?: { includeArchived?: boolean }): Promise<PostAnnotation[]> {
+  let q = supabase
     .from('post_annotations')
     .select('*')
     .eq('post_id', postId)
     .order('start_offset', { ascending: true })
+  if (!opts?.includeArchived) q = q.is('archived_at', null)
+  const { data, error } = await q
   if (error) { console.error('fetchAnnotations', error); return [] }
   return (data || []).map((r: any) => ({
     id: r.id,

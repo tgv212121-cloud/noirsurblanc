@@ -75,16 +75,31 @@ export default function BookingTab({ clientId, clientName }: Props) {
 
   useEffect(() => { load() }, [clientId])
 
+  // Tick chaque minute pour re-evaluer 'en cours' / cacher les RDV termines
+  const [tick, setTick] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 60_000)
+    return () => clearInterval(id)
+  }, [])
+
   const load = async () => {
     setLoading(true)
     const nowIso = new Date().toISOString()
+    // On fetch a partir de 2h dans le passe pour capturer toute reunion encore en cours
+    const fromIso = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
     const in21 = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString()
     const [r, all, mine] = await Promise.all([
       fetchAvailabilityRules(),
       fetchAppointments({ fromIso: nowIso }),
-      fetchAppointments({ clientId, fromIso: nowIso }),
+      fetchAppointments({ clientId, fromIso }),
     ])
-    setRules(r); setAppointments(all); setMyAppointments(mine); setLoading(false)
+    // Filtre client-side : on garde uniquement les RDV qui ne sont pas termines
+    const stillRelevant = (mine || []).filter(a => {
+      const start = new Date(a.scheduledAt).getTime()
+      const end = start + (a.durationMin || 30) * 60_000
+      return end > Date.now()
+    })
+    setRules(r); setAppointments(all); setMyAppointments(stillRelevant); setLoading(false)
     try {
       // 1. Busy admin (la agence) - public endpoint
       const br = await fetch('/api/google/freebusy', {
@@ -219,28 +234,45 @@ export default function BookingTab({ clientId, clientName }: Props) {
             <h3 className="font-heading text-base text-blanc italic">Tes rendez-vous à venir</h3>
           </div>
           <div>
-            {myAppointments.map(a => {
-              const d = new Date(a.scheduledAt)
-              return (
-                <div key={a.id} className="flex items-center gap-4" style={{ padding: '16px 22px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                  <div>
-                    <p className="text-sm text-blanc font-medium">
-                      {DAYS_SHORT[d.getDay()]} {d.getDate()} {MONTHS_FR[d.getMonth()].toLowerCase()} à {pad(d.getHours())}h{pad(d.getMinutes())}
-                    </p>
-                    {a.topic && <p className="text-xs text-blanc-muted/70" style={{ marginTop: '3px' }}>{a.topic}</p>}
+            {myAppointments
+              .filter(a => {
+                const start = new Date(a.scheduledAt).getTime()
+                const end = start + (a.durationMin || 30) * 60_000
+                void tick
+                return end > Date.now()
+              })
+              .map(a => {
+                const d = new Date(a.scheduledAt)
+                const start = d.getTime()
+                const end = start + (a.durationMin || 30) * 60_000
+                const inProgress = start <= Date.now() && Date.now() < end
+                return (
+                  <div key={a.id} className="flex items-center gap-4" style={{ padding: '16px 22px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm text-blanc font-medium">
+                          {DAYS_SHORT[d.getDay()]} {d.getDate()} {MONTHS_FR[d.getMonth()].toLowerCase()} à {pad(d.getHours())}h{pad(d.getMinutes())}
+                        </p>
+                        {inProgress && (
+                          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider rounded-full" style={{ padding: '3px 9px', background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.4)', color: '#22c55e' }}>
+                            <span className="inline-block rounded-full animate-pulse" style={{ width: '6px', height: '6px', background: '#22c55e', boxShadow: '0 0 8px rgba(34,197,94,0.7)' }} />
+                            En cours
+                          </span>
+                        )}
+                      </div>
+                      {a.topic && <p className="text-xs text-blanc-muted/70" style={{ marginTop: '3px' }}>{a.topic}</p>}
+                    </div>
+                    {a.meetingUrl && (
+                      <a href={a.meetingUrl} className={`text-xs tracking-widest uppercase ${inProgress ? 'text-noir font-bold' : 'text-gold hover:text-gold-light'}`} style={{ padding: '8px 14px', border: inProgress ? 'none' : '1px solid rgba(202,138,4,0.3)', borderRadius: '8px', background: inProgress ? 'linear-gradient(135deg,#a16207,#ca8a04,#eab308)' : 'transparent' }}>
+                        Rejoindre
+                      </a>
+                    )}
+                    <button onClick={() => handleCancelClick(a)} className="text-[11px] text-red-400/70 hover:text-red-400 tracking-widest uppercase cursor-pointer" style={{ padding: '8px 12px' }}>
+                      Annuler
+                    </button>
                   </div>
-                  <span className="flex-1" />
-                  {a.meetingUrl && (
-                    <a href={a.meetingUrl} className="text-xs text-gold hover:text-gold-light tracking-widest uppercase" style={{ padding: '8px 14px', border: '1px solid rgba(202,138,4,0.3)', borderRadius: '8px' }}>
-                      Rejoindre
-                    </a>
-                  )}
-                  <button onClick={() => handleCancelClick(a)} className="text-[11px] text-red-400/70 hover:text-red-400 tracking-widest uppercase cursor-pointer" style={{ padding: '8px 12px' }}>
-                    Annuler
-                  </button>
-                </div>
-              )
-            })}
+                )
+              })}
           </div>
         </div>
       )}
