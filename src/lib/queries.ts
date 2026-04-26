@@ -179,25 +179,69 @@ export async function updatePost(postId: string, changes: {
   if (changes.files !== undefined) patch.files = changes.files
   if (Object.keys(patch).length === 0) return true
 
-  // Si le contenu change, on incremente la version et on archive les annotations existantes
-  // (elles ne s'alignent plus sur les nouveaux offsets de texte)
+  // Si le contenu change : on snapshot la version actuelle dans post_versions,
+  // on incremente content_version, mais les annotations restent attachees a leur version d'origine
   if (changes.content !== undefined) {
-    const { data: cur } = await supabase.from('posts').select('content, content_version').eq('id', postId).maybeSingle()
+    const { data: cur } = await supabase.from('posts').select('content, content_version, files').eq('id', postId).maybeSingle()
     const curContent = (cur as { content?: string } | null)?.content
     const curVersion = (cur as { content_version?: number } | null)?.content_version || 1
-    if (curContent !== changes.content) {
+    const curFiles = (cur as { files?: unknown } | null)?.files || []
+    if (curContent !== undefined && curContent !== changes.content) {
+      // Snapshot l'ancienne version
+      await supabase.from('post_versions').insert({
+        post_id: postId,
+        version: curVersion,
+        content: curContent,
+        files: curFiles,
+      })
       patch.content_version = curVersion + 1
-      await supabase
-        .from('post_annotations')
-        .update({ archived_at: new Date().toISOString() })
-        .eq('post_id', postId)
-        .is('archived_at', null)
     }
   }
 
   const { error } = await supabase.from('posts').update(patch).eq('id', postId)
   if (error) { console.error('updatePost', error); return false }
   return true
+}
+
+export type PostVersion = {
+  id: string
+  postId: string
+  version: number
+  content: string
+  files: { name: string; url: string; size?: number }[]
+  createdAt: string
+}
+
+// Recupere l'historique complet d'un post : version courante (depuis posts) + anciennes (depuis post_versions)
+// Triees DESC : la plus recente en premier
+export async function fetchPostHistory(postId: string): Promise<PostVersion[]> {
+  const [postRes, versionsRes] = await Promise.all([
+    supabase.from('posts').select('id, content, content_version, files, updated_at, published_at').eq('id', postId).maybeSingle(),
+    supabase.from('post_versions').select('*').eq('post_id', postId).order('version', { ascending: false }),
+  ])
+  const out: PostVersion[] = []
+  const post = postRes.data as { content?: string; content_version?: number; files?: unknown; updated_at?: string; published_at?: string } | null
+  if (post) {
+    out.push({
+      id: postId + '-current',
+      postId,
+      version: post.content_version || 1,
+      content: post.content || '',
+      files: Array.isArray(post.files) ? post.files as { name: string; url: string; size?: number }[] : [],
+      createdAt: post.updated_at || post.published_at || new Date().toISOString(),
+    })
+  }
+  for (const r of (versionsRes.data || [])) {
+    out.push({
+      id: r.id,
+      postId: r.post_id,
+      version: r.version,
+      content: r.content,
+      files: Array.isArray(r.files) ? r.files : [],
+      createdAt: r.created_at,
+    })
+  }
+  return out
 }
 
 // Supprime un post
@@ -258,13 +302,13 @@ export type PostAnnotation = {
   resolvedAt: string | null
 }
 
-export async function fetchAnnotations(postId: string, opts?: { includeArchived?: boolean }): Promise<PostAnnotation[]> {
+export async function fetchAnnotations(postId: string, opts?: { version?: number }): Promise<PostAnnotation[]> {
   let q = supabase
     .from('post_annotations')
     .select('*')
     .eq('post_id', postId)
     .order('start_offset', { ascending: true })
-  if (!opts?.includeArchived) q = q.is('archived_at', null)
+  if (opts?.version !== undefined) q = q.eq('post_version', opts.version)
   const { data, error } = await q
   if (error) { console.error('fetchAnnotations', error); return [] }
   return (data || []).map((r: any) => ({
@@ -289,7 +333,14 @@ export async function createAnnotation(a: {
   selectedText: string
   textContent?: string
   voiceUrl?: string
+  postVersion?: number
 }): Promise<PostAnnotation | null> {
+  // Si pas de version fournie, on prend la version courante du post
+  let version = a.postVersion
+  if (version === undefined) {
+    const { data: post } = await supabase.from('posts').select('content_version').eq('id', a.postId).maybeSingle()
+    version = (post as { content_version?: number } | null)?.content_version || 1
+  }
   const { data, error } = await supabase
     .from('post_annotations')
     .insert({
@@ -300,6 +351,7 @@ export async function createAnnotation(a: {
       selected_text: a.selectedText,
       text_content: a.textContent || null,
       voice_url: a.voiceUrl || null,
+      post_version: version,
     })
     .select()
     .single()

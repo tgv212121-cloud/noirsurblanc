@@ -11,7 +11,9 @@ type Props = {
   postId: string
   clientId: string
   content: string
-  readOnly?: boolean // si true (admin), on montre juste les annotations sans permettre d'en creer
+  readOnly?: boolean // si true (admin), pas de creation de nouveau commentaire
+  version?: number  // version specifique a afficher (filtre les annotations). Defaut: toutes
+  canComment?: boolean // false sur les anciennes versions : on voit les commentaires mais on ne peut pas en creer
 }
 
 function formatRelativeTime(iso: string): string {
@@ -33,7 +35,8 @@ function formatRec(s: number): string {
   return `${m}:${sec.toString().padStart(2, '0')}`
 }
 
-export default function AnnotatedPostContent({ postId, clientId, content, readOnly = false }: Props) {
+export default function AnnotatedPostContent({ postId, clientId, content, readOnly = false, version, canComment = true }: Props) {
+  const allowCommenting = !readOnly && canComment
   const toast = useToast()
   const contentRef = useRef<HTMLDivElement>(null)
   const [annotations, setAnnotations] = useState<PostAnnotation[]>([])
@@ -55,13 +58,13 @@ export default function AnnotatedPostContent({ postId, clientId, content, readOn
 
   useEffect(() => {
     let mounted = true
-    fetchAnnotations(postId).then(a => { if (mounted) { setAnnotations(a); setLoading(false) } })
+    fetchAnnotations(postId, version !== undefined ? { version } : undefined).then(a => { if (mounted) { setAnnotations(a); setLoading(false) } })
     return () => { mounted = false }
-  }, [postId])
+  }, [postId, version])
 
   // Detecter une selection sur le contenu -> ouvre DIRECTEMENT le composer
   useEffect(() => {
-    if (readOnly) return
+    if (!allowCommenting) return
     const onMouseUp = () => {
       // Laisse React traiter le clic d'un item du composer avant de reagir
       setTimeout(() => {
@@ -90,7 +93,7 @@ export default function AnnotatedPostContent({ postId, clientId, content, readOn
       document.removeEventListener('mouseup', onMouseUp)
       document.removeEventListener('touchend', onMouseUp)
     }
-  }, [readOnly, composer])
+  }, [allowCommenting, composer])
 
   const closeComposer = () => {
     setComposer(null); setCommentText('')
@@ -161,6 +164,7 @@ export default function AnnotatedPostContent({ postId, clientId, content, readOn
       selectedText: composer.text,
       textContent: hasText ? commentText.trim() : undefined,
       voiceUrl,
+      postVersion: version,
     })
     setSubmitting(false)
     if (!created) { toast.error('Erreur lors de la sauvegarde.'); return }

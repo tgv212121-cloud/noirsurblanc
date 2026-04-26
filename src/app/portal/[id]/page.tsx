@@ -17,7 +17,7 @@ import NotificationsSettingsCard from '@/components/ui/NotificationsSettingsCard
 import BookingTab from '@/components/booking/BookingTab'
 import MagicCard from '@/components/ui/MagicCard'
 import NumberTicker from '@/components/ui/NumberTicker'
-import AnnotatedPostContent from '@/components/posts/AnnotatedPostContent'
+import VersionedPostView from '@/components/posts/VersionedPostView'
 
 type Tab = 'calendar' | 'messages' | 'stats' | 'history' | 'booking' | 'account'
 
@@ -738,9 +738,9 @@ function PostCopyCard({ postId, clientId, content, files, validatedAt, onValidat
 
   return (
     <div className="bg-noir-elevated rounded-xl" style={{ padding: '28px' }}>
-      {/* Post text avec annotations (selection -> commentaire texte/vocal) */}
+      {/* Versions du post (la plus recente en haut, anciennes en-dessous avec leurs commentaires) */}
       <div className="mb-8">
-        <AnnotatedPostContent postId={postId} clientId={clientId} content={content} />
+        <VersionedPostView postId={postId} clientId={clientId} />
       </div>
 
       {/* Images - preview cliquable avec bouton Telecharger */}
