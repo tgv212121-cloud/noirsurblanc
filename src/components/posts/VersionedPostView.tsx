@@ -10,8 +10,8 @@ type Props = {
   postId: string
   clientId: string
   readOnly?: boolean // true = admin (ne peut pas creer de commentaires)
-  // Pour la version courante seulement, l'admin a une edition / extras geree par le parent
-  // Cette vue se contente d'afficher le contenu + annotations
+  // Slot d'actions a afficher en bas du card de la version actuelle (ex : Copier pour LinkedIn + Valider)
+  actionsForCurrent?: React.ReactNode
 }
 
 function formatVersionDate(iso: string): string {
@@ -19,7 +19,7 @@ function formatVersionDate(iso: string): string {
   return d.toLocaleString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
 }
 
-export default function VersionedPostView({ postId, clientId, readOnly = false }: Props) {
+export default function VersionedPostView({ postId, clientId, readOnly = false, actionsForCurrent }: Props) {
   const [versions, setVersions] = useState<PostVersion[]>([])
   const [loading, setLoading] = useState(true)
   const [reloadKey, setReloadKey] = useState(0)
@@ -97,6 +97,13 @@ export default function VersionedPostView({ postId, clientId, readOnly = false }
                     <p className="text-sm text-blanc truncate flex-1">{f.name}</p>
                   </a>
                 ))}
+              </div>
+            )}
+
+            {/* Actions (Copier / Valider) uniquement sur la version actuelle */}
+            {isCurrent && actionsForCurrent && (
+              <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                {actionsForCurrent}
               </div>
             )}
           </div>

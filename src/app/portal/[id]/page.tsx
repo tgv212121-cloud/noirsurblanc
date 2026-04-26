@@ -736,12 +736,57 @@ function PostCopyCard({ postId, clientId, content, files, validatedAt, onValidat
     doValidate()
   }
 
+  // Bloc d'actions a afficher juste apres la version actuelle
+  const actionsBlock = (
+    <div className="flex items-center flex-wrap" style={{ gap: '12px' }}>
+      <button
+        onClick={handleCopy}
+        className="inline-flex items-center gap-2 text-sm font-medium rounded-xl cursor-pointer transition-all duration-300"
+        style={{ padding: '14px 32px', backgroundColor: copied ? '#059669' : '#8b5cf6', color: 'white' }}
+      >
+        {copied ? (
+          <>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Copié&#8201;!
+          </>
+        ) : (
+          <>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            Copier pour LinkedIn
+          </>
+        )}
+      </button>
+      {isValidated ? (
+        <button
+          onClick={doUnvalidate}
+          disabled={validating}
+          title="Cliquer pour annuler la validation"
+          className="group inline-flex items-center gap-2 text-sm font-medium rounded-xl cursor-pointer transition-colors"
+          style={{ padding: '12px 22px', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#22c55e' }}
+        >
+          <svg className="group-hover:hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <svg className="hidden group-hover:block" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          <span className="group-hover:hidden">{validating ? '…' : 'Validé'}</span>
+          <span className="hidden group-hover:block">{validating ? '…' : 'Annuler'}</span>
+        </button>
+      ) : (
+        <button onClick={doValidate} disabled={validating} className="nsb-btn nsb-btn-secondary" style={{ padding: '12px 22px', fontSize: '11px' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          {validating ? 'Validation…' : 'Valider'}
+        </button>
+      )}
+      {copied && (
+        <span className="text-xs text-blanc-muted animate-pulse">
+          Collez directement sur LinkedIn, la mise en forme est conservée.
+        </span>
+      )}
+    </div>
+  )
+
   return (
     <div className="bg-noir-elevated rounded-xl" style={{ padding: '28px' }}>
-      {/* Versions du post (la plus recente en haut, anciennes en-dessous avec leurs commentaires) */}
-      <div className="mb-8">
-        <VersionedPostView postId={postId} clientId={clientId} />
-      </div>
+      {/* Versions du post + actions (Copier/Valider) attachees a la version actuelle */}
+      <VersionedPostView postId={postId} clientId={clientId} actionsForCurrent={actionsBlock} />
 
       {/* Images - preview cliquable avec bouton Telecharger */}
       {images.length > 0 && (
@@ -866,67 +911,6 @@ function PostCopyCard({ postId, clientId, content, files, validatedAt, onValidat
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Actions */}
-      <div className="flex items-center flex-wrap" style={{ gap: '12px' }}>
-        <button
-          onClick={handleCopy}
-          className="inline-flex items-center gap-2 text-sm font-medium rounded-xl cursor-pointer transition-all duration-300"
-          style={{
-            padding: '14px 32px',
-            backgroundColor: copied ? '#059669' : '#8b5cf6',
-            color: 'white',
-          }}
-        >
-          {copied ? (
-            <>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 6 9 17l-5-5" />
-              </svg>
-              Copié&#8201;!
-            </>
-          ) : (
-            <>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="14" height="14" x="8" y="8" rx="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-              </svg>
-              Copier pour LinkedIn
-            </>
-          )}
-        </button>
-
-        {/* Bouton Valider (ou chip 'Validé' cliquable pour annuler la validation) */}
-        {isValidated ? (
-          <button
-            onClick={doUnvalidate}
-            disabled={validating}
-            title="Cliquer pour annuler la validation"
-            className="group inline-flex items-center gap-2 text-sm font-medium rounded-xl cursor-pointer transition-colors"
-            style={{ padding: '12px 22px', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#22c55e' }}
-          >
-            <svg className="group-hover:hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <svg className="hidden group-hover:block" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-            <span className="group-hover:hidden">{validating ? '…' : 'Validé'}</span>
-            <span className="hidden group-hover:block">{validating ? '…' : 'Annuler'}</span>
-          </button>
-        ) : (
-          <button
-            onClick={doValidate}
-            disabled={validating}
-            className="nsb-btn nsb-btn-secondary"
-            style={{ padding: '12px 22px', fontSize: '11px' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            {validating ? 'Validation…' : 'Valider'}
-          </button>
-        )}
-
-        {copied && (
-          <span className="text-xs text-blanc-muted animate-pulse">
-            Collez directement sur LinkedIn, la mise en forme est conservée.
-          </span>
-        )}
-      </div>
     </div>
   )
 }
