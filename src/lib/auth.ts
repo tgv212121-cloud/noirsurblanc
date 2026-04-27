@@ -1,6 +1,7 @@
 'use client'
 
 import { supabase } from './supabase'
+import { IS_DEMO_MODE } from './demo/config'
 
 export type Role = 'admin' | 'client'
 
@@ -9,6 +10,23 @@ export type Profile = {
   email: string | null
   role: Role
   clientId: string | null
+}
+
+// En mode demo : auth simulee via sessionStorage. Pas de Supabase auth.
+const DEMO_AUTH_KEY = 'nsb-demo-auth'
+
+function getDemoAuth(): Profile | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = sessionStorage.getItem(DEMO_AUTH_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
+}
+
+export function setDemoAuth(p: Profile | null) {
+  if (typeof window === 'undefined') return
+  if (p) sessionStorage.setItem(DEMO_AUTH_KEY, JSON.stringify(p))
+  else sessionStorage.removeItem(DEMO_AUTH_KEY)
 }
 
 export async function signUp(email: string, password: string, opts: { role: Role; clientId?: string | null }) {
@@ -36,6 +54,7 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signOut() {
+  if (IS_DEMO_MODE) { setDemoAuth(null); return }
   await supabase.auth.signOut()
 }
 
@@ -56,6 +75,8 @@ export async function getSession() {
 }
 
 export async function getMyProfile(): Promise<Profile | null> {
+  if (IS_DEMO_MODE) return getDemoAuth()
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
   const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()

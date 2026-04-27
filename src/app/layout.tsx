@@ -6,6 +6,7 @@ import MainWrapper from "@/components/layout/MainWrapper";
 import { ToastProvider } from "@/components/ui/Toast";
 import { AudioPlayerProvider } from "@/components/audio/AudioPlayerProvider";
 import MiniPlayer from "@/components/audio/MiniPlayer";
+import DemoFetchInterceptor from "@/components/demo/DemoFetchInterceptor";
 
 const jost = Jost({
   subsets: ["latin"],
@@ -48,6 +49,7 @@ export default function RootLayout({
     <html lang="fr" className={`h-full ${jost.variable} ${bodoni.variable}`}>
       <body className="h-full">
         <ToastProvider>
+          <DemoFetchInterceptor />
           <AudioPlayerProvider>
             <Sidebar />
             <MainWrapper>{children}</MainWrapper>
