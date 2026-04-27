@@ -167,10 +167,21 @@ function cryptoId(): string {
 // API top-level
 function from(table: string) { return new QueryBuilder(table) }
 
-const channel = (_name: string) => ({
-  on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
-  subscribe: () => ({ unsubscribe: () => {} }),
-})
+// Channel mock chainable : .on().on().on().subscribe() doit marcher
+type MockChannel = {
+  on: (..._args: any[]) => MockChannel
+  subscribe: (..._args: any[]) => MockChannel
+  unsubscribe: () => void
+}
+function makeChannel(): MockChannel {
+  const ch: MockChannel = {
+    on: () => ch,
+    subscribe: () => ch,
+    unsubscribe: () => {},
+  }
+  return ch
+}
+const channel = (_name: string) => makeChannel()
 
 const removeChannel = (_c: any) => {}
 
