@@ -3,7 +3,7 @@ export const IS_DEMO_MODE: boolean =
   typeof process !== 'undefined' && process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 
 // Cle racine pour le localStorage du mode demo
-export const DEMO_STORAGE_KEY = 'nsb-demo-v1'
+export const DEMO_STORAGE_KEY = 'nsb-demo-v2'
 
 // Identifiants fake utilises pour le auth
 export const DEMO_ADMIN_ID = 'demo-admin-id'
