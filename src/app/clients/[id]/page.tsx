@@ -144,7 +144,11 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const daysInMonth = getDaysInMonth(calendarMonth, calendarYear)
   const firstDay = getFirstDayOfMonth(calendarMonth, calendarYear)
   const postsByDate: Record<string, typeof clientPosts> = {}
-  clientPosts.forEach(p => { if (!postsByDate[p.publishedAt]) postsByDate[p.publishedAt] = []; postsByDate[p.publishedAt].push(p) })
+  clientPosts.forEach(p => {
+    const dateKey = p.publishedAt.includes('T') ? p.publishedAt.split('T')[0] : p.publishedAt
+    if (!postsByDate[dateKey]) postsByDate[dateKey] = []
+    postsByDate[dateKey].push(p)
+  })
   const prevMonth = () => { if (calendarMonth === 0) { setCalendarMonth(11); setCalendarYear(y => y - 1) } else setCalendarMonth(m => m - 1) }
   const nextMonth = () => { if (calendarMonth === 11) { setCalendarMonth(0); setCalendarYear(y => y + 1) } else setCalendarMonth(m => m + 1) }
 

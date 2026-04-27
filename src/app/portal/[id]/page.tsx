@@ -149,7 +149,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
 
   const postsByDate: Record<string, typeof clientPosts> = {}
   clientPosts.forEach(p => {
-    const date = p.publishedAt
+    const date = p.publishedAt.includes('T') ? p.publishedAt.split('T')[0] : p.publishedAt
     if (!postsByDate[date]) postsByDate[date] = []
     postsByDate[date].push(p)
   })
