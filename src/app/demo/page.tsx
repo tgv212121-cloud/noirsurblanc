@@ -133,9 +133,19 @@ export default function DemoLandingPage() {
           ))}
         </div>
 
-        <button onClick={onReset} className="text-xs text-blanc-muted/40 hover:text-blanc-muted underline underline-offset-4 cursor-pointer" style={{ marginTop: '40px' }}>
-          Remettre la démo à zéro
-        </button>
+        {/* Liens secondaires */}
+        <div className="flex items-center flex-wrap justify-center" style={{ marginTop: '40px', gap: '24px' }}>
+          <Link href="/onboarding" className="text-xs text-gold hover:text-gold-light underline underline-offset-4 decoration-gold/40 cursor-pointer">
+            Tester le formulaire d&apos;onboarding →
+          </Link>
+          <button onClick={onReset} className="text-xs text-blanc-muted/40 hover:text-blanc-muted underline underline-offset-4 cursor-pointer">
+            Remettre la démo à zéro
+          </button>
+        </div>
+
+        <p className="text-[11px] text-blanc-muted/40 text-center" style={{ marginTop: '24px', maxWidth: '480px' }}>
+          Aucune donnée n&apos;est envoyée. Tout vit dans le localStorage de ton navigateur.
+        </p>
       </div>
     </div>
   )
