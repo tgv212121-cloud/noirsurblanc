@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getMyProfile, type Profile } from './auth'
+import { IS_DEMO_MODE } from './demo/config'
 
 type Options = {
   requireRole?: 'admin' | 'client'
@@ -18,17 +19,17 @@ export function useAuthGuard(opts: Options = {}) {
     let stopPing: (() => void) | null = null
     ;(async () => {
       const p = await getMyProfile()
-      if (!p) { router.push('/login'); return }
+      if (!p) { router.push(IS_DEMO_MODE ? '/demo' : '/login'); return }
       // Role mismatch : redirect to user's own home (no loop to /login)
       if (opts.requireRole === 'admin' && p.role !== 'admin') {
         if (p.clientId) router.push(`/portal/${p.clientId}`)
-        else router.push('/login')
+        else router.push(IS_DEMO_MODE ? '/demo' : '/login')
         return
       }
       // Client trying to access another client's portal
       if (opts.requireClientId && p.role === 'client' && p.clientId !== opts.requireClientId) {
         if (p.clientId) router.push(`/portal/${p.clientId}`)
-        else router.push('/login')
+        else router.push(IS_DEMO_MODE ? '/demo' : '/login')
         return
       }
       setProfile(p); setChecking(false)

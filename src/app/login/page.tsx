@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { signIn, getMyProfile } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
+import { IS_DEMO_MODE } from '@/lib/demo/config'
+import { useEffect } from 'react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -14,6 +16,11 @@ export default function LoginPage() {
   const [showPwd, setShowPwd] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  // En mode demo : on redirige direct vers /demo (pas de login mot-de-passe)
+  useEffect(() => {
+    if (IS_DEMO_MODE) router.replace('/demo')
+  }, [router])
   const [googleLoading, setGoogleLoading] = useState(false)
 
   const handleGoogleLogin = async () => {
