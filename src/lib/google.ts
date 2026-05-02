@@ -83,23 +83,34 @@ type TokenRow = {
 }
 
 async function refreshRowIfNeeded(row: TokenRow): Promise<TokenRow | null> {
-  const sb = getAdminSupabase()
   const now = Date.now()
   const exp = new Date(row.expires_at).getTime()
   if (exp - now > 60_000) return row
+
+  // Tente le refresh cote Google (peut echouer : token revoque, secret invalide...)
+  let refreshed
   try {
-    const refreshed = await refreshAccessToken(row.refresh_token)
-    const newExp = new Date(Date.now() + refreshed.expires_in * 1000).toISOString()
-    await sb.from('google_tokens').update({
-      access_token: refreshed.access_token,
-      expires_at: newExp,
-      updated_at: new Date().toISOString(),
-    }).eq('id', row.id)
-    return { ...row, access_token: refreshed.access_token, expires_at: newExp }
+    refreshed = await refreshAccessToken(row.refresh_token)
   } catch (e) {
-    console.error('token refresh failed', e)
+    console.error('[google] refresh failed (Google side)', e)
     return null
   }
+  const newExp = new Date(Date.now() + refreshed.expires_in * 1000).toISOString()
+
+  // Best effort : on persiste en DB. Si ca echoue (colonne manquante, RLS...),
+  // on retourne quand meme le token en memoire pour que le call courant aboutisse.
+  try {
+    const sb = getAdminSupabase()
+    const { error } = await sb.from('google_tokens').update({
+      access_token: refreshed.access_token,
+      expires_at: newExp,
+    }).eq('id', row.id)
+    if (error) console.error('[google] persist refresh failed (will continue with in-memory token)', error)
+  } catch (e) {
+    console.error('[google] persist refresh threw (will continue with in-memory token)', e)
+  }
+
+  return { ...row, access_token: refreshed.access_token, expires_at: newExp }
 }
 
 // Primary admin token

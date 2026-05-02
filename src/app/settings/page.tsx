@@ -186,6 +186,9 @@ export default function SettingsPage() {
       {/* Google Calendar integration */}
       <GoogleCalendarCard />
 
+      {/* Bouton diagnostic : re-sync des events Google manquants */}
+      <ResyncBookingsCard />
+
       {/* Availability (calendar slots for client bookings) */}
       <AvailabilityCard rules={rules} onChange={async () => { setRules(await fetchAvailabilityRules()) }} />
 
@@ -556,6 +559,59 @@ function UpcomingAppointmentsCard({
           setToCancel(null)
         }}
       />
+    </div>
+  )
+}
+
+function ResyncBookingsCard() {
+  const toast = useToast()
+  const [busy, setBusy] = useState(false)
+  const [last, setLast] = useState<{ processed: number; successes: number; failures: number } | null>(null)
+
+  const cardStyle = { background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.09)' } as const
+
+  const onResync = async () => {
+    setBusy(true)
+    try {
+      const r = await fetch('/api/admin/resync-bookings', { method: 'POST' })
+      const d = await r.json()
+      if (!r.ok || !d.ok) {
+        toast.error(d.reason || d.error || 'Echec du resync.')
+        return
+      }
+      setLast({ processed: d.processed, successes: d.successes, failures: d.failures })
+      if (d.processed === 0) toast.info('Aucun RDV à re-synchroniser. Tout est OK.')
+      else toast.success(`${d.successes}/${d.processed} RDV re-synchronisés.`)
+    } catch (e) {
+      toast.error('Erreur réseau pendant le resync.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden" style={{ ...cardStyle, marginBottom: '24px' }}>
+      <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+      <div className="flex items-center gap-3" style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
+        <h2 className="font-heading text-lg text-blanc italic">Re-synchroniser les RDV</h2>
+      </div>
+      <div className="flex items-center justify-between gap-6 flex-wrap" style={{ padding: '24px' }}>
+        <div className="flex-1" style={{ minWidth: '280px' }}>
+          <p className="text-sm text-blanc/90 leading-relaxed" style={{ marginBottom: '6px' }}>Force la création des events Google manquants</p>
+          <p className="text-xs text-blanc-muted/70 leading-relaxed">
+            Si un RDV n&apos;est pas apparu dans ton agenda Google (token expiré silencieusement, etc.), clique ici pour rejouer la création des events Google sur tous les RDV confirmés sans google_event_id.
+          </p>
+          {last && (
+            <p className="text-xs text-blanc-muted/60" style={{ marginTop: '10px' }}>
+              Dernier run : {last.processed} traités · {last.successes} succès · {last.failures} échecs
+            </p>
+          )}
+        </div>
+        <button onClick={onResync} disabled={busy} className="nsb-btn nsb-btn-secondary" style={{ padding: '13px 22px' }}>
+          {busy ? 'Re-sync en cours…' : 'Lancer le re-sync'}
+        </button>
+      </div>
     </div>
   )
 }
