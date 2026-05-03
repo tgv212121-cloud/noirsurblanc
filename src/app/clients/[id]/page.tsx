@@ -15,6 +15,7 @@ import SliderTabs from '@/components/ui/SliderTabs'
 import MessageThread from '@/components/messaging/MessageThread'
 import VersionedPostView from '@/components/posts/VersionedPostView'
 import PerformanceInsights from '@/components/posts/PerformanceInsights'
+import UnipileSyncBadge from '@/components/posts/UnipileSyncBadge'
 import NotificationPrompt from '@/components/ui/NotificationPrompt'
 import type { Client, Post, PostMetrics, Reminder, PostStatus } from '@/types'
 import { questions } from '@/components/onboarding/questions'
@@ -652,6 +653,11 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         {/* Stats tab */}
         {activeTab === 'stats' && (
           <motion.div key="stats" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+            {/* Sync badge (LinkedIn / Unipile) */}
+            <div style={{ marginBottom: '32px' }}>
+              <UnipileSyncBadge clientId={client.id} />
+            </div>
+
             {/* Section 1 : Insights (top 3 + patterns) */}
             <PerformanceInsights posts={publishedPosts} metrics={metrics} clientFirstName={client.name.split(' ')[0]} />
 

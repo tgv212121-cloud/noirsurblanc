@@ -72,6 +72,11 @@ input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
   50% { box-shadow: 0 0 16px 4px rgba(201, 169, 97, 0.12); }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* ============================================================
  * DESIGN SYSTEM NOIRSURBLANC : utilities transverses
  * Classes reutilisables pour boutons, inputs, cards

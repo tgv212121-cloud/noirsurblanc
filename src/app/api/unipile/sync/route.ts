@@ -190,6 +190,11 @@ export async function POST(req: Request) {
       }
     }
 
+    // Update timestamp last_unipile_sync_at sur le profil + le client
+    const nowSync = new Date().toISOString()
+    await sb.from('profiles').update({ last_unipile_sync_at: nowSync }).eq('id', userId)
+    if (clientId) await sb.from('clients').update({ last_unipile_sync_at: nowSync }).eq('id', clientId)
+
     return NextResponse.json({
       ok: true,
       accountId,
@@ -197,6 +202,7 @@ export async function POST(req: Request) {
       postsUpserted,
       metricsUpserted,
       firstError,
+      lastSyncAt: nowSync,
       sample: items[0] || null,
     })
   } catch (e) {

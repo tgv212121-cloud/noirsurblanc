@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/sync-unipile-all",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}

@@ -19,6 +19,7 @@ import BookingTab from '@/components/booking/BookingTab'
 import MagicCard from '@/components/ui/MagicCard'
 import NumberTicker from '@/components/ui/NumberTicker'
 import VersionedPostView from '@/components/posts/VersionedPostView'
+import UnipileSyncBadge from '@/components/posts/UnipileSyncBadge'
 
 type Tab = 'calendar' | 'messages' | 'stats' | 'history' | 'booking' | 'account'
 
@@ -396,6 +397,11 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
           >
+            {/* Sync badge (LinkedIn / Unipile) */}
+            <div style={{ marginBottom: '24px' }}>
+              <UnipileSyncBadge />
+            </div>
+
             {/* Global stats */}
             <div className="grid grid-cols-2 gap-5 mb-12">
               <div className="bg-noir-elevated rounded-xl" style={{ padding: '24px 28px' }}>
