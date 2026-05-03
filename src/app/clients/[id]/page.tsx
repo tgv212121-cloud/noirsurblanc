@@ -175,7 +175,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         </div>
 
         {/* Contact info */}
-        <div className="flex flex-wrap items-center gap-x-8 gap-y-3 mt-8" style={{ borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-3" style={{ marginTop: '32px', borderTop: '1px solid var(--border)', paddingTop: '24px', paddingBottom: '4px' }}>
           <div><p className="text-xs text-blanc-muted mb-1">Client depuis</p><p className="text-sm text-blanc">{formatDate(client.onboardedAt)}</p></div>
           <div><p className="text-xs text-blanc-muted mb-1">LinkedIn</p>{client.linkedinUrl ? <a href={client.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-gold hover:text-gold-dark transition-colors duration-200">Voir le profil</a> : <p className="text-sm text-blanc-muted/50">Non renseigné</p>}</div>
           <div>
@@ -208,7 +208,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
 
 
       {/* Tabs */}
-      <div className="mb-10 overflow-x-auto">
+      <div className="overflow-x-auto" style={{ marginTop: '40px', marginBottom: '40px' }}>
         <SliderTabs
           items={TABS.map(t => ({ id: t.id, label: t.label }))}
           value={activeTab}
@@ -654,7 +654,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         {activeTab === 'stats' && (
           <motion.div key="stats" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
             {/* Sync badge (LinkedIn / Unipile) */}
-            <div style={{ marginBottom: '32px' }}>
+            <div style={{ marginBottom: '40px' }}>
               <UnipileSyncBadge clientId={client.id} />
             </div>
 
