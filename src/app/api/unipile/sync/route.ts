@@ -119,38 +119,45 @@ export async function POST(req: Request) {
 
     for (const p of items) {
       const externalId = p.social_id || p.provider_id || p.id
-      const linkedinUrl = p.share_url || p.url || p.permalink || null
+      const shareUrl = p.share_url || p.url || p.permalink || null
+      // On utilise une "cle de match" (la meilleure URL ou ID dispo) qu'on stocke dans linkedin_url
+      const matchKey = shareUrl || externalId
       const content = p.text || p.body || ''
-      const publishedAt = p.date || p.created_at || p.published_at || new Date().toISOString()
-      if (!externalId) continue
+      const publishedAt = p.parsed_datetime || p.date || p.created_at || p.published_at || new Date().toISOString()
+      if (!externalId || !matchKey) continue
 
-      // Match : on cherche un post existant avec ce linkedin_url ou cet id externe (stocke dans linkedin_url)
-      const candidateUrl = linkedinUrl || externalId
+      // Match : on cherche un post existant pour ce client avec linkedin_url = matchKey
       const { data: existing } = await sb
         .from('posts')
         .select('id')
         .eq('client_id', clientId)
-        .or(`linkedin_url.eq.${candidateUrl},id.eq.${externalId}`)
+        .eq('linkedin_url', matchKey)
         .maybeSingle()
 
       let postId: string
       if (existing && (existing as { id: string }).id) {
+        // Post deja sync : on met juste a jour status + content + date
         postId = (existing as { id: string }).id
-        // Update url si manquant
-        if (linkedinUrl) {
-          await sb.from('posts').update({ linkedin_url: linkedinUrl, status: 'published' }).eq('id', postId)
-        }
+        await sb.from('posts').update({
+          status: 'published',
+          content,
+          published_at: publishedAt,
+        }).eq('id', postId)
       } else {
-        // On insere un nouveau post lie a ce client
-        postId = externalId
-        await sb.from('posts').insert({
-          id: postId,
+        // Premier sync : on insere SANS forcer l'id (la DB genere son uuid). On stocke matchKey dans linkedin_url pour les futurs syncs.
+        const { data: inserted, error: insErrPost } = await sb.from('posts').insert({
           client_id: clientId,
           content,
           published_at: publishedAt,
           status: 'published',
-          linkedin_url: linkedinUrl,
-        })
+          linkedin_url: matchKey,
+        }).select('id').single()
+        if (insErrPost || !inserted) {
+          if (!firstError) firstError = `posts insert: ${insErrPost?.message || 'no row'}`
+          console.error('[unipile sync] posts insert failed', insErrPost)
+          continue
+        }
+        postId = (inserted as { id: string }).id
         postsUpserted++
       }
 
