@@ -19,6 +19,7 @@ type UnipilePost = {
   date?: string
   created_at?: string
   published_at?: string
+  parsed_datetime?: string
   share_url?: string
   url?: string
   permalink?: string
@@ -27,6 +28,8 @@ type UnipilePost = {
   repost_counter?: number
   view_counter?: number
   impression_count?: number
+  imppressions_counter?: number  // typo officielle Unipile (sic)
+  impressions_counter?: number   // au cas ou ils corrigent
   engagement?: {
     likes?: number
     comments?: number
@@ -112,6 +115,7 @@ export async function POST(req: Request) {
 
     let postsUpserted = 0
     let metricsUpserted = 0
+    let firstError: string | null = null
 
     for (const p of items) {
       const externalId = p.social_id || p.provider_id || p.id
@@ -150,15 +154,15 @@ export async function POST(req: Request) {
         postsUpserted++
       }
 
-      // Metrics upsert
+      // Metrics upsert avec mapping ouvert sur les noms de champs Unipile (qui ont un typo "imppressions")
       const eng = p.engagement || {}
-      const impressions = p.view_counter ?? p.impression_count ?? eng.views ?? eng.impressions ?? 0
+      const impressions = p.imppressions_counter ?? p.impressions_counter ?? p.view_counter ?? p.impression_count ?? eng.views ?? eng.impressions ?? 0
       const likes = p.reaction_counter ?? eng.likes ?? 0
       const comments = p.comment_counter ?? eng.comments ?? 0
       const reposts = p.repost_counter ?? eng.reposts ?? 0
-      const engagement_rate = impressions > 0 ? ((likes + comments + reposts) / impressions) * 100 : 0
+      const engagementRate = impressions > 0 ? ((likes + comments + reposts) / impressions) * 100 : 0
 
-      // Upsert (delete existing puis insert pour eviter les conflits si la table n'a pas de unique sur post_id)
+      // Upsert : on essaie d'abord avec engagement_rate, sinon on retente sans (au cas ou la colonne s'appelle autrement)
       await sb.from('metrics').delete().eq('post_id', postId)
       const { error: insErr } = await sb.from('metrics').insert({
         post_id: postId,
@@ -166,10 +170,15 @@ export async function POST(req: Request) {
         likes,
         comments,
         reposts,
-        engagement_rate,
+        engagement_rate: engagementRate,
         captured_at: new Date().toISOString(),
       })
-      if (!insErr) metricsUpserted++
+      if (!insErr) {
+        metricsUpserted++
+      } else if (!firstError) {
+        firstError = insErr.message || JSON.stringify(insErr)
+        console.error('[unipile sync] metrics insert error', insErr)
+      }
     }
 
     return NextResponse.json({
@@ -178,6 +187,7 @@ export async function POST(req: Request) {
       postsFromUnipile: items.length,
       postsUpserted,
       metricsUpserted,
+      firstError,
       sample: items[0] || null,
     })
   } catch (e) {

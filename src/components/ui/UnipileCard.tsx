@@ -77,8 +77,12 @@ export default function UnipileCard({ audience = 'client' }: Props) {
       if (d.postsFromUnipile === 0) {
         toast.info('Aucun post retourné par Unipile. Vérifie la console F12 pour les détails.')
         console.log('[Unipile sync DEBUG]', d)
+      } else if (d.metricsUpserted === 0 && d.firstError) {
+        toast.error(`Posts importés mais metrics échec : ${d.firstError.slice(0, 200)}`)
+        console.error('[Unipile sync DEBUG]', d)
       } else {
-        toast.success(`${d.metricsUpserted} posts synchronisés. Recharge l’onglet Stats.`)
+        toast.success(`${d.metricsUpserted}/${d.postsFromUnipile} posts synchronisés. Recharge l’onglet Stats.`)
+        console.log('[Unipile sync OK]', d)
       }
     } catch (e) {
       toast.error('Erreur réseau.')
