@@ -14,6 +14,7 @@ import NotificationPrompt from '@/components/ui/NotificationPrompt'
 import ChangePasswordCard from '@/components/ui/ChangePasswordCard'
 import GoogleCalendarCard from '@/components/ui/GoogleCalendarCard'
 import NotificationsSettingsCard from '@/components/ui/NotificationsSettingsCard'
+import UnipileCard from '@/components/ui/UnipileCard'
 import BookingTab from '@/components/booking/BookingTab'
 import MagicCard from '@/components/ui/MagicCard'
 import NumberTicker from '@/components/ui/NumberTicker'
@@ -533,6 +534,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
             </div>
 
             <NotificationsSettingsCard />
+            <UnipileCard audience="client" />
             <GoogleCalendarCard audience="client" returnTo={`/portal/${client.id}`} />
             <ChangePasswordCard />
           </motion.div>

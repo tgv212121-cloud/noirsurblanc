@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/Toast'
 import ChangePasswordCard from '@/components/ui/ChangePasswordCard'
 import GoogleCalendarCard from '@/components/ui/GoogleCalendarCard'
 import NotificationsSettingsCard from '@/components/ui/NotificationsSettingsCard'
+import UnipileCard from '@/components/ui/UnipileCard'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -185,6 +186,9 @@ export default function SettingsPage() {
 
       {/* Google Calendar integration */}
       <GoogleCalendarCard />
+
+      {/* LinkedIn (Unipile) */}
+      <UnipileCard audience="admin" />
 
       {/* Bouton diagnostic : re-sync des events Google manquants */}
       <ResyncBookingsCard />
