@@ -41,7 +41,7 @@ export default function SettingsPage() {
       setMe(p)
       const [allP, allC, allR, appts, notifs] = await Promise.all([
         listProfiles(), fetchClients(), fetchAvailabilityRules(),
-        fetchAppointments({ fromIso: new Date().toISOString() }),
+        fetchAppointments({ fromIso: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() }),
         fetchNotificationEmails(),
       ])
       setProfiles(allP); setClients(allC); setRules(allR); setUpcomingAppts(appts); setNotifEmails(notifs); setLoading(false)
@@ -206,7 +206,7 @@ export default function SettingsPage() {
       <UpcomingAppointmentsCard
         appointments={upcomingAppts}
         clients={clients}
-        onChange={async () => { setUpcomingAppts(await fetchAppointments({ fromIso: new Date().toISOString() })) }}
+        onChange={async () => { setUpcomingAppts(await fetchAppointments({ fromIso: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() })) }}
       />
 
       {/* Two columns : create form + list */}
@@ -489,16 +489,24 @@ function UpcomingAppointmentsCard({
           <p className="text-sm text-blanc-muted/60 text-center" style={{ padding: '32px 24px' }}>
             Aucun rendez-vous prévu. Tu en seras notifié par email dès qu&apos;un client réserve.
           </p>
-        ) : appointments.map(a => {
+        ) : appointments.filter(a => {
+          // Cache les RDV deja termines (start + duration < now)
+          const start = new Date(a.scheduledAt).getTime()
+          const end = start + (a.durationMin || 30) * 60_000
+          return end > Date.now()
+        }).map(a => {
           const d = new Date(a.scheduledAt)
           const c = a.clientId ? clientsById[a.clientId] : undefined
+          const start = d.getTime()
+          const end = start + (a.durationMin || 30) * 60_000
+          const inProgress = start <= Date.now() && Date.now() < end
           return (
             <div key={a.id} className="flex items-center gap-5 flex-wrap" style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
               <div style={{ minWidth: '160px' }}>
                 <p className="text-[10px] text-blanc-muted/60 uppercase tracking-[0.14em]" style={{ marginBottom: '4px' }}>
                   {DAYS[d.getDay()]} {d.getDate()} {MONTHS[d.getMonth()]}
                 </p>
-                <p className="font-heading italic text-blanc" style={{ fontSize: '22px', lineHeight: 1 }}>
+                <p className={`font-heading italic ${inProgress ? 'text-green-400' : 'text-blanc'}`} style={{ fontSize: '22px', lineHeight: 1 }}>
                   {pad(d.getHours())}h{pad(d.getMinutes())}
                 </p>
                 <p className="text-[11px] text-blanc-muted/60" style={{ marginTop: '3px' }}>{a.durationMin} min</p>
@@ -508,6 +516,12 @@ function UpcomingAppointmentsCard({
                   <p className="text-sm text-blanc font-medium">
                     {c ? c.name : (a.prospectName || 'Inconnu')}
                   </p>
+                  {inProgress && (
+                    <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider rounded-full" style={{ padding: '3px 9px', background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.4)', color: '#22c55e' }}>
+                      <span className="inline-block rounded-full animate-pulse" style={{ width: '6px', height: '6px', background: '#22c55e', boxShadow: '0 0 8px rgba(34,197,94,0.7)' }} />
+                      En cours
+                    </span>
+                  )}
                   {!a.clientId && a.prospectEmail && (
                     <span className="text-[9px] uppercase tracking-[0.14em] font-semibold"
                       style={{ padding: '2px 8px', borderRadius: '999px', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)', color: '#60a5fa' }}>

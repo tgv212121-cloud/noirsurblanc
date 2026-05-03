@@ -17,12 +17,28 @@ export default function Dashboard() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
 
   useEffect(() => {
+    // Fetch a partir de now-2h pour capturer les RDV en cours (pas seulement futurs)
+    const fromIso = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
     Promise.all([
       fetchClients(), fetchPosts(), fetchMetrics(), fetchReminders(),
-      fetchAppointments({ fromIso: new Date().toISOString() }),
+      fetchAppointments({ fromIso }),
     ]).then(([c, p, m, r, a]) => {
-      setClients(c); setPosts(p); setMetrics(m); setReminders(r); setAppointments(a)
+      setClients(c); setPosts(p); setMetrics(m); setReminders(r)
+      // Filtre client-side : on garde uniquement les RDV pas encore termines (start + duration > now)
+      const stillRelevant = (a || []).filter(apt => {
+        const start = new Date(apt.scheduledAt).getTime()
+        const end = start + (apt.durationMin || 30) * 60_000
+        return end > Date.now()
+      })
+      setAppointments(stillRelevant)
     })
+  }, [])
+
+  // Tick toutes les 60s pour cacher automatiquement les RDV qui se terminent
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 60_000)
+    return () => clearInterval(id)
   }, [])
 
   const activeClients = clients.filter(c => c.status === 'active').length
@@ -88,28 +104,39 @@ export default function Dashboard() {
             {appointments.slice(0, 3).map(a => {
               const c = clients.find(x => x.id === a.clientId)
               const d = new Date(a.scheduledAt)
+              const start = d.getTime()
+              const end = start + (a.durationMin || 30) * 60_000
+              const inProgress = start <= Date.now() && Date.now() < end
               const pad = (n: number) => n.toString().padStart(2, '0')
               const DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
               const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.']
               return (
                 <div key={a.id} className="flex items-center gap-4" style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                  <div className="flex items-center justify-center shrink-0" style={{ width: '52px', height: '52px', borderRadius: '12px', background: 'rgba(202,138,4,0.1)', border: '1px solid rgba(202,138,4,0.25)' }}>
+                  <div className="flex items-center justify-center shrink-0" style={{ width: '52px', height: '52px', borderRadius: '12px', background: inProgress ? 'rgba(34,197,94,0.12)' : 'rgba(202,138,4,0.1)', border: `1px solid ${inProgress ? 'rgba(34,197,94,0.4)' : 'rgba(202,138,4,0.25)'}` }}>
                     <div className="text-center">
-                      <p className="text-[9px] text-gold/80 uppercase tracking-wider leading-none" style={{ marginBottom: '2px' }}>{DAYS[d.getDay()]}</p>
-                      <p className="text-gold font-heading italic" style={{ fontSize: '16px', lineHeight: 1 }}>{d.getDate()}</p>
-                      <p className="text-[9px] text-gold/80 lowercase leading-none" style={{ marginTop: '2px' }}>{MONTHS[d.getMonth()]}</p>
+                      <p className={`text-[9px] uppercase tracking-wider leading-none ${inProgress ? 'text-green-400/80' : 'text-gold/80'}`} style={{ marginBottom: '2px' }}>{DAYS[d.getDay()]}</p>
+                      <p className={`font-heading italic ${inProgress ? 'text-green-400' : 'text-gold'}`} style={{ fontSize: '16px', lineHeight: 1 }}>{d.getDate()}</p>
+                      <p className={`text-[9px] lowercase leading-none ${inProgress ? 'text-green-400/80' : 'text-gold/80'}`} style={{ marginTop: '2px' }}>{MONTHS[d.getMonth()]}</p>
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-blanc truncate">{c?.name || 'Client'}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-medium text-blanc truncate">{c?.name || 'Client'}</p>
+                      {inProgress && (
+                        <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider rounded-full" style={{ padding: '3px 9px', background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.4)', color: '#22c55e' }}>
+                          <span className="inline-block rounded-full animate-pulse" style={{ width: '6px', height: '6px', background: '#22c55e', boxShadow: '0 0 8px rgba(34,197,94,0.7)' }} />
+                          En cours
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-blanc-muted/70" style={{ marginTop: '3px' }}>
                       {pad(d.getHours())}h{pad(d.getMinutes())} · {a.durationMin} min{a.topic ? ' · ' + a.topic : ''}
                     </p>
                   </div>
                   {a.meetingUrl && (
                     <a href={a.meetingUrl} target="_blank" rel="noopener noreferrer"
-                      className="text-[11px] text-gold hover:text-gold-light tracking-widest uppercase"
-                      style={{ padding: '6px 12px', border: '1px solid rgba(202,138,4,0.3)', borderRadius: '8px' }}>
+                      className={`text-[11px] tracking-widest uppercase ${inProgress ? 'text-noir font-bold' : 'text-gold hover:text-gold-light'}`}
+                      style={{ padding: '6px 12px', borderRadius: '8px', border: inProgress ? 'none' : '1px solid rgba(202,138,4,0.3)', background: inProgress ? 'linear-gradient(135deg,#a16207,#ca8a04,#eab308)' : 'transparent' }}>
                       Rejoindre
                     </a>
                   )}
