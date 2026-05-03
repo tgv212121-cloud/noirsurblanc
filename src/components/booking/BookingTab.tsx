@@ -325,7 +325,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
             maskComposite: 'exclude',
           }} />
 
-          <div className="relative rounded-xl grid grid-cols-1 md:grid-cols-[300px_1fr] gap-10" style={{ background: 'rgba(15,15,15,0.95)', padding: '34px 36px' }}>
+          <div className="relative rounded-xl grid grid-cols-1 md:grid-cols-[320px_1fr]" style={{ background: 'rgba(15,15,15,0.95)', padding: '44px 48px', gap: '56px' }}>
             {/* Calendrier - colonne gauche, taille reduite */}
             <div style={{ fontSize: '13px' }}>
               <Calendar
@@ -340,10 +340,10 @@ export default function BookingTab({ clientId, clientName }: Props) {
             </div>
 
             {/* Créneaux - colonne droite */}
-            <div className="md:border-l md:pl-10 flex flex-col" style={{ borderColor: 'rgba(202,138,4,0.15)' }}>
+            <div className="md:border-l flex flex-col" style={{ borderColor: 'rgba(202,138,4,0.15)', paddingLeft: '40px' }}>
               {selectedDay ? (
                 <>
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-blanc-muted/60" style={{ marginBottom: '14px' }}>
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-blanc-muted/60" style={{ marginBottom: '20px' }}>
                     Créneaux du {selectedDay.getDate()} {MONTHS_FR[selectedDay.getMonth()].toLowerCase()}
                   </p>
                   <AnimatePresence mode="wait">
@@ -353,7 +353,8 @@ export default function BookingTab({ clientId, clientName }: Props) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -6 }}
                       transition={{ duration: 0.18 }}
-                      className="flex flex-col gap-2 flex-1"
+                      className="flex flex-col flex-1"
+                      style={{ gap: '10px' }}
                     >
                       {selectedDaySlots.length === 0 ? (
                         <p className="text-sm text-blanc-muted/70" style={{ padding: '16px 0' }}>
@@ -368,8 +369,8 @@ export default function BookingTab({ clientId, clientName }: Props) {
                             onClick={() => setPickedSlot(s)}
                             className="text-sm cursor-pointer transition-all text-left w-full"
                             style={{
-                              padding: '12px 16px',
-                              borderRadius: '10px',
+                              padding: '15px 20px',
+                              borderRadius: '12px',
                               background: isPicked ? '#0a0a0a' : 'transparent',
                               border: `1px solid ${isPicked ? 'rgba(202,138,4,0.8)' : 'rgba(202,138,4,0.25)'}`,
                               color: isPicked ? '#ca8a04' : '#e7e5e4',
@@ -391,9 +392,9 @@ export default function BookingTab({ clientId, clientName }: Props) {
                       disabled={!pickedSlot}
                       className="w-full text-center cursor-pointer transition-all disabled:cursor-not-allowed"
                       style={{
-                        marginTop: '14px',
-                        padding: '14px 18px',
-                        borderRadius: '10px',
+                        marginTop: '24px',
+                        padding: '17px 20px',
+                        borderRadius: '12px',
                         background: pickedSlot ? '#0a0a0a' : 'rgba(10,10,10,0.4)',
                         border: `1px solid ${pickedSlot ? '#ca8a04' : 'rgba(202,138,4,0.2)'}`,
                         color: pickedSlot ? '#ca8a04' : 'rgba(202,138,4,0.35)',
