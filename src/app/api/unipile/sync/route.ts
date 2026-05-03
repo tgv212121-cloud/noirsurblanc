@@ -144,20 +144,22 @@ export async function POST(req: Request) {
           published_at: publishedAt,
         }).eq('id', postId)
       } else {
-        // Premier sync : on insere SANS forcer l'id (la DB genere son uuid). On stocke matchKey dans linkedin_url pour les futurs syncs.
-        const { data: inserted, error: insErrPost } = await sb.from('posts').insert({
+        // Premier sync : on genere un UUID cote serveur (la colonne posts.id est NOT NULL sans default)
+        const newId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8)
+        const { error: insErrPost } = await sb.from('posts').insert({
+          id: newId,
           client_id: clientId,
           content,
           published_at: publishedAt,
           status: 'published',
           linkedin_url: matchKey,
-        }).select('id').single()
-        if (insErrPost || !inserted) {
-          if (!firstError) firstError = `posts insert: ${insErrPost?.message || 'no row'}`
+        })
+        if (insErrPost) {
+          if (!firstError) firstError = `posts insert: ${insErrPost.message}`
           console.error('[unipile sync] posts insert failed', insErrPost)
           continue
         }
-        postId = (inserted as { id: string }).id
+        postId = newId
         postsUpserted++
       }
 
