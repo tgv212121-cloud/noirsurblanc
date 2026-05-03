@@ -652,48 +652,111 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         {/* Stats tab */}
         {activeTab === 'stats' && (
           <motion.div key="stats" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+            {/* Section 1 : Insights (top 3 + patterns) */}
             <PerformanceInsights posts={publishedPosts} metrics={metrics} clientFirstName={client.name.split(' ')[0]} />
 
-            <div className="grid grid-cols-2 gap-5 mb-12">
-              <div className="bg-noir-elevated rounded-xl" style={{ padding: '24px 28px' }}><p className="text-blanc-muted text-xs mb-2">Impressions totales</p><p className="text-3xl font-bold text-blanc">{formatNumber(totalImpressions)}</p></div>
-              <div className="bg-noir-elevated rounded-xl" style={{ padding: '24px 28px' }}><p className="text-blanc-muted text-xs mb-2">Likes totaux</p><p className="text-3xl font-bold text-blanc">{formatNumber(totalLikes)}</p></div>
-              <div className="bg-noir-elevated rounded-xl" style={{ padding: '24px 28px' }}><p className="text-blanc-muted text-xs mb-2">Commentaires totaux</p><p className="text-3xl font-bold text-blanc">{formatNumber(publishedPosts.reduce((s, p) => { const m = metrics.find(mt => mt.postId === p.id); return s + (m?.comments || 0) }, 0))}</p></div>
-              <div className="bg-noir-elevated rounded-xl" style={{ padding: '24px 28px' }}><p className="text-blanc-muted text-xs mb-2">Engagement moyen</p><p className="text-3xl font-bold text-gold">{avgEngagement}%</p></div>
+            {/* Section 2 : 4 KPI globaux en ligne premium */}
+            <div className="flex items-center gap-3" style={{ marginTop: '56px', marginBottom: '20px' }}>
+              <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
+              <h3 className="font-heading italic text-blanc" style={{ fontSize: '20px' }}>Vue d&apos;ensemble</h3>
             </div>
+            {(() => {
+              const totalComments = publishedPosts.reduce((s, p) => { const m = metrics.find(mt => mt.postId === p.id); return s + (m?.comments || 0) }, 0)
+              return (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" style={{ marginBottom: '56px' }}>
+                  <KpiCard label="Impressions" value={formatNumber(totalImpressions)} accent="white" />
+                  <KpiCard label="Likes" value={formatNumber(totalLikes)} accent="white" />
+                  <KpiCard label="Commentaires" value={formatNumber(totalComments)} accent="white" />
+                  <KpiCard label="Engagement" value={`${avgEngagement}%`} accent="gold" />
+                </div>
+              )
+            })()}
 
-            <h2 className="text-base font-semibold text-blanc mb-6">Performance par post</h2>
-            <div className="space-y-4">
-              {[...publishedPosts].map(p => ({ ...p, m: metrics.find(mt => mt.postId === p.id) })).filter(p => p.m).sort((a, b) => (b.m!.impressions * b.m!.engagementRate) - (a.m!.impressions * a.m!.engagementRate)).map((post, i) => {
-                const isOpen = expandedPost === post.id
-                const firstLine = post.content.split('\n').filter(l => l.trim())[0] || ''
-                return (
-                  <div key={post.id}>
-                    <button onClick={() => setExpandedPost(isOpen ? null : post.id)} className="w-full text-left bg-noir-elevated rounded-xl transition-all duration-200 cursor-pointer hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]" style={{ padding: '20px 24px' }}>
-                      <div className="flex items-center gap-4">
-                        <span className="text-2xl font-bold" style={{ color: i === 0 ? '#2563eb' : 'var(--blanc-muted)', opacity: i === 0 ? 1 : 0.3 }}>{i + 1}</span>
-                        <div className="flex-1 min-w-0"><p className="text-base text-blanc truncate">{firstLine}</p><p className="text-xs text-blanc-muted mt-1">{formatRelative(post.publishedAt)}</p></div>
-                        <div className="text-right shrink-0"><p className="text-sm font-semibold text-blanc">{formatNumber(post.m!.impressions)}</p><p className="text-xs text-gold">{post.m!.engagementRate}%</p></div>
-                      </div>
-                    </button>
-                    <AnimatePresence>
-                      {isOpen && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="overflow-hidden">
-                          <div className="bg-noir-light rounded-b-xl -mt-2" style={{ padding: '24px' }}>
-                            <div className="grid grid-cols-4 gap-4 mb-6">
-                              <div className="bg-noir-card rounded-xl" style={{ padding: '16px 20px' }}><p className="text-xs text-blanc-muted mb-1">Impressions</p><p className="text-lg font-bold text-blanc">{formatNumber(post.m!.impressions)}</p></div>
-                              <div className="bg-noir-card rounded-xl" style={{ padding: '16px 20px' }}><p className="text-xs text-blanc-muted mb-1">Likes</p><p className="text-lg font-bold text-blanc">{post.m!.likes}</p></div>
-                              <div className="bg-noir-card rounded-xl" style={{ padding: '16px 20px' }}><p className="text-xs text-blanc-muted mb-1">Commentaires</p><p className="text-lg font-bold text-blanc">{post.m!.comments}</p></div>
-                              <div className="bg-noir-card rounded-xl" style={{ padding: '16px 20px' }}><p className="text-xs text-blanc-muted mb-1">Engagement</p><p className="text-lg font-bold text-gold">{post.m!.engagementRate}%</p></div>
-                            </div>
-                            <p className="text-sm text-blanc leading-relaxed whitespace-pre-line">{post.content}</p>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )
-              })}
+            {/* Section 3 : Performance par post (liste detaillee) */}
+            <div className="flex items-center gap-3" style={{ marginBottom: '20px' }}>
+              <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
+              <h3 className="font-heading italic text-blanc" style={{ fontSize: '20px' }}>Performance par post</h3>
+              <span className="text-xs text-blanc-muted/60" style={{ marginLeft: '8px' }}>{publishedPosts.length} posts</span>
             </div>
+            {(() => {
+              const ranked = [...publishedPosts]
+                .map(p => ({ ...p, m: metrics.find(mt => mt.postId === p.id) }))
+                .filter(p => p.m)
+                .sort((a, b) => (b.m!.impressions * b.m!.engagementRate) - (a.m!.impressions * a.m!.engagementRate))
+              const topImpressions = ranked[0]?.m?.impressions || 1
+              const baselineRate = ranked.length > 0 ? ranked.reduce((s, p) => s + p.m!.engagementRate, 0) / ranked.length : 0
+              return (
+                <div className="flex flex-col" style={{ gap: '12px' }}>
+                  {ranked.map((post, i) => {
+                    const isOpen = expandedPost === post.id
+                    const firstLine = post.content.split('\n').filter(l => l.trim())[0] || ''
+                    const widthPct = Math.min(100, Math.max(8, (post.m!.impressions / topImpressions) * 100))
+                    const rateDelta = post.m!.engagementRate - baselineRate
+                    const isAbove = rateDelta > 0.05
+                    const isBelow = rateDelta < -0.05
+                    return (
+                      <div key={post.id}>
+                        <button
+                          onClick={() => setExpandedPost(isOpen ? null : post.id)}
+                          className="w-full text-left rounded-xl transition-all duration-200 cursor-pointer hover:bg-white/[0.025]"
+                          style={{ padding: '18px 22px', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}
+                        >
+                          {/* Ligne 1 : rank + preview + impressions */}
+                          <div className="flex items-start gap-4">
+                            <span className="font-heading italic shrink-0" style={{ fontSize: '22px', color: i < 3 ? '#ca8a04' : 'rgba(255,255,255,0.3)', minWidth: '28px', textAlign: 'center' }}>
+                              {i + 1}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-blanc leading-relaxed" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                {firstLine}
+                              </p>
+                              <div className="flex items-center gap-3 flex-wrap" style={{ marginTop: '8px' }}>
+                                <span className="text-[11px] text-blanc-muted/60">{formatRelative(post.publishedAt)}</span>
+                                <span className="inline-flex items-center gap-1 text-[11px] text-blanc-muted/70">
+                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H7"/></svg>
+                                  {post.m!.likes}
+                                </span>
+                                <span className="inline-flex items-center gap-1 text-[11px] text-blanc-muted/70">
+                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                  {post.m!.comments}
+                                </span>
+                                {post.m!.reposts > 0 && (
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-blanc-muted/70">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                                    {post.m!.reposts}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-base font-medium text-blanc tabular-nums">{formatNumber(post.m!.impressions)}</p>
+                              <div className="flex items-center justify-end gap-1.5" style={{ marginTop: '2px' }}>
+                                <p className="text-xs tabular-nums" style={{ color: '#ca8a04' }}>{post.m!.engagementRate.toFixed(2)}%</p>
+                                {isAbove && <span className="text-[9px] text-green-400/80">↑</span>}
+                                {isBelow && <span className="text-[9px] text-red-400/70">↓</span>}
+                              </div>
+                            </div>
+                          </div>
+                          {/* Ligne 2 : barre de progression relative */}
+                          <div style={{ marginTop: '12px', height: '3px', background: 'rgba(255,255,255,0.05)', borderRadius: '999px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: widthPct + '%', background: i === 0 ? 'linear-gradient(90deg, #a16207, #eab308)' : 'rgba(202,138,4,0.4)', borderRadius: '999px', transition: 'width 0.3s ease' }} />
+                          </div>
+                        </button>
+                        <AnimatePresence>
+                          {isOpen && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
+                              <div className="rounded-xl -mt-1" style={{ padding: '22px 24px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderTop: 'none', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
+                                <p className="text-sm text-blanc leading-relaxed whitespace-pre-line">{post.content}</p>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
           </motion.div>
         )}
         {/* Onboarding tab , questionnaire answers */}
@@ -796,6 +859,22 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
           }
         }}
       />
+    </div>
+  )
+}
+
+function KpiCard({ label, value, accent }: { label: string; value: string; accent: 'white' | 'gold' }) {
+  return (
+    <div className="relative rounded-2xl overflow-hidden" style={{
+      padding: '22px 24px',
+      background: accent === 'gold'
+        ? 'linear-gradient(135deg, rgba(202,138,4,0.08), rgba(202,138,4,0.02))'
+        : 'rgba(255,255,255,0.025)',
+      border: `1px solid ${accent === 'gold' ? 'rgba(202,138,4,0.25)' : 'rgba(255,255,255,0.08)'}`,
+    }}>
+      <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+      <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>{label}</p>
+      <p className={`font-heading font-medium leading-none ${accent === 'gold' ? 'text-gold italic' : 'text-blanc'}`} style={{ fontSize: '34px', letterSpacing: '-0.01em' }}>{value}</p>
     </div>
   )
 }
