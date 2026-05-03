@@ -14,6 +14,7 @@ import PulseButton from '@/components/ui/PulseButton'
 import SliderTabs from '@/components/ui/SliderTabs'
 import MessageThread from '@/components/messaging/MessageThread'
 import VersionedPostView from '@/components/posts/VersionedPostView'
+import PerformanceInsights from '@/components/posts/PerformanceInsights'
 import NotificationPrompt from '@/components/ui/NotificationPrompt'
 import type { Client, Post, PostMetrics, Reminder, PostStatus } from '@/types'
 import { questions } from '@/components/onboarding/questions'
@@ -651,6 +652,8 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         {/* Stats tab */}
         {activeTab === 'stats' && (
           <motion.div key="stats" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+            <PerformanceInsights posts={publishedPosts} metrics={metrics} clientFirstName={client.name.split(' ')[0]} />
+
             <div className="grid grid-cols-2 gap-5 mb-12">
               <div className="bg-noir-elevated rounded-xl" style={{ padding: '24px 28px' }}><p className="text-blanc-muted text-xs mb-2">Impressions totales</p><p className="text-3xl font-bold text-blanc">{formatNumber(totalImpressions)}</p></div>
               <div className="bg-noir-elevated rounded-xl" style={{ padding: '24px 28px' }}><p className="text-blanc-muted text-xs mb-2">Likes totaux</p><p className="text-3xl font-bold text-blanc">{formatNumber(totalLikes)}</p></div>
