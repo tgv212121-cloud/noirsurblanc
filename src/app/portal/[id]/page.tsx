@@ -420,7 +420,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                     <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
                     <h3 className="font-heading italic text-blanc" style={{ fontSize: '20px' }}>Vue d&apos;ensemble</h3>
                   </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" style={{ marginBottom: '56px' }}>
+                  <div className="grid grid-cols-2 lg:grid-cols-4" style={{ marginBottom: '56px', gap: '20px' }}>
                     <div className="relative rounded-2xl overflow-hidden" style={{ padding: '22px 24px', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
                       <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>Impressions</p>

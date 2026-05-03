@@ -102,7 +102,7 @@ export default function PerformanceInsights({ posts, metrics, clientFirstName }:
       </div>
 
       {/* Top 3 podium */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ marginBottom: '20px' }}>
+      <div className="grid grid-cols-1 md:grid-cols-3" style={{ marginBottom: '24px', gap: '20px' }}>
         {top3.map((entry, i) => {
           const firstLine = entry.post.content.split('\n').filter(l => l.trim())[0] || ''
           const rateDelta = entry.m.engagementRate - baselineRate
@@ -143,7 +143,7 @@ export default function PerformanceInsights({ posts, metrics, clientFirstName }:
       </div>
 
       {/* Patterns insights */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '20px' }}>
         {bestDay && (
           <InsightCard
             label="Meilleur jour"
