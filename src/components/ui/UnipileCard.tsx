@@ -41,14 +41,20 @@ export default function UnipileCard({ audience = 'client' }: Props) {
       })
       const d = await r.json()
       if (!r.ok || !d.url) {
-        toast.error(d.error || 'Impossible de générer le lien Unipile.')
+        // Affiche le detail Unipile pour qu'on diagnostique
+        const msg = d.detail
+          ? `Unipile : ${d.detail.slice(0, 200)}`
+          : (d.error || 'Impossible de générer le lien Unipile.')
+        toast.error(msg)
+        console.error('[Unipile connect failed]', d)
         setLoading(false)
         return
       }
       // Redirige vers le hosted auth link Unipile
       window.location.href = d.url
-    } catch {
+    } catch (e) {
       toast.error('Erreur réseau.')
+      console.error('[Unipile connect network]', e)
       setLoading(false)
     }
   }

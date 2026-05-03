@@ -21,9 +21,23 @@ export async function POST(req: Request) {
     const { userId } = await req.json()
     if (!userId) return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
 
-    // L'API Unipile attend un payload Hosted Auth Link
+    // L'API Unipile attend un payload Hosted Auth Link minimal
     // Doc : https://developer.unipile.com/reference/accountscontroller_requestauthurl
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1h
+    const payload: Record<string, unknown> = {
+      type: 'create',
+      providers: ['LINKEDIN'],
+      api_url: UNIPILE_DSN,
+      expiresOn: expiresAt,
+      name: userId, // identifie l'user dans le webhook
+    }
+    // Optional URLs : on inclut seulement si APP_URL est defini correctement
+    if (APP_URL && !APP_URL.includes('localhost')) {
+      payload.success_redirect_url = `${APP_URL}/api/unipile/connected?userId=${encodeURIComponent(userId)}`
+      payload.failure_redirect_url = `${APP_URL}/settings?unipile=failed`
+      payload.notify_url = `${APP_URL}/api/unipile/webhook`
+    }
+
     const r = await fetch(`${UNIPILE_DSN}/api/v1/hosted/accounts/link`, {
       method: 'POST',
       headers: {
@@ -31,26 +45,24 @@ export async function POST(req: Request) {
         'Content-Type': 'application/json',
         accept: 'application/json',
       },
-      body: JSON.stringify({
-        type: 'create',
-        providers: ['LINKEDIN'],
-        api_url: UNIPILE_DSN,
-        expiresOn: expiresAt,
-        // Identifie l'user dans le webhook de retour
-        name: userId,
-        success_redirect_url: `${APP_URL}/api/unipile/connected?userId=${encodeURIComponent(userId)}`,
-        failure_redirect_url: `${APP_URL}/settings?unipile=failed`,
-        notify_url: `${APP_URL}/api/unipile/webhook`,
-      }),
+      body: JSON.stringify(payload),
     })
+    const txt = await r.text()
     if (!r.ok) {
-      const txt = await r.text().catch(() => '')
       console.error('[unipile] hosted link error', r.status, txt)
-      return NextResponse.json({ error: 'Unipile API error', detail: txt }, { status: 500 })
+      return NextResponse.json({
+        error: 'Unipile API error',
+        status: r.status,
+        detail: txt.slice(0, 500),
+      }, { status: 500 })
     }
-    const d = await r.json()
+    let d: { url?: string } = {}
+    try { d = JSON.parse(txt) } catch {}
     const url = d.url
-    if (!url) return NextResponse.json({ error: 'No url returned by Unipile' }, { status: 500 })
+    if (!url) {
+      console.error('[unipile] no url in response', txt)
+      return NextResponse.json({ error: 'No url returned by Unipile', detail: txt.slice(0, 500) }, { status: 500 })
+    }
     return NextResponse.json({ url })
   } catch (e) {
     console.error('unipile connect', e)
