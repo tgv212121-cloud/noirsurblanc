@@ -75,7 +75,8 @@ export default function UnipileCard({ audience = 'client' }: Props) {
         return
       }
       if (d.postsFromUnipile === 0) {
-        toast.info('Aucun post trouvé sur ton LinkedIn.')
+        toast.info('Aucun post retourné par Unipile. Vérifie la console F12 pour les détails.')
+        console.log('[Unipile sync DEBUG]', d)
       } else {
         toast.success(`${d.metricsUpserted} posts synchronisés. Recharge l’onglet Stats.`)
       }

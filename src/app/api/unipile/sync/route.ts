@@ -78,9 +78,37 @@ export async function POST(req: Request) {
       console.error('[unipile sync] fetch posts failed', r.status, txt)
       return NextResponse.json({ error: 'Unipile posts fetch failed', status: r.status, detail: txt.slice(0, 500) }, { status: 500 })
     }
-    let parsed: { items?: UnipilePost[]; data?: UnipilePost[] } = {}
+    let parsed: any = {}
     try { parsed = JSON.parse(txt) } catch {}
-    const items: UnipilePost[] = parsed.items || parsed.data || []
+    // Unipile peut renvoyer plusieurs shapes : { items: [...] }, { data: [...] }, { posts: [...] } ou directement un array
+    const items: UnipilePost[] = (
+      parsed.items
+      || parsed.data
+      || parsed.posts
+      || parsed.results
+      || (Array.isArray(parsed) ? parsed : [])
+    ) as UnipilePost[]
+
+    // Si toujours 0, on log les keys du response pour diagnostic
+    if (items.length === 0) {
+      const responseKeys = Object.keys(parsed || {})
+      const sampleKeys = parsed && Array.isArray(parsed.items) === false && typeof parsed === 'object'
+        ? JSON.stringify(parsed).slice(0, 800)
+        : 'array_or_unknown'
+      return NextResponse.json({
+        ok: true,
+        accountId,
+        myProviderId: myId,
+        postsFromUnipile: 0,
+        postsUpserted: 0,
+        metricsUpserted: 0,
+        debug: {
+          response_keys: responseKeys,
+          response_sample: sampleKeys,
+          raw_response_preview: txt.slice(0, 1000),
+        },
+      })
+    }
 
     let postsUpserted = 0
     let metricsUpserted = 0
