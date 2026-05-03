@@ -44,15 +44,38 @@ export async function POST(req: Request) {
     if (!UNIPILE_API_KEY || !UNIPILE_DSN) {
       return NextResponse.json({ error: 'Unipile not configured' }, { status: 500 })
     }
-    const { userId } = await req.json()
-    if (!userId) return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
+    const body = await req.json()
+    const { userId, clientId: directClientId } = body as { userId?: string; clientId?: string }
+
+    if (!userId && !directClientId) return NextResponse.json({ error: 'Missing userId or clientId' }, { status: 400 })
 
     const sb = getAdminSupabase()
-    const { data: prof } = await sb.from('profiles').select('unipile_account_id, client_id').eq('id', userId).maybeSingle()
-    const accountId = (prof as { unipile_account_id?: string } | null)?.unipile_account_id
-    const clientId = (prof as { client_id?: string } | null)?.client_id
+
+    // Cherche unipile_account_id : soit via profile (par userId), soit via client (par clientId)
+    let accountId: string | undefined
+    let clientId: string | undefined = directClientId
+    let userIdForUpdate: string | undefined = userId
+
+    if (userId) {
+      const { data: prof } = await sb.from('profiles').select('unipile_account_id, client_id').eq('id', userId).maybeSingle()
+      const p = prof as { unipile_account_id?: string; client_id?: string } | null
+      accountId = p?.unipile_account_id
+      clientId = clientId || p?.client_id
+    }
+
+    // Fallback : on lit unipile_account_id directement sur le client
+    if (!accountId && clientId) {
+      const { data: cli } = await sb.from('clients').select('unipile_account_id').eq('id', clientId).maybeSingle()
+      accountId = (cli as { unipile_account_id?: string } | null)?.unipile_account_id
+      // Et on essaie aussi de trouver le profile lie pour mettre a jour profiles.last_unipile_sync_at
+      if (!userIdForUpdate) {
+        const { data: prof } = await sb.from('profiles').select('id').eq('client_id', clientId).maybeSingle()
+        userIdForUpdate = (prof as { id?: string } | null)?.id
+      }
+    }
+
     if (!accountId) return NextResponse.json({ error: 'No Unipile account linked' }, { status: 400 })
-    if (!clientId) return NextResponse.json({ error: 'Profile has no client_id' }, { status: 400 })
+    if (!clientId) return NextResponse.json({ error: 'No client_id resolved' }, { status: 400 })
 
     // Etape 1 : recupere mon profil LinkedIn (pour avoir mon provider_id LinkedIn)
     const meRes = await fetch(`${UNIPILE_DSN}/api/v1/users/me?account_id=${encodeURIComponent(accountId)}`, {
@@ -190,9 +213,9 @@ export async function POST(req: Request) {
       }
     }
 
-    // Update timestamp last_unipile_sync_at sur le profil + le client
+    // Update timestamp last_unipile_sync_at sur le profil (si dispo) + le client
     const nowSync = new Date().toISOString()
-    await sb.from('profiles').update({ last_unipile_sync_at: nowSync }).eq('id', userId)
+    if (userIdForUpdate) await sb.from('profiles').update({ last_unipile_sync_at: nowSync }).eq('id', userIdForUpdate)
     if (clientId) await sb.from('clients').update({ last_unipile_sync_at: nowSync }).eq('id', clientId)
 
     return NextResponse.json({

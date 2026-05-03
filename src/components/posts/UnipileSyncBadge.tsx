@@ -58,21 +58,20 @@ export default function UnipileSyncBadge({ clientId }: Props) {
 
   const sync = async () => {
     if (busy) return
-    // Determine quel userId utiliser pour le sync
-    let targetUserId = userId
-    if (clientId) {
-      // En vue admin sur fiche client : on doit trouver le profile.id du client
-      const { data } = await supabase.from('profiles').select('id').eq('client_id', clientId).maybeSingle()
-      targetUserId = (data as { id?: string } | null)?.id || null
+    // Vue admin : on passe le clientId directement, le backend trouvera le compte Unipile
+    // Vue client : on passe userId
+    const payload: Record<string, string> = clientId ? { clientId } : (userId ? { userId } : {})
+    if (!payload.clientId && !payload.userId) {
+      toast.error('Impossible de déterminer le compte à synchroniser.')
+      return
     }
-    if (!targetUserId) { toast.error('Impossible de déterminer le compte à synchroniser.'); return }
 
     setBusy(true)
     try {
       const r = await fetch('/api/unipile/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: targetUserId }),
+        body: JSON.stringify(payload),
       })
       const d = await r.json()
       if (!r.ok) {
