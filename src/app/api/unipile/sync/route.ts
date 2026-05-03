@@ -51,18 +51,32 @@ export async function POST(req: Request) {
     if (!accountId) return NextResponse.json({ error: 'No Unipile account linked' }, { status: 400 })
     if (!clientId) return NextResponse.json({ error: 'Profile has no client_id' }, { status: 400 })
 
-    // Fetch the posts of this account on LinkedIn via Unipile
-    const r = await fetch(`${UNIPILE_DSN}/api/v1/users/me/posts?account_id=${encodeURIComponent(accountId)}&limit=100`, {
+    // Etape 1 : recupere mon profil LinkedIn (pour avoir mon provider_id LinkedIn)
+    const meRes = await fetch(`${UNIPILE_DSN}/api/v1/users/me?account_id=${encodeURIComponent(accountId)}`, {
       method: 'GET',
-      headers: {
-        'X-API-KEY': UNIPILE_API_KEY,
-        accept: 'application/json',
-      },
+      headers: { 'X-API-KEY': UNIPILE_API_KEY, accept: 'application/json' },
+    })
+    const meTxt = await meRes.text()
+    if (!meRes.ok) {
+      console.error('[unipile sync] /users/me failed', meRes.status, meTxt)
+      return NextResponse.json({ error: 'Unipile /users/me failed', status: meRes.status, detail: meTxt.slice(0, 500) }, { status: 500 })
+    }
+    let me: { provider_id?: string; public_identifier?: string; id?: string } = {}
+    try { me = JSON.parse(meTxt) } catch {}
+    const myId = me.provider_id || me.public_identifier || me.id
+    if (!myId) {
+      return NextResponse.json({ error: 'No provider_id in Unipile /users/me response', detail: meTxt.slice(0, 500) }, { status: 500 })
+    }
+
+    // Etape 2 : recupere mes posts via /users/{provider_id}/posts
+    const r = await fetch(`${UNIPILE_DSN}/api/v1/users/${encodeURIComponent(myId)}/posts?account_id=${encodeURIComponent(accountId)}&limit=100`, {
+      method: 'GET',
+      headers: { 'X-API-KEY': UNIPILE_API_KEY, accept: 'application/json' },
     })
     const txt = await r.text()
     if (!r.ok) {
       console.error('[unipile sync] fetch posts failed', r.status, txt)
-      return NextResponse.json({ error: 'Unipile fetch failed', status: r.status, detail: txt.slice(0, 500) }, { status: 500 })
+      return NextResponse.json({ error: 'Unipile posts fetch failed', status: r.status, detail: txt.slice(0, 500) }, { status: 500 })
     }
     let parsed: { items?: UnipilePost[]; data?: UnipilePost[] } = {}
     try { parsed = JSON.parse(txt) } catch {}
