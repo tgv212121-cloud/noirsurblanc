@@ -83,7 +83,7 @@ export default function Sidebar() {
   ]
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+    <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <FloatingDock items={items} />
     </div>
   )

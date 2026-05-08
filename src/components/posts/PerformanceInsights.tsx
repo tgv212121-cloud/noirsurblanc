@@ -102,14 +102,13 @@ export default function PerformanceInsights({ posts, metrics, clientFirstName }:
       </div>
 
       {/* Top 3 podium */}
-      <div className="grid grid-cols-1 md:grid-cols-3" style={{ marginBottom: '24px', gap: '20px' }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-5" style={{ marginBottom: '24px' }}>
         {top3.map((entry, i) => {
           const firstLine = entry.post.content.split('\n').filter(l => l.trim())[0] || ''
           const rateDelta = entry.m.engagementRate - baselineRate
           const isAbove = rateDelta > 0
           return (
-            <div key={entry.post.id} className="relative rounded-2xl overflow-hidden" style={{
-              padding: '22px 24px',
+            <div key={entry.post.id} className="relative rounded-2xl overflow-hidden p-4 sm:p-[22px_24px]" style={{
               background: i === 0 ? 'linear-gradient(135deg, rgba(202,138,4,0.10), rgba(202,138,4,0.02))' : 'rgba(255,255,255,0.025)',
               border: i === 0 ? '1px solid rgba(202,138,4,0.28)' : '1px solid rgba(255,255,255,0.08)',
             }}>
@@ -143,7 +142,7 @@ export default function PerformanceInsights({ posts, metrics, clientFirstName }:
       </div>
 
       {/* Patterns insights */}
-      <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '20px' }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-5">
         {bestDay && (
           <InsightCard
             label="Meilleur jour"
@@ -185,7 +184,7 @@ export default function PerformanceInsights({ posts, metrics, clientFirstName }:
 
 function InsightCard({ label, value, subtitle, icon }: { label: string; value: string; subtitle: string; icon: React.ReactNode }) {
   return (
-    <div className="rounded-2xl" style={{ padding: '20px 22px', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
+    <div className="rounded-2xl p-4 sm:p-[20px_22px]" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
       <div className="flex items-center gap-2" style={{ marginBottom: '10px', color: '#ca8a04' }}>
         {icon}
         <p className="text-[10px] uppercase tracking-[0.18em] text-blanc-muted/70">{label}</p>

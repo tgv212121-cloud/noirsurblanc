@@ -91,6 +91,12 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
     })
   }, [id])
 
+  // Rafraîchit posts + metrics après une sync Unipile (sans reload)
+  const refreshStats = async () => {
+    const [p, m] = await Promise.all([fetchClientPosts(id), fetchMetrics()])
+    setInitialPosts(p); setMetrics(m)
+  }
+
   const getPostStatus = useCallback((postId: string, originalStatus: PostStatus): PostStatus => {
     return postStatuses[postId] || originalStatus
   }, [postStatuses])
@@ -219,7 +225,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       <AnimatePresence mode="wait">
         {/* Calendar tab */}
         {activeTab === 'calendar' && (
-          <motion.div key="calendar" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 lg:grid-cols-[minmax(0,520px)_1fr] gap-8 items-start">
+          <motion.div key="calendar" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 lg:grid-cols-[minmax(0,520px)_1fr] gap-6 lg:gap-8 items-start">
           <div>
             <div className="flex items-center justify-between mb-8">
               <button onClick={prevMonth} className="text-blanc-muted hover:text-blanc text-sm cursor-pointer" style={{ padding: '8px 16px' }}>← {MONTHS_FR[calendarMonth === 0 ? 11 : calendarMonth - 1]}</button>
@@ -260,7 +266,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
           {/* Right column: editor / post viewer */}
           <div className="lg:sticky lg:top-6">
             {!editingDate && (
-              <div className="bg-noir-elevated rounded-xl text-center" style={{ padding: '60px 28px' }}>
+              <div className="bg-noir-elevated rounded-xl text-center px-5 py-10 sm:p-[60px_28px]">
                 <p className="text-sm text-blanc-muted">Clique sur un jour pour rédiger ou voir un post.</p>
               </div>
             )}
@@ -326,7 +332,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                     }
 
                     return (
-                      <div key={post.id} className="bg-noir-elevated rounded-xl" style={{ padding: '28px' }}>
+                      <div key={post.id} className="bg-noir-elevated rounded-xl p-5 sm:p-7">
                         <div className="flex items-center gap-3 mb-5 flex-wrap">
                           <span className="text-[10px] font-medium uppercase tracking-wider rounded"
                             style={{ padding: '4px 10px', backgroundColor: post.status === 'published' ? '#05966912' : '#2563eb12', color: post.status === 'published' ? '#059669' : '#2563eb' }}>
@@ -340,10 +346,10 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                           )}
                           {canEdit && !isEditing && (
                             <div className="ml-auto flex items-center gap-2">
-                              <button onClick={startEdit} className="nsb-btn nsb-btn-secondary" style={{ padding: '8px 16px', fontSize: '10.5px' }}>
+                              <button onClick={startEdit} className="nsb-btn nsb-btn-secondary" style={{ padding: '10px 18px', fontSize: '11px', minHeight: '40px' }}>
                                 Modifier
                               </button>
-                              <button onClick={() => setPostToDelete(post)} className="nsb-btn nsb-btn-secondary" style={{ padding: '8px 14px', fontSize: '10.5px', color: '#f87171', borderColor: 'rgba(248,113,113,0.3)' }}>
+                              <button onClick={() => setPostToDelete(post)} className="nsb-btn nsb-btn-secondary" style={{ padding: '10px 16px', fontSize: '11px', minHeight: '40px', color: '#f87171', borderColor: 'rgba(248,113,113,0.3)' }}>
                                 Supprimer
                               </button>
                             </div>
@@ -373,7 +379,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                                   return (
                                     <div key={i} className="relative group">
                                       {isImg ? (
-                                        <img src={f.url} alt={f.name} style={{ width: '110px', height: '110px', borderRadius: '10px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.08)' }} />
+                                        <img src={f.url} alt={f.name} style={{ width: '100%', maxWidth: '110px', aspectRatio: '1 / 1', borderRadius: '10px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.08)' }} />
                                       ) : (
                                         <div className="flex items-center gap-2 rounded-lg" style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', maxWidth: '260px' }}>
                                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -434,7 +440,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                               </div>
                             )}
                             {m && (
-                              <div className="grid grid-cols-4 gap-3">
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                                 <div className="bg-noir-card rounded-lg" style={{ padding: '12px 16px' }}><p className="text-[10px] text-blanc-muted mb-1">Impressions</p><p className="text-sm font-semibold text-blanc">{formatNumber(m.impressions)}</p></div>
                                 <div className="bg-noir-card rounded-lg" style={{ padding: '12px 16px' }}><p className="text-[10px] text-blanc-muted mb-1">Likes</p><p className="text-sm font-semibold text-blanc">{m.likes}</p></div>
                                 <div className="bg-noir-card rounded-lg" style={{ padding: '12px 16px' }}><p className="text-[10px] text-blanc-muted mb-1">Commentaires</p><p className="text-sm font-semibold text-blanc">{m.comments}</p></div>
@@ -448,7 +454,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                   })
                 ) : (
                   /* No post for this date , show editor */
-                  <div className="bg-noir-elevated rounded-xl" style={{ padding: '28px' }}>
+                  <div className="bg-noir-elevated rounded-xl p-5 sm:p-7">
                     <h3 className="text-base font-semibold text-blanc mb-2">Rédiger un post</h3>
                     <p className="text-xs text-blanc-muted mb-5">
                       Ce post sera visible par {client.name.split(' ')[0]} dans son calendrier.
@@ -482,7 +488,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                         <div className="flex gap-3 mb-4 flex-wrap">
                           {postImages.map((img, i) => (
                             <div key={i} className="relative group">
-                              <img src={img} alt={`Image ${i + 1}`} className="rounded-lg object-cover" style={{ width: '120px', height: '120px' }} />
+                              <img src={img} alt={`Image ${i + 1}`} className="rounded-lg object-cover" style={{ width: '100%', maxWidth: '120px', aspectRatio: '1 / 1' }} />
                               <button
                                 onClick={() => setPostImages(prev => prev.filter((_, idx) => idx !== i))}
                                 className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-200"
@@ -655,7 +661,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
           <motion.div key="stats" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
             {/* Sync badge (LinkedIn / Unipile) */}
             <div style={{ marginBottom: '40px' }}>
-              <UnipileSyncBadge clientId={client.id} />
+              <UnipileSyncBadge clientId={client.id} onSyncComplete={refreshStats} />
             </div>
 
             {/* Section 1 : Insights (top 3 + patterns) */}
@@ -669,7 +675,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
             {(() => {
               const totalComments = publishedPosts.reduce((s, p) => { const m = metrics.find(mt => mt.postId === p.id); return s + (m?.comments || 0) }, 0)
               return (
-                <div className="grid grid-cols-2 lg:grid-cols-4" style={{ marginBottom: '56px', gap: '20px' }}>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5" style={{ marginBottom: '40px' }}>
                   <KpiCard label="Impressions" value={formatNumber(totalImpressions)} accent="white" />
                   <KpiCard label="Likes" value={formatNumber(totalLikes)} accent="white" />
                   <KpiCard label="Commentaires" value={formatNumber(totalComments)} accent="white" />
@@ -779,7 +785,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                 const objAnswer = (raw && typeof raw === 'object') ? raw as Record<string, string> : null
                 const strAnswer = typeof raw === 'string' ? raw : null
                 return (
-                <div key={q.id} className="bg-noir-elevated rounded-xl" style={{ padding: '24px 28px' }}>
+                <div key={q.id} className="bg-noir-elevated rounded-xl p-5 sm:p-[24px_28px]">
                   <div className="flex items-start gap-4">
                     <span className="text-xs font-medium text-blanc-muted shrink-0" style={{ padding: '4px 10px', backgroundColor: 'var(--noir-card)', borderRadius: '6px', marginTop: '2px' }}>
                       {String(i + 1).padStart(2, '0')}
