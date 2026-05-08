@@ -43,60 +43,63 @@ export default function SliderTabs({ items, value, onChange, className }: Props)
   }, [])
 
   return (
-    <div
-      ref={containerRef}
-      className={cn('relative inline-flex', className)}
-      style={{
-        background: 'rgba(255,255,255,0.025)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        padding: '4px',
-        borderRadius: '12px',
-        gap: '2px',
-      }}
-    >
-      {/* Slider dore */}
-      <span
-        aria-hidden
+    <div className={cn('max-w-full overflow-x-auto nsb-no-scrollbar', className)} style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div
+        ref={containerRef}
+        className="relative inline-flex"
         style={{
-          position: 'absolute',
-          top: '4px',
-          bottom: '4px',
-          left: slider.left + 'px',
-          width: slider.width + 'px',
-          background: '#ca8a04',
-          borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(202,138,4,0.25)',
-          transition: 'left .35s cubic-bezier(0.22, 1, 0.36, 1), width .35s cubic-bezier(0.22, 1, 0.36, 1)',
-          zIndex: 0,
+          background: 'rgba(255,255,255,0.025)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          padding: '4px',
+          borderRadius: '12px',
+          gap: '2px',
         }}
-      />
+      >
+        {/* Slider dore */}
+        <span
+          aria-hidden
+          style={{
+            position: 'absolute',
+            top: '4px',
+            bottom: '4px',
+            left: slider.left + 'px',
+            width: slider.width + 'px',
+            background: '#ca8a04',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(202,138,4,0.25)',
+            transition: 'left .35s cubic-bezier(0.22, 1, 0.36, 1), width .35s cubic-bezier(0.22, 1, 0.36, 1)',
+            zIndex: 0,
+          }}
+        />
 
-      {items.map((t) => {
-        const active = t.id === value
-        return (
-          <button
-            key={t.id}
-            ref={(el) => { btnRefs.current[t.id] = el }}
-            onClick={() => onChange(t.id)}
-            className="relative cursor-pointer transition-colors"
-            style={{
-              padding: '9px 18px',
-              fontSize: '12px',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: active ? '#0a0a0a' : 'rgba(255,255,255,0.65)',
-              fontWeight: active ? 600 : 500,
-              background: 'transparent',
-              border: 'none',
-              borderRadius: '8px',
-              fontFamily: 'inherit',
-              zIndex: 1,
-            }}
-          >
-            {t.label}
-          </button>
-        )
-      })}
+        {items.map((t) => {
+          const active = t.id === value
+          return (
+            <button
+              key={t.id}
+              ref={(el) => { btnRefs.current[t.id] = el }}
+              onClick={() => onChange(t.id)}
+              className="relative cursor-pointer transition-colors whitespace-nowrap"
+              style={{
+                padding: '11px 16px',
+                minHeight: '44px',
+                fontSize: '12px',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: active ? '#0a0a0a' : 'rgba(255,255,255,0.65)',
+                fontWeight: active ? 600 : 500,
+                background: 'transparent',
+                border: 'none',
+                borderRadius: '8px',
+                fontFamily: 'inherit',
+                zIndex: 1,
+              }}
+            >
+              {t.label}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

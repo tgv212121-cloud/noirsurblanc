@@ -318,7 +318,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
   }
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100vh - 260px)' }}>
+    <div className="flex flex-col" style={{ height: 'min(calc(100dvh - 220px), calc(100vh - 220px))', minHeight: '420px' }}>
       {/* Messages */}
       <div className="flex-1 space-y-6 overflow-y-auto" style={{ paddingRight: '8px', paddingBottom: '24px' }}>
         {messages.length === 0 ? (
@@ -331,7 +331,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
             return (
               <div key={msg.id} className={cn('flex', isMe ? 'justify-end' : 'justify-start')}>
               <div
-                className="relative w-fit max-w-[65%]"
+                className="relative w-fit max-w-[85%] sm:max-w-[70%]"
                 onContextMenu={(e) => {
                   e.preventDefault()
                   setCtxMenu({ x: e.clientX, y: e.clientY, msg })
@@ -563,7 +563,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
           )
         })()}
 
-        <div className="bg-noir-elevated rounded-2xl" style={{ padding: '20px 22px' }}>
+        <div className="bg-noir-elevated rounded-2xl p-4 sm:p-[20px_22px]">
           {recording ? (
             <div className="flex items-center justify-between gap-4 flex-wrap" style={{ padding: '16px' }}>
               <div className="flex items-center gap-3">
@@ -652,7 +652,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                     onClick={() => fileInputRef.current?.click()}
                     disabled={sending}
                     className="flex items-center justify-center rounded-lg text-blanc-muted hover:text-blanc transition-colors duration-200 cursor-pointer disabled:opacity-50"
-                    style={{ width: '40px', height: '40px', backgroundColor: 'var(--noir-card)' }}
+                    style={{ width: '44px', height: '44px', minWidth: '44px', backgroundColor: 'var(--noir-card)' }}
                     title="Joindre un fichier"
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -663,7 +663,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                     onClick={startRecording}
                     disabled={sending}
                     className="flex items-center justify-center rounded-lg text-blanc-muted hover:text-blanc transition-colors duration-200 cursor-pointer disabled:opacity-50"
-                    style={{ width: '40px', height: '40px', backgroundColor: 'var(--noir-card)' }}
+                    style={{ width: '44px', height: '44px', minWidth: '44px', backgroundColor: 'var(--noir-card)' }}
                     title="Message vocal"
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -726,7 +726,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
             <button
               onClick={(e) => { e.stopPropagation(); setLightboxUrl(null) }}
               className="absolute flex items-center justify-center rounded-full text-white/80 hover:text-white transition-colors cursor-pointer"
-              style={{ top: '20px', right: '20px', width: '40px', height: '40px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
+              style={{ top: '16px', right: '16px', width: '44px', height: '44px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
               aria-label="Fermer"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -746,7 +746,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                 } catch {}
               }}
               className="absolute flex items-center justify-center rounded-full text-white/80 hover:text-white transition-colors cursor-pointer"
-              style={{ top: '20px', right: '70px', width: '40px', height: '40px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
+              style={{ top: '16px', right: '68px', width: '44px', height: '44px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
               aria-label="Télécharger"
               title="Télécharger"
             >

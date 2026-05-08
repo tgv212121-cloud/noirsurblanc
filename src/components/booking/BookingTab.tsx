@@ -197,7 +197,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
 
   if (rules.filter(r => r.enabled).length === 0) {
     return (
-      <div className="text-center rounded-2xl" style={{ padding: '60px 28px', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.09)' }}>
+      <div className="text-center rounded-2xl px-5 py-10 sm:p-[60px_28px]" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.09)' }}>
         <p className="text-sm text-blanc-muted">
           Les créneaux de rendez-vous ne sont pas encore ouverts. Reviens bientôt.
         </p>
@@ -207,7 +207,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
 
   if (success) {
     return (
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center rounded-2xl" style={{ padding: '56px 28px', background: 'rgba(202,138,4,0.06)', border: '1px solid rgba(202,138,4,0.2)' }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center rounded-2xl px-5 py-10 sm:p-[56px_28px]" style={{ background: 'rgba(202,138,4,0.06)', border: '1px solid rgba(202,138,4,0.2)' }}>
         <div className="flex items-center justify-center rounded-full mx-auto" style={{ width: '60px', height: '60px', background: 'rgba(202,138,4,0.15)', border: '1px solid rgba(202,138,4,0.3)', marginBottom: '20px' }}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
@@ -247,7 +247,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
                 const end = start + (a.durationMin || 30) * 60_000
                 const inProgress = start <= Date.now() && Date.now() < end
                 return (
-                  <div key={a.id} className="flex items-center gap-4" style={{ padding: '16px 22px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div key={a.id} className="flex items-center gap-3 sm:gap-4 flex-wrap" style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm text-blanc font-medium">
@@ -325,7 +325,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
             maskComposite: 'exclude',
           }} />
 
-          <div className="relative rounded-xl grid grid-cols-1 md:grid-cols-[320px_1fr]" style={{ background: 'rgba(15,15,15,0.95)', padding: '44px 48px', gap: '56px' }}>
+          <div className="relative rounded-xl grid grid-cols-1 md:grid-cols-[280px_1fr] p-5 sm:p-8 md:p-[44px_48px] gap-8 md:gap-14" style={{ background: 'rgba(15,15,15,0.95)' }}>
             {/* Calendrier - colonne gauche, taille reduite */}
             <div style={{ fontSize: '13px' }}>
               <Calendar
@@ -340,7 +340,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
             </div>
 
             {/* Créneaux - colonne droite */}
-            <div className="md:border-l flex flex-col" style={{ borderColor: 'rgba(202,138,4,0.15)', paddingLeft: '40px' }}>
+            <div className="md:border-l flex flex-col md:pl-10" style={{ borderColor: 'rgba(202,138,4,0.15)' }}>
               {selectedDay ? (
                 <>
                   <p className="text-[10px] uppercase tracking-[0.22em] text-blanc-muted/60" style={{ marginBottom: '20px' }}>
@@ -423,13 +423,13 @@ export default function BookingTab({ clientId, clientName }: Props) {
         {selectedSlot && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center px-6"
+            className="fixed inset-0 z-[100] flex items-center justify-center px-4 sm:px-6"
             style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(8px)' }}
             onClick={() => { if (!submitting) setSelectedSlot(null) }}>
             <motion.div
               initial={{ opacity: 0, scale: 0.94, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }}
               onClick={e => e.stopPropagation()}
-              className="relative w-full rounded-3xl" style={{ maxWidth: '460px', background: 'rgba(20,20,20,0.96)', border: '1px solid rgba(255,255,255,0.08)', padding: '32px' }}>
+              className="relative w-full rounded-3xl p-5 sm:p-8" style={{ maxWidth: 'min(460px, calc(100vw - 2rem))', background: 'rgba(20,20,20,0.96)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <h3 className="font-heading text-2xl text-blanc italic" style={{ marginBottom: '8px' }}>Confirmer</h3>
               <p className="text-sm text-blanc-muted/80" style={{ marginBottom: '20px' }}>
                 {DAYS_SHORT[selectedSlot.date.getDay()]} {selectedSlot.date.getDate()} {MONTHS_FR[selectedSlot.date.getMonth()].toLowerCase()} à {pad(selectedSlot.date.getHours())}h{pad(selectedSlot.date.getMinutes())} &middot; {duration} min

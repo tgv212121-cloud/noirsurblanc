@@ -60,6 +60,12 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
     })
   }, [id])
 
+  // Rafraîchit posts + metrics après une sync Unipile (sans reload)
+  const refreshStats = async () => {
+    const [p, m] = await Promise.all([fetchClientPosts(id), fetchMetrics()])
+    setPosts(p); setMetrics(m)
+  }
+
   // Refetch admin last seen every 30s pour tenir la pastille a jour
   useEffect(() => {
     let mounted = true
@@ -198,7 +204,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
           : 0
         const totalImpressions = metrics.reduce((s, m) => s + (m.impressions || 0), 0)
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ marginBottom: '56px' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4" style={{ marginBottom: '40px' }}>
             {/* Posts publiés */}
             <MagicCard>
               <div style={{ padding: '22px 26px' }}>
@@ -268,7 +274,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 lg:grid-cols-[minmax(0,280px)_1fr] gap-12 items-start"
+            className="grid grid-cols-1 lg:grid-cols-[minmax(0,280px)_1fr] gap-8 lg:gap-12 items-start"
           >
           <div>
             {/* Month navigation */}
@@ -379,7 +385,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                 ))}
               </motion.div>
             ) : (
-              <div className="bg-noir-elevated rounded-xl text-center" style={{ padding: '60px 28px' }}>
+              <div className="bg-noir-elevated rounded-xl text-center px-5 py-10 sm:p-[60px_28px]">
                 <p className="text-sm text-blanc-muted">
                   {selectedDate ? "Aucun post prévu ce jour-là." : "Clique sur un jour pour voir le post à publier."}
                 </p>
@@ -400,7 +406,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
           >
             {/* Sync badge (LinkedIn / Unipile) */}
             <div style={{ marginBottom: '32px' }}>
-              <UnipileSyncBadge />
+              <UnipileSyncBadge onSyncComplete={refreshStats} />
             </div>
 
             {/* Section 1 : Insights (top 3 + patterns) */}
@@ -420,23 +426,23 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                     <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
                     <h3 className="font-heading italic text-blanc" style={{ fontSize: '20px' }}>Vue d&apos;ensemble</h3>
                   </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-4" style={{ marginBottom: '56px', gap: '20px' }}>
-                    <div className="relative rounded-2xl overflow-hidden" style={{ padding: '22px 24px', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5" style={{ marginBottom: '40px' }}>
+                    <div className="relative rounded-2xl overflow-hidden p-4 sm:p-[22px_24px]" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
                       <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>Impressions</p>
                       <p className="font-heading font-medium leading-none text-blanc" style={{ fontSize: '34px', letterSpacing: '-0.01em' }}>{formatNumber(totalImp)}</p>
                     </div>
-                    <div className="relative rounded-2xl overflow-hidden" style={{ padding: '22px 24px', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div className="relative rounded-2xl overflow-hidden p-4 sm:p-[22px_24px]" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
                       <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>Likes</p>
                       <p className="font-heading font-medium leading-none text-blanc" style={{ fontSize: '34px', letterSpacing: '-0.01em' }}>{formatNumber(totalLk)}</p>
                     </div>
-                    <div className="relative rounded-2xl overflow-hidden" style={{ padding: '22px 24px', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div className="relative rounded-2xl overflow-hidden p-4 sm:p-[22px_24px]" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
                       <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>Commentaires</p>
                       <p className="font-heading font-medium leading-none text-blanc" style={{ fontSize: '34px', letterSpacing: '-0.01em' }}>{formatNumber(totalCo)}</p>
                     </div>
-                    <div className="relative rounded-2xl overflow-hidden" style={{ padding: '22px 24px', background: 'linear-gradient(135deg, rgba(139,92,246,0.10), rgba(139,92,246,0.02))', border: '1px solid rgba(139,92,246,0.25)' }}>
+                    <div className="relative rounded-2xl overflow-hidden p-4 sm:p-[22px_24px]" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.10), rgba(139,92,246,0.02))', border: '1px solid rgba(139,92,246,0.25)' }}>
                       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
                       <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>Engagement</p>
                       <p className="font-heading font-medium italic leading-none" style={{ fontSize: '34px', letterSpacing: '-0.01em', color: '#8b5cf6' }}>{avgEng}%</p>
@@ -827,7 +833,7 @@ function PostCopyCard({ postId, clientId, content, files, validatedAt, onValidat
   )
 
   return (
-    <div className="bg-noir-elevated rounded-xl" style={{ padding: '28px' }}>
+    <div className="bg-noir-elevated rounded-xl p-5 sm:p-7">
       {/* Versions du post + actions (Copier/Valider) attachees a la version actuelle */}
       <VersionedPostView postId={postId} clientId={clientId} actionsForCurrent={actionsBlock} />
 
@@ -872,7 +878,7 @@ function PostCopyCard({ postId, clientId, content, files, validatedAt, onValidat
                 }}
                 title="Télécharger"
                 className="absolute flex items-center justify-center rounded-lg cursor-pointer transition-all opacity-90 hover:opacity-100 hover:scale-105"
-                style={{ top: '10px', right: '10px', width: '36px', height: '36px', background: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.18)', color: 'white', backdropFilter: 'blur(6px)' }}
+                style={{ top: '8px', right: '8px', width: '40px', height: '40px', background: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.18)', color: 'white', backdropFilter: 'blur(6px)' }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
               </button>
@@ -936,7 +942,7 @@ function PostCopyCard({ postId, clientId, content, files, validatedAt, onValidat
                 } catch {}
               }}
               className="absolute flex items-center justify-center rounded-full text-white/80 hover:text-white transition-colors cursor-pointer"
-              style={{ top: '20px', right: '70px', width: '40px', height: '40px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
+              style={{ top: '16px', right: '68px', width: '44px', height: '44px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
               aria-label="Télécharger"
               title="Télécharger"
             >

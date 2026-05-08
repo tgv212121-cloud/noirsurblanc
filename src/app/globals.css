@@ -59,6 +59,15 @@ body {
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
+/* Utilitaire pour masquer la scrollbar (tabs, carousels horizontaux) */
+.nsb-no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.nsb-no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* Empêche les zooms involontaires sur les inputs iOS (font-size >= 16px) */
+@media (max-width: 640px) {
+  input, textarea, select { font-size: 16px; }
+}
+
 ::selection { background: rgba(201, 169, 97, 0.25); }
 
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Jost, Bodoni_Moda } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/layout/Sidebar";
@@ -24,11 +24,18 @@ const bodoni = Bodoni_Moda({
   style: ["normal", "italic"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#0a0a0a",
+  viewportFit: "cover",
+};
+
 export const metadata: Metadata = {
   title: "Noirsurblanc",
   description: "Plateforme de gestion de contenu LinkedIn",
   manifest: "/manifest.json",
-  themeColor: "#0a0a0a",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Noirsurblanc" },
   icons: {
     icon: [

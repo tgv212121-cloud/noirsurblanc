@@ -8,6 +8,8 @@ type Props = {
   // Si fourni, on lit last_unipile_sync_at sur le client (vue admin sur fiche client)
   // Sinon on prend le user courant (vue client sur son portail)
   clientId?: string
+  // Callback déclenché après une sync réussie (pour rafraîchir les stats du parent)
+  onSyncComplete?: () => void | Promise<void>
 }
 
 function formatRelativeShort(iso: string | null | undefined): string {
@@ -24,7 +26,7 @@ function formatRelativeShort(iso: string | null | undefined): string {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
-export default function UnipileSyncBadge({ clientId }: Props) {
+export default function UnipileSyncBadge({ clientId, onSyncComplete }: Props) {
   const toast = useToast()
   const [lastSync, setLastSync] = useState<string | null>(null)
   const [connected, setConnected] = useState(false)
@@ -88,7 +90,10 @@ export default function UnipileSyncBadge({ clientId }: Props) {
       } else {
         toast.success('À jour.')
       }
-      // Reload page si demande
+      // Rafraîchit les données du parent (stats, KPIs, podium…)
+      if (onSyncComplete) {
+        try { await onSyncComplete() } catch { /* silent */ }
+      }
     } catch {
       toast.error('Erreur réseau.')
     } finally {
