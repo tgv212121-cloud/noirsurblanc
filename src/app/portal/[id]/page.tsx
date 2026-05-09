@@ -426,23 +426,23 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                     <span className="inline-block rounded-full" style={{ width: '6px', height: '6px', background: '#ca8a04', boxShadow: '0 0 10px rgba(202,138,4,0.6)' }} />
                     <h3 className="font-heading italic text-blanc" style={{ fontSize: '20px' }}>Vue d&apos;ensemble</h3>
                   </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5" style={{ marginBottom: '40px' }}>
-                    <div className="relative rounded-2xl overflow-hidden p-4 sm:p-[22px_24px]" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6" style={{ marginBottom: '48px' }}>
+                    <div className="relative rounded-2xl overflow-hidden" style={{ padding: 'clamp(18px, 3.5vw, 28px) clamp(20px, 3.5vw, 30px)', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
                       <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>Impressions</p>
                       <p className="font-heading font-medium leading-none text-blanc" style={{ fontSize: '34px', letterSpacing: '-0.01em' }}>{formatNumber(totalImp)}</p>
                     </div>
-                    <div className="relative rounded-2xl overflow-hidden p-4 sm:p-[22px_24px]" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div className="relative rounded-2xl overflow-hidden" style={{ padding: 'clamp(18px, 3.5vw, 28px) clamp(20px, 3.5vw, 30px)', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
                       <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>Likes</p>
                       <p className="font-heading font-medium leading-none text-blanc" style={{ fontSize: '34px', letterSpacing: '-0.01em' }}>{formatNumber(totalLk)}</p>
                     </div>
-                    <div className="relative rounded-2xl overflow-hidden p-4 sm:p-[22px_24px]" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div className="relative rounded-2xl overflow-hidden" style={{ padding: 'clamp(18px, 3.5vw, 28px) clamp(20px, 3.5vw, 30px)', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
                       <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>Commentaires</p>
                       <p className="font-heading font-medium leading-none text-blanc" style={{ fontSize: '34px', letterSpacing: '-0.01em' }}>{formatNumber(totalCo)}</p>
                     </div>
-                    <div className="relative rounded-2xl overflow-hidden p-4 sm:p-[22px_24px]" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.10), rgba(139,92,246,0.02))', border: '1px solid rgba(139,92,246,0.25)' }}>
+                    <div className="relative rounded-2xl overflow-hidden" style={{ padding: 'clamp(18px, 3.5vw, 28px) clamp(20px, 3.5vw, 30px)', background: 'linear-gradient(135deg, rgba(139,92,246,0.10), rgba(139,92,246,0.02))', border: '1px solid rgba(139,92,246,0.25)' }}>
                       <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
                       <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>Engagement</p>
                       <p className="font-heading font-medium italic leading-none" style={{ fontSize: '34px', letterSpacing: '-0.01em', color: '#8b5cf6' }}>{avgEng}%</p>

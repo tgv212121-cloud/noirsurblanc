@@ -675,7 +675,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
             {(() => {
               const totalComments = publishedPosts.reduce((s, p) => { const m = metrics.find(mt => mt.postId === p.id); return s + (m?.comments || 0) }, 0)
               return (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5" style={{ marginBottom: '40px' }}>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6" style={{ marginBottom: '48px' }}>
                   <KpiCard label="Impressions" value={formatNumber(totalImpressions)} accent="white" />
                   <KpiCard label="Likes" value={formatNumber(totalLikes)} accent="white" />
                   <KpiCard label="Commentaires" value={formatNumber(totalComments)} accent="white" />

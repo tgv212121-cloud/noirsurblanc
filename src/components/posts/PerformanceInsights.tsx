@@ -102,36 +102,37 @@ export default function PerformanceInsights({ posts, metrics, clientFirstName }:
       </div>
 
       {/* Top 3 podium */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-5" style={{ marginBottom: '24px' }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6" style={{ marginBottom: '32px' }}>
         {top3.map((entry, i) => {
           const firstLine = entry.post.content.split('\n').filter(l => l.trim())[0] || ''
           const rateDelta = entry.m.engagementRate - baselineRate
           const isAbove = rateDelta > 0
           return (
-            <div key={entry.post.id} className="relative rounded-2xl overflow-hidden p-4 sm:p-[22px_24px]" style={{
+            <div key={entry.post.id} className="relative rounded-2xl overflow-hidden" style={{
+              padding: 'clamp(20px, 4vw, 32px) clamp(22px, 4vw, 34px)',
               background: i === 0 ? 'linear-gradient(135deg, rgba(202,138,4,0.10), rgba(202,138,4,0.02))' : 'rgba(255,255,255,0.025)',
               border: i === 0 ? '1px solid rgba(202,138,4,0.28)' : '1px solid rgba(255,255,255,0.08)',
             }}>
-              <div className="flex items-center gap-3" style={{ marginBottom: '12px' }}>
-                <span className="font-heading italic" style={{ fontSize: '24px', color: i === 0 ? '#ca8a04' : 'rgba(255,255,255,0.4)' }}>
+              <div className="flex items-center gap-3" style={{ marginBottom: '18px' }}>
+                <span className="font-heading italic" style={{ fontSize: '26px', color: i === 0 ? '#ca8a04' : 'rgba(255,255,255,0.4)' }}>
                   {i === 0 ? '1er' : i === 1 ? '2e' : '3e'}
                 </span>
                 <span className="text-[10px] uppercase tracking-[0.18em] text-blanc-muted/60">Top {i + 1}</span>
               </div>
-              <p className="text-sm text-blanc leading-relaxed" style={{ marginBottom: '16px', minHeight: '40px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              <p className="text-sm text-blanc leading-relaxed" style={{ marginBottom: '22px', minHeight: '44px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                 {firstLine}
               </p>
-              <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-5 flex-wrap">
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-blanc-muted/50" style={{ marginBottom: '2px' }}>Impressions</p>
+                  <p className="text-[10px] uppercase tracking-wider text-blanc-muted/50" style={{ marginBottom: '4px' }}>Impressions</p>
                   <p className="text-lg text-blanc font-medium">{formatNumber(entry.m.impressions)}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-blanc-muted/50" style={{ marginBottom: '2px' }}>Engagement</p>
+                  <p className="text-[10px] uppercase tracking-wider text-blanc-muted/50" style={{ marginBottom: '4px' }}>Engagement</p>
                   <p className="text-lg font-medium" style={{ color: i === 0 ? '#ca8a04' : '#fafaf9' }}>{entry.m.engagementRate.toFixed(2)}%</p>
                 </div>
                 {Math.abs(rateDelta) > 0.05 && (
-                  <span className="text-[10px] uppercase tracking-wider rounded-full" style={{ padding: '3px 8px', background: isAbove ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)', color: isAbove ? '#22c55e' : '#f87171' }}>
+                  <span className="text-[10px] uppercase tracking-wider rounded-full" style={{ padding: '4px 10px', background: isAbove ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)', color: isAbove ? '#22c55e' : '#f87171' }}>
                     {isAbove ? '+' : ''}{rateDelta.toFixed(2)} vs moyenne
                   </span>
                 )}
@@ -142,7 +143,7 @@ export default function PerformanceInsights({ posts, metrics, clientFirstName }:
       </div>
 
       {/* Patterns insights */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         {bestDay && (
           <InsightCard
             label="Meilleur jour"
@@ -184,12 +185,12 @@ export default function PerformanceInsights({ posts, metrics, clientFirstName }:
 
 function InsightCard({ label, value, subtitle, icon }: { label: string; value: string; subtitle: string; icon: React.ReactNode }) {
   return (
-    <div className="rounded-2xl p-4 sm:p-[20px_22px]" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
-      <div className="flex items-center gap-2" style={{ marginBottom: '10px', color: '#ca8a04' }}>
+    <div className="rounded-2xl" style={{ padding: 'clamp(20px, 4vw, 28px) clamp(22px, 4vw, 32px)', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="flex items-center gap-2" style={{ marginBottom: '14px', color: '#ca8a04' }}>
         {icon}
         <p className="text-[10px] uppercase tracking-[0.18em] text-blanc-muted/70">{label}</p>
       </div>
-      <p className="font-heading italic text-blanc" style={{ fontSize: '22px', marginBottom: '4px', lineHeight: 1.2 }}>{value}</p>
+      <p className="font-heading italic text-blanc" style={{ fontSize: '24px', marginBottom: '6px', lineHeight: 1.2 }}>{value}</p>
       <p className="text-[11px] text-blanc-muted/60 leading-relaxed">{subtitle}</p>
     </div>
   )
