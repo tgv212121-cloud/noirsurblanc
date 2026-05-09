@@ -85,6 +85,20 @@ export async function POST(req: Request) {
     const meTxt = await meRes.text()
     if (!meRes.ok) {
       console.error('[unipile sync] /users/me failed', meRes.status, meTxt)
+      // Cas particulier : compte Unipile expiré ou révoqué côté LinkedIn → on nettoie pour forcer une reconnexion
+      const isStaleAccount = meRes.status === 404 || /account not found|resource_not_found/i.test(meTxt)
+      if (isStaleAccount) {
+        if (userIdForUpdate) {
+          await sb.from('profiles').update({ unipile_account_id: null, last_unipile_sync_at: null }).eq('id', userIdForUpdate)
+        }
+        if (clientId) {
+          await sb.from('clients').update({ unipile_account_id: null, last_unipile_sync_at: null }).eq('id', clientId)
+        }
+        return NextResponse.json({
+          error: 'account_stale',
+          message: 'Ta connexion LinkedIn a expiré ou été révoquée. Reconnecte ton compte pour relancer la synchronisation.',
+        }, { status: 410 })
+      }
       return NextResponse.json({ error: 'Unipile /users/me failed', status: meRes.status, detail: meTxt.slice(0, 500) }, { status: 500 })
     }
     let me: { provider_id?: string; public_identifier?: string; id?: string } = {}

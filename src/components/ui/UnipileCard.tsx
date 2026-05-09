@@ -70,6 +70,13 @@ export default function UnipileCard({ audience = 'client' }: Props) {
       })
       const d = await r.json()
       if (!r.ok) {
+        // Compte Unipile invalidé : on bascule l'UI en "déconnecté" pour proposer la reconnexion
+        if (d.error === 'account_stale' || r.status === 410) {
+          setStatus({ connected: false })
+          toast.error(d.message || 'Connexion LinkedIn expirée. Reconnecte ton compte.')
+          console.warn('[Unipile sync] account stale, cleared')
+          return
+        }
         toast.error(d.detail ? `Sync : ${d.detail.slice(0, 200)}` : (d.error || 'Échec du sync.'))
         console.error('[Unipile sync]', d)
         return

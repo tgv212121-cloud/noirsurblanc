@@ -77,6 +77,11 @@ export default function UnipileSyncBadge({ clientId, onSyncComplete }: Props) {
       })
       const d = await r.json()
       if (!r.ok) {
+        if (d.error === 'account_stale' || r.status === 410) {
+          setConnected(false)
+          toast.error(d.message || 'Connexion LinkedIn expirée. Va dans Paramètres pour reconnecter.')
+          return
+        }
         toast.error(d.error || 'Sync échec.')
         return
       }
