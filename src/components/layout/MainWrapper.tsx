@@ -13,7 +13,12 @@ export default function MainWrapper({ children }: { children: React.ReactNode })
 
   return (
     <main style={{ minHeight: '100vh' }}>
-      <div className="px-4 sm:px-8 md:px-12 lg:px-[60px] pt-6 sm:pt-8 pb-24 sm:pb-28 lg:pb-[120px]">{children}</div>
+      <div style={{
+        paddingLeft: 'clamp(16px, 4vw, 56px)',
+        paddingRight: 'clamp(16px, 4vw, 56px)',
+        paddingTop: 'clamp(20px, 3vw, 36px)',
+        paddingBottom: 'clamp(80px, 8vw, 110px)',
+      }}>{children}</div>
     </main>
   )
 }
