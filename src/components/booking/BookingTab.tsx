@@ -207,17 +207,17 @@ export default function BookingTab({ clientId, clientName }: Props) {
 
   if (success) {
     return (
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center rounded-2xl" style={{ padding: 'clamp(40px, 6vw, 56px) clamp(20px, 4vw, 28px)', background: 'rgba(202,138,4,0.06)', border: '1px solid rgba(202,138,4,0.2)' }}>
-        <div className="flex items-center justify-center rounded-full mx-auto" style={{ width: '60px', height: '60px', background: 'rgba(202,138,4,0.15)', border: '1px solid rgba(202,138,4,0.3)', marginBottom: '20px' }}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl flex flex-col items-center text-center" style={{ padding: 'clamp(48px, 7vw, 72px) clamp(24px, 4vw, 40px)', background: 'rgba(202,138,4,0.06)', border: '1px solid rgba(202,138,4,0.2)' }}>
+        <div className="flex items-center justify-center rounded-full" style={{ width: '64px', height: '64px', background: 'rgba(202,138,4,0.15)', border: '1px solid rgba(202,138,4,0.3)', marginBottom: '28px' }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
-        <h2 className="font-heading text-2xl text-blanc italic" style={{ marginBottom: '10px' }}>Rendez-vous confirmé</h2>
-        <p className="text-sm text-blanc-muted/80 leading-relaxed" style={{ marginBottom: '22px' }}>
+        <h2 className="font-heading text-2xl text-blanc italic" style={{ marginBottom: '14px' }}>Rendez-vous confirmé</h2>
+        <p className="text-sm text-blanc-muted/80 leading-relaxed" style={{ marginBottom: '32px', maxWidth: '420px' }}>
           Un email avec les détails et le lien de la visio vient de t&apos;être envoyé.
         </p>
         <button onClick={() => { setSuccess(false); setSelectedSlot(null); setTopic(''); setNotes('') }}
           className="text-xs text-gold hover:text-gold-light tracking-widest uppercase cursor-pointer"
-          style={{ padding: '10px 20px', border: '1px solid rgba(202,138,4,0.4)', borderRadius: '10px' }}>
+          style={{ padding: '12px 24px', border: '1px solid rgba(202,138,4,0.4)', borderRadius: '10px' }}>
           Réserver un autre
         </button>
       </motion.div>
@@ -429,27 +429,27 @@ export default function BookingTab({ clientId, clientName }: Props) {
             <motion.div
               initial={{ opacity: 0, scale: 0.94, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }}
               onClick={e => e.stopPropagation()}
-              className="relative w-full rounded-3xl p-5 sm:p-8" style={{ maxWidth: 'min(460px, calc(100vw - 2rem))', background: 'rgba(20,20,20,0.96)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <h3 className="font-heading text-2xl text-blanc italic" style={{ marginBottom: '8px' }}>Confirmer</h3>
-              <p className="text-sm text-blanc-muted/80" style={{ marginBottom: '20px' }}>
+              className="relative w-full rounded-3xl" style={{ maxWidth: 'min(480px, calc(100vw - 2rem))', background: 'rgba(20,20,20,0.96)', border: '1px solid rgba(255,255,255,0.08)', padding: 'clamp(28px, 4vw, 40px) clamp(28px, 4vw, 40px)' }}>
+              <h3 className="font-heading text-2xl text-blanc italic" style={{ marginBottom: '12px' }}>Confirmer</h3>
+              <p className="text-sm text-blanc-muted/80" style={{ marginBottom: '32px' }}>
                 {DAYS_SHORT[selectedSlot.date.getDay()]} {selectedSlot.date.getDate()} {MONTHS_FR[selectedSlot.date.getMonth()].toLowerCase()} à {pad(selectedSlot.date.getHours())}h{pad(selectedSlot.date.getMinutes())} &middot; {duration} min
               </p>
 
-              <label className="text-[10px] text-blanc-muted/60 uppercase tracking-wider block" style={{ marginBottom: '6px' }}>Sujet du call (optionnel)</label>
+              <label className="text-[10px] text-blanc-muted/60 uppercase tracking-wider block" style={{ marginBottom: '10px' }}>Sujet du call (optionnel)</label>
               <input type="text" value={topic} onChange={e => setTopic(e.target.value)} placeholder="Ex: point stratégie de contenu"
-                style={{ width: '100%', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: '#fafaf9', fontSize: '14px', padding: '12px 14px', outline: 'none', marginBottom: '14px', fontFamily: 'inherit' }} />
+                style={{ width: '100%', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: '#fafaf9', fontSize: '14px', padding: '14px 16px', outline: 'none', marginBottom: '24px', fontFamily: 'inherit' }} />
 
-              <label className="text-[10px] text-blanc-muted/60 uppercase tracking-wider block" style={{ marginBottom: '6px' }}>Note (optionnel)</label>
+              <label className="text-[10px] text-blanc-muted/60 uppercase tracking-wider block" style={{ marginBottom: '10px' }}>Note (optionnel)</label>
               <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Infos utiles pour préparer le call" rows={3}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: '#fafaf9', fontSize: '14px', padding: '12px 14px', outline: 'none', resize: 'none', fontFamily: 'inherit' }} />
+                style={{ width: '100%', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: '#fafaf9', fontSize: '14px', padding: '14px 16px', outline: 'none', resize: 'none', fontFamily: 'inherit' }} />
 
-              <div className="flex items-center" style={{ marginTop: '24px', gap: '10px' }}>
+              <div className="flex items-center" style={{ marginTop: '36px', gap: '12px' }}>
                 <button onClick={() => { if (!submitting) setSelectedSlot(null) }} disabled={submitting}
-                  className="nsb-btn nsb-btn-secondary flex-1" style={{ padding: '13px 18px' }}>
+                  className="nsb-btn nsb-btn-secondary flex-1" style={{ padding: '15px 20px' }}>
                   Annuler
                 </button>
                 <button onClick={handleConfirm} disabled={submitting}
-                  className="nsb-btn nsb-btn-primary flex-1" style={{ padding: '13px 18px' }}>
+                  className="nsb-btn nsb-btn-primary flex-1" style={{ padding: '15px 20px' }}>
                   {submitting ? 'Réservation...' : 'Confirmer'}
                 </button>
               </div>
