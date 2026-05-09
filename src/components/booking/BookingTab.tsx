@@ -197,7 +197,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
 
   if (rules.filter(r => r.enabled).length === 0) {
     return (
-      <div className="text-center rounded-2xl px-5 py-10 sm:p-[60px_28px]" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.09)' }}>
+      <div className="text-center rounded-2xl" style={{ padding: 'clamp(40px, 7vw, 60px) clamp(20px, 4vw, 28px)', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.09)' }}>
         <p className="text-sm text-blanc-muted">
           Les créneaux de rendez-vous ne sont pas encore ouverts. Reviens bientôt.
         </p>
@@ -207,7 +207,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
 
   if (success) {
     return (
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center rounded-2xl px-5 py-10 sm:p-[56px_28px]" style={{ background: 'rgba(202,138,4,0.06)', border: '1px solid rgba(202,138,4,0.2)' }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center rounded-2xl" style={{ padding: 'clamp(40px, 6vw, 56px) clamp(20px, 4vw, 28px)', background: 'rgba(202,138,4,0.06)', border: '1px solid rgba(202,138,4,0.2)' }}>
         <div className="flex items-center justify-center rounded-full mx-auto" style={{ width: '60px', height: '60px', background: 'rgba(202,138,4,0.15)', border: '1px solid rgba(202,138,4,0.3)', marginBottom: '20px' }}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
@@ -325,7 +325,7 @@ export default function BookingTab({ clientId, clientName }: Props) {
             maskComposite: 'exclude',
           }} />
 
-          <div className="relative rounded-xl grid grid-cols-1 md:grid-cols-[280px_1fr] p-5 sm:p-8 md:p-[44px_48px] gap-8 md:gap-14" style={{ background: 'rgba(15,15,15,0.95)' }}>
+          <div className="relative rounded-xl grid grid-cols-1 md:grid-cols-[280px_1fr]" style={{ background: 'rgba(15,15,15,0.95)', padding: 'clamp(20px, 4vw, 44px) clamp(20px, 4vw, 48px)', gap: 'clamp(24px, 4vw, 56px)' }}>
             {/* Calendrier - colonne gauche, taille reduite */}
             <div style={{ fontSize: '13px' }}>
               <Calendar

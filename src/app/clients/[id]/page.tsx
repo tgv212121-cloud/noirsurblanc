@@ -266,7 +266,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
           {/* Right column: editor / post viewer */}
           <div className="lg:sticky lg:top-6">
             {!editingDate && (
-              <div className="bg-noir-elevated rounded-xl text-center px-5 py-10 sm:p-[60px_28px]">
+              <div className="bg-noir-elevated rounded-xl text-center" style={{ padding: 'clamp(40px, 7vw, 60px) clamp(20px, 4vw, 28px)' }}>
                 <p className="text-sm text-blanc-muted">Clique sur un jour pour rédiger ou voir un post.</p>
               </div>
             )}
@@ -785,7 +785,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                 const objAnswer = (raw && typeof raw === 'object') ? raw as Record<string, string> : null
                 const strAnswer = typeof raw === 'string' ? raw : null
                 return (
-                <div key={q.id} className="bg-noir-elevated rounded-xl p-5 sm:p-[24px_28px]">
+                <div key={q.id} className="bg-noir-elevated rounded-xl" style={{ padding: 'clamp(20px, 3vw, 28px) clamp(22px, 3vw, 32px)' }}>
                   <div className="flex items-start gap-4">
                     <span className="text-xs font-medium text-blanc-muted shrink-0" style={{ padding: '4px 10px', backgroundColor: 'var(--noir-card)', borderRadius: '6px', marginTop: '2px' }}>
                       {String(i + 1).padStart(2, '0')}

@@ -385,7 +385,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                 ))}
               </motion.div>
             ) : (
-              <div className="bg-noir-elevated rounded-xl text-center px-5 py-10 sm:p-[60px_28px]">
+              <div className="bg-noir-elevated rounded-xl text-center" style={{ padding: 'clamp(40px, 7vw, 60px) clamp(20px, 4vw, 28px)' }}>
                 <p className="text-sm text-blanc-muted">
                   {selectedDate ? "Aucun post prévu ce jour-là." : "Clique sur un jour pour voir le post à publier."}
                 </p>

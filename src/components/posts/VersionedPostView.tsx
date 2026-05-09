@@ -35,7 +35,7 @@ export default function VersionedPostView({ postId, clientId, readOnly = false, 
 
   // versions est deja trie par version DESC (la plus recente en premier)
   return (
-    <div className="flex flex-col" style={{ gap: '24px' }}>
+    <div className="flex flex-col" style={{ gap: '40px' }}>
       {versions.map((v, idx) => {
         const isCurrent = idx === 0
         const images = v.files.filter(f => IMG_RE.test(f.url) || IMG_RE.test(f.name))
@@ -45,14 +45,14 @@ export default function VersionedPostView({ postId, clientId, readOnly = false, 
             key={v.id}
             className="rounded-2xl"
             style={{
-              padding: '24px 26px',
+              padding: 'clamp(22px, 3vw, 32px) clamp(24px, 3vw, 34px)',
               background: isCurrent ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.015)',
               border: isCurrent ? '1px solid rgba(202,138,4,0.25)' : '1px solid rgba(255,255,255,0.06)',
               opacity: isCurrent ? 1 : 0.85,
             }}
           >
             {/* Bandeau version */}
-            <div className="flex items-center gap-3 flex-wrap" style={{ marginBottom: '18px' }}>
+            <div className="flex items-center gap-3 flex-wrap" style={{ marginBottom: '24px' }}>
               <span
                 className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider rounded-full"
                 style={{
@@ -102,7 +102,7 @@ export default function VersionedPostView({ postId, clientId, readOnly = false, 
 
             {/* Actions (Copier / Valider) uniquement sur la version actuelle */}
             {isCurrent && actionsForCurrent && (
-              <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ marginTop: '28px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                 {actionsForCurrent}
               </div>
             )}

@@ -563,7 +563,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
           )
         })()}
 
-        <div className="bg-noir-elevated rounded-2xl p-4 sm:p-[20px_22px]">
+        <div className="bg-noir-elevated rounded-2xl" style={{ padding: 'clamp(16px, 3vw, 24px) clamp(18px, 3vw, 26px)' }}>
           {recording ? (
             <div className="flex items-center justify-between gap-4 flex-wrap" style={{ padding: '16px' }}>
               <div className="flex items-center gap-3">
@@ -631,7 +631,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                 }}
                 placeholder="Votre message..."
                 className="w-full bg-transparent text-sm text-blanc placeholder:text-blanc-muted/50 outline-none leading-relaxed"
-                style={{ resize: 'none', padding: '4px 8px', minHeight: '24px', maxHeight: '260px', overflowY: 'auto' }}
+                style={{ resize: 'none', padding: '6px 10px', minHeight: '32px', maxHeight: '260px', overflowY: 'auto' }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault()
@@ -640,8 +640,8 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
                 }}
               />
 
-              <div className="flex items-center justify-between" style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between" style={{ marginTop: '22px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
+                <div className="flex items-center gap-3">
                   <input
                     ref={fileInputRef}
                     type="file"
