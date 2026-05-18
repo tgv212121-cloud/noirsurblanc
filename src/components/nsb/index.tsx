@@ -369,14 +369,14 @@ export function SliderTabs({ items, value, onChange, className = '' }: SliderTab
     >
       <div
         ref={wrapRef}
-        className="relative inline-flex gap-1 rounded-xl border border-white/10 bg-white/[0.025] p-[5px]"
+        className="relative inline-flex gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-[6px]"
       >
         <span
           aria-hidden
           className="absolute z-0 rounded-lg bg-gold shadow-[0_4px_12px_rgba(202,138,4,0.25)]"
           style={{
-            top: 5,
-            bottom: 5,
+            top: 6,
+            bottom: 6,
             left: slider.left,
             width: slider.width,
             transition:
@@ -393,7 +393,7 @@ export function SliderTabs({ items, value, onChange, className = '' }: SliderTab
               }}
               onClick={() => onChange(t.id)}
               className={[
-                'relative z-10 min-h-[44px] whitespace-nowrap rounded-lg border-0 bg-transparent px-5 py-[11px]',
+                'relative z-10 min-h-[44px] whitespace-nowrap rounded-lg border-0 bg-transparent px-7 py-[11px]',
                 'font-body text-[12px] uppercase tracking-[0.08em] cursor-pointer transition-colors',
                 active ? 'font-semibold text-noir' : 'font-medium text-blanc/65 hover:text-blanc',
               ].join(' ')}
