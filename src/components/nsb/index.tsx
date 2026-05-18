@@ -393,7 +393,7 @@ export function SliderTabs({ items, value, onChange, className = '' }: SliderTab
               }}
               onClick={() => onChange(t.id)}
               className={[
-                'relative z-10 min-h-[48px] whitespace-nowrap rounded-lg border-0 bg-transparent px-11 py-[14px]',
+                'relative z-10 min-h-[48px] whitespace-nowrap rounded-lg border-0 bg-transparent px-[52px] py-[14px]',
                 'font-body text-[12px] uppercase tracking-[0.08em] cursor-pointer transition-colors',
                 active ? 'font-semibold text-noir' : 'font-medium text-blanc/65 hover:text-blanc',
               ].join(' ')}
