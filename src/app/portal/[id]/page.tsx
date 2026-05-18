@@ -21,6 +21,7 @@ import NumberTicker from '@/components/ui/NumberTicker'
 import VersionedPostView from '@/components/posts/VersionedPostView'
 import UnipileSyncBadge from '@/components/posts/UnipileSyncBadge'
 import PerformanceInsights from '@/components/posts/PerformanceInsights'
+import { KPI, CalendarDay } from '@/components/nsb'
 
 type Tab = 'calendar' | 'messages' | 'stats' | 'history' | 'booking' | 'account'
 
@@ -309,40 +310,18 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                 const isToday = dateStr === now.toISOString().split('T')[0]
                 const isSelected = selectedDate === dateStr
                 const hasPost = dayPosts.length > 0
-                // Etat visuel : vert = tous valides (ou publies) / orange = au moins 1 non valide
                 const allValidated = hasPost && dayPosts.every(p => p.status === 'published' || !!p.validatedAt)
-                const dotColor = allValidated ? '#22c55e' : '#ea580c'
-                const bgTint = allValidated ? '#22c55e10' : '#ea580c10'
+                const status: 'empty' | 'pending' | 'validated' = !hasPost ? 'empty' : allValidated ? 'validated' : 'pending'
 
                 return (
-                  <button
+                  <CalendarDay
                     key={day}
+                    day={day}
+                    status={status}
+                    isToday={isToday}
+                    isSelected={isSelected}
                     onClick={() => setSelectedDate(isSelected ? null : dateStr)}
-                    className={cn(
-                      'relative rounded-xl text-sm cursor-pointer transition-all duration-200 text-center',
-                      isSelected ? 'ring-2' : '',
-                      hasPost ? 'font-semibold' : 'text-blanc-muted',
-                    )}
-                    style={{
-                      padding: '12px 0',
-                      backgroundColor: hasPost ? bgTint : isToday ? 'var(--noir-elevated)' : 'transparent',
-                      color: hasPost ? 'var(--blanc)' : undefined,
-                      ['--tw-ring-color' as string]: '#8b5cf6',
-                    }}
-                  >
-                    {day}
-                    {hasPost && (
-                      <span
-                        className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full"
-                        style={{
-                          width: '5px',
-                          height: '5px',
-                          backgroundColor: dotColor,
-                          boxShadow: allValidated ? '0 0 6px rgba(34,197,94,0.5)' : 'none',
-                        }}
-                      />
-                    )}
-                  </button>
+                  />
                 )
               })}
             </div>
@@ -427,26 +406,10 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
                     <h3 className="font-heading italic text-blanc" style={{ fontSize: '20px' }}>Vue d&apos;ensemble</h3>
                   </div>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6" style={{ marginBottom: '48px' }}>
-                    <div className="relative rounded-2xl overflow-hidden" style={{ padding: 'clamp(18px, 3.5vw, 28px) clamp(20px, 3.5vw, 30px)', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>Impressions</p>
-                      <p className="font-heading font-medium leading-none text-blanc" style={{ fontSize: '34px', letterSpacing: '-0.01em' }}>{formatNumber(totalImp)}</p>
-                    </div>
-                    <div className="relative rounded-2xl overflow-hidden" style={{ padding: 'clamp(18px, 3.5vw, 28px) clamp(20px, 3.5vw, 30px)', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>Likes</p>
-                      <p className="font-heading font-medium leading-none text-blanc" style={{ fontSize: '34px', letterSpacing: '-0.01em' }}>{formatNumber(totalLk)}</p>
-                    </div>
-                    <div className="relative rounded-2xl overflow-hidden" style={{ padding: 'clamp(18px, 3.5vw, 28px) clamp(20px, 3.5vw, 30px)', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>Commentaires</p>
-                      <p className="font-heading font-medium leading-none text-blanc" style={{ fontSize: '34px', letterSpacing: '-0.01em' }}>{formatNumber(totalCo)}</p>
-                    </div>
-                    <div className="relative rounded-2xl overflow-hidden" style={{ padding: 'clamp(18px, 3.5vw, 28px) clamp(20px, 3.5vw, 30px)', background: 'linear-gradient(135deg, rgba(139,92,246,0.10), rgba(139,92,246,0.02))', border: '1px solid rgba(139,92,246,0.25)' }}>
-                      <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>Engagement</p>
-                      <p className="font-heading font-medium italic leading-none" style={{ fontSize: '34px', letterSpacing: '-0.01em', color: '#8b5cf6' }}>{avgEng}%</p>
-                    </div>
+                    <KPI label="Impressions" value={formatNumber(totalImp)} />
+                    <KPI label="Likes" value={formatNumber(totalLk)} />
+                    <KPI label="Commentaires" value={formatNumber(totalCo)} />
+                    <KPI label="Engagement" value={`${avgEng}%`} dotColor="#8b5cf6" accent valueColor="text-[#8b5cf6]" />
                   </div>
                 </>
               )

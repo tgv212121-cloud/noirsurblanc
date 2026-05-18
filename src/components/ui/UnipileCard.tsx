@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from './Toast'
+import { Button } from '@/components/nsb'
 
 type Props = {
   audience?: 'admin' | 'client'
@@ -157,20 +158,23 @@ export default function UnipileCard({ audience = 'client' }: Props) {
 
         {status?.connected ? (
           <div className="flex items-center" style={{ gap: '10px' }}>
-            <button onClick={sync} disabled={loading} className="nsb-btn nsb-btn-primary" style={{ padding: '13px 22px', fontSize: '11px' }}>
-              {loading ? 'Sync…' : 'Synchroniser'}
-            </button>
-            <button onClick={disconnect} disabled={loading}
-              className="text-sm text-blanc-muted hover:text-red-400 cursor-pointer transition-colors disabled:opacity-40"
-              style={{ padding: '12px 20px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <Button variant="primary" size="md" onClick={sync} disabled={loading}>
+              {loading ? 'Sync...' : 'Synchroniser'}
+            </Button>
+            <Button variant="secondary" size="md" onClick={disconnect} disabled={loading}>
               {loading ? '...' : 'Déconnecter'}
-            </button>
+            </Button>
           </div>
         ) : status ? (
-          <button onClick={connect} disabled={loading} className="nsb-btn nsb-btn-primary" style={{ padding: '14px 24px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="#0a0a0a"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 110-4.12 2.06 2.06 0 010 4.12zm1.78 13.02H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45C23.2 24 24 23.23 24 22.28V1.72C24 .77 23.2 0 22.22 0z"/></svg>
-            {loading ? 'Connexion…' : 'Connecter LinkedIn'}
-          </button>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={connect}
+            disabled={loading}
+            leading={<svg width="16" height="16" viewBox="0 0 24 24" fill="#0a0a0a"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 110-4.12 2.06 2.06 0 010 4.12zm1.78 13.02H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45C23.2 24 24 23.23 24 22.28V1.72C24 .77 23.2 0 22.22 0z"/></svg>}
+          >
+            {loading ? 'Connexion...' : 'Connecter LinkedIn'}
+          </Button>
         ) : null}
       </div>
     </div>

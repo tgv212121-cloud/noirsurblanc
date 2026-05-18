@@ -10,6 +10,7 @@ import {
 } from '@/lib/queries'
 import type { AvailabilityRule, Appointment } from '@/types'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import { Button } from '@/components/nsb'
 import { useToast } from '@/components/ui/Toast'
 import { supabase } from '@/lib/supabase'
 import Calendar from '@/components/ui/Calendar'
@@ -444,14 +445,12 @@ export default function BookingTab({ clientId, clientName }: Props) {
                 style={{ width: '100%', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: '#fafaf9', fontSize: '14px', padding: '14px 16px', outline: 'none', resize: 'none', fontFamily: 'inherit' }} />
 
               <div className="flex items-center" style={{ marginTop: '36px', gap: '12px' }}>
-                <button onClick={() => { if (!submitting) setSelectedSlot(null) }} disabled={submitting}
-                  className="nsb-btn nsb-btn-secondary flex-1" style={{ padding: '15px 20px' }}>
+                <Button variant="secondary" size="md" fullWidth onClick={() => { if (!submitting) setSelectedSlot(null) }} disabled={submitting}>
                   Annuler
-                </button>
-                <button onClick={handleConfirm} disabled={submitting}
-                  className="nsb-btn nsb-btn-primary flex-1" style={{ padding: '15px 20px' }}>
+                </Button>
+                <Button variant="primary" size="md" fullWidth onClick={handleConfirm} disabled={submitting}>
                   {submitting ? 'Réservation...' : 'Confirmer'}
-                </button>
+                </Button>
               </div>
             </motion.div>
           </motion.div>

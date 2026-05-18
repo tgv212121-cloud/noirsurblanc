@@ -16,6 +16,7 @@ import MessageThread from '@/components/messaging/MessageThread'
 import VersionedPostView from '@/components/posts/VersionedPostView'
 import PerformanceInsights from '@/components/posts/PerformanceInsights'
 import UnipileSyncBadge from '@/components/posts/UnipileSyncBadge'
+import { KPI, CalendarDay } from '@/components/nsb'
 import NotificationPrompt from '@/components/ui/NotificationPrompt'
 import type { Client, Post, PostMetrics, Reminder, PostStatus } from '@/types'
 import { questions } from '@/components/onboarding/questions'
@@ -246,17 +247,17 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                 const isSelected = selectedDate === dateStr
                 const hasPost = dayPosts.length > 0
                 const isEditing = editingDate === dateStr
-                // Tous les posts du jour valides (ou publies) -> vert ; sinon bleu
                 const allValidated = hasPost && dayPosts.every(p => p.status === 'published' || !!p.validatedAt)
-                const dotColor = allValidated ? '#22c55e' : '#2563eb'
-                const bgTint = allValidated ? '#22c55e12' : '#2563eb10'
+                const status: 'empty' | 'pending' | 'validated' = !hasPost ? 'empty' : allValidated ? 'validated' : 'pending'
                 return (
-                  <button key={day} onClick={() => { setEditingDate(isEditing ? null : dateStr); setSelectedDate(isEditing ? null : dateStr); if (!hasPost) setNewPost('') }}
-                    className={cn('relative rounded-xl text-sm cursor-pointer transition-all duration-200 text-center', (isSelected || isEditing) ? 'ring-2' : '', hasPost ? 'font-semibold' : 'text-blanc-muted')}
-                    style={{ padding: '12px 0', backgroundColor: hasPost ? bgTint : isToday ? 'var(--noir-elevated)' : 'transparent', color: hasPost ? 'var(--blanc)' : undefined, ['--tw-ring-color' as string]: allValidated ? '#22c55e' : '#2563eb'}}>
-                    {day}
-                    {hasPost && <span className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full" style={{ width: '5px', height: '5px', backgroundColor: dotColor, boxShadow: allValidated ? '0 0 6px rgba(34,197,94,0.5)' : 'none' }} />}
-                  </button>
+                  <CalendarDay
+                    key={day}
+                    day={day}
+                    status={status}
+                    isToday={isToday}
+                    isSelected={isSelected || isEditing}
+                    onClick={() => { setEditingDate(isEditing ? null : dateStr); setSelectedDate(isEditing ? null : dateStr); if (!hasPost) setNewPost('') }}
+                  />
                 )
               })}
             </div>
@@ -676,10 +677,10 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
               const totalComments = publishedPosts.reduce((s, p) => { const m = metrics.find(mt => mt.postId === p.id); return s + (m?.comments || 0) }, 0)
               return (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6" style={{ marginBottom: '48px' }}>
-                  <KpiCard label="Impressions" value={formatNumber(totalImpressions)} accent="white" />
-                  <KpiCard label="Likes" value={formatNumber(totalLikes)} accent="white" />
-                  <KpiCard label="Commentaires" value={formatNumber(totalComments)} accent="white" />
-                  <KpiCard label="Engagement" value={`${avgEngagement}%`} accent="gold" />
+                  <KPI label="Impressions" value={formatNumber(totalImpressions)} />
+                  <KPI label="Likes" value={formatNumber(totalLikes)} />
+                  <KPI label="Commentaires" value={formatNumber(totalComments)} />
+                  <KPI label="Engagement" value={`${avgEngagement}%`} valueColor="text-gold" />
                 </div>
               )
             })()}
@@ -875,18 +876,3 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   )
 }
 
-function KpiCard({ label, value, accent }: { label: string; value: string; accent: 'white' | 'gold' }) {
-  return (
-    <div className="relative rounded-2xl overflow-hidden" style={{
-      padding: '22px 24px',
-      background: accent === 'gold'
-        ? 'linear-gradient(135deg, rgba(202,138,4,0.08), rgba(202,138,4,0.02))'
-        : 'rgba(255,255,255,0.025)',
-      border: `1px solid ${accent === 'gold' ? 'rgba(202,138,4,0.25)' : 'rgba(255,255,255,0.08)'}`,
-    }}>
-      <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
-      <p className="text-[11px] uppercase tracking-[0.16em] text-blanc-muted/60" style={{ marginBottom: '12px' }}>{label}</p>
-      <p className={`font-heading font-medium leading-none ${accent === 'gold' ? 'text-gold italic' : 'text-blanc'}`} style={{ fontSize: '34px', letterSpacing: '-0.01em' }}>{value}</p>
-    </div>
-  )
-}

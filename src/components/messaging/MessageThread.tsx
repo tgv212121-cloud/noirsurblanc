@@ -366,7 +366,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
 
                 <div
                   id={'msg-' + msg.id}
-                  className="rounded-2xl"
+                  className="rounded-[18px]"
                   style={{
                     padding: msg.voiceUrl ? '10px 14px' : (msg.text ? '14px 18px' : '8px'),
                     backgroundColor: isMe ? accentColor : 'var(--noir-elevated)',
