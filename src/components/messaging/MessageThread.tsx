@@ -318,7 +318,7 @@ export default function MessageThread({ clientId, currentUser, accentColor, othe
   }
 
   return (
-    <div className="flex flex-col" style={{ height: 'min(calc(100dvh - 380px), calc(100vh - 380px))', minHeight: '380px', maxHeight: 'calc(100vh - 280px)' }}>
+    <div className="flex flex-col" style={{ height: 'min(calc(100dvh - 300px), calc(100vh - 300px))', minHeight: '480px', maxHeight: 'calc(100vh - 220px)' }}>
       {/* Messages */}
       <div className="flex-1 space-y-6 overflow-y-auto" style={{ paddingRight: '8px', paddingBottom: '24px' }}>
         {messages.length === 0 ? (
