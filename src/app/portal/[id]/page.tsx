@@ -385,7 +385,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ id: str
           >
             {/* Sync badge (LinkedIn / Unipile) */}
             <div style={{ marginBottom: '32px' }}>
-              <UnipileSyncBadge onSyncComplete={refreshStats} />
+              <UnipileSyncBadge clientId={id} onSyncComplete={refreshStats} />
             </div>
 
             {/* Section 1 : Insights (top 3 + patterns) */}
