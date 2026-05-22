@@ -89,18 +89,19 @@ export function KPI({ label, value, meta, dotColor = '#ca8a04', valueColor, acce
   return (
     <div
       className={[
-        'relative overflow-hidden rounded-xl border px-[26px] py-[22px]',
+        'relative rounded-xl border',
         accent
           ? 'border-accent-client/25 bg-[linear-gradient(135deg,rgba(139,92,246,0.10),rgba(139,92,246,0.02))]'
           : 'border-white/10 bg-white/[0.025]',
       ].join(' ')}
+      style={{ padding: '22px 26px' }}
     >
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)]"
       />
 
-      <div className="mb-[10px] flex items-center gap-2">
+      <div className="flex items-center gap-2" style={{ marginBottom: '12px' }}>
         <span
           className="inline-block h-[5px] w-[5px] rounded-full"
           style={{ background: dotColor, boxShadow: `0 0 8px ${dotColor}99` }}
@@ -109,16 +110,13 @@ export function KPI({ label, value, meta, dotColor = '#ca8a04', valueColor, acce
       </div>
 
       <div
-        className={[
-          'font-heading italic font-medium leading-none tracking-[-0.02em]',
-          'text-[var(--fs-display)]',
-          valueColor || 'text-blanc',
-        ].join(' ')}
+        className={['font-heading italic font-medium tracking-[-0.02em]', valueColor || 'text-blanc'].join(' ')}
+        style={{ fontSize: '34px', lineHeight: 1.15 }}
       >
         {value}
       </div>
 
-      {meta && <div className="mt-2 text-[11px] text-blanc-muted/60">{meta}</div>}
+      {meta && <div style={{ marginTop: '8px' }} className="text-[11px] text-blanc-muted/60">{meta}</div>}
     </div>
   )
 }
