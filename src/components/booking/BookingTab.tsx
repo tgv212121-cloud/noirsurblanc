@@ -264,7 +264,26 @@ export default function BookingTab({ clientId, clientName }: Props) {
                       {a.topic && <p className="text-xs text-blanc-muted/70" style={{ marginTop: '3px' }}>{a.topic}</p>}
                     </div>
                     {a.meetingUrl && (
-                      <a href={a.meetingUrl} className={`text-xs tracking-widest uppercase ${inProgress ? 'text-noir font-bold' : 'text-gold hover:text-gold-light'}`} style={{ padding: '8px 14px', border: inProgress ? 'none' : '1px solid rgba(202,138,4,0.3)', borderRadius: '8px', background: inProgress ? 'linear-gradient(135deg,#a16207,#ca8a04,#eab308)' : 'transparent' }}>
+                      <a
+                        href={a.meetingUrl}
+                        className="text-xs tracking-widest uppercase font-semibold inline-flex items-center gap-2 no-underline"
+                        style={{
+                          padding: '10px 18px',
+                          borderRadius: '8px',
+                          color: inProgress ? '#ffffff' : '#ca8a04',
+                          background: inProgress
+                            ? 'linear-gradient(135deg, #15803d, #22c55e, #4ade80)'
+                            : 'transparent',
+                          border: inProgress ? 'none' : '1px solid rgba(202,138,4,0.3)',
+                          boxShadow: inProgress ? '0 4px 16px rgba(34,197,94,0.35)' : 'none',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        {inProgress && (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                            <path d="M8 5v14l11-7z"/>
+                          </svg>
+                        )}
                         Rejoindre
                       </a>
                     )}
